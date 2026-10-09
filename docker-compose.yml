@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-bss_timecollection}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bss_timecollection} -d ${POSTGRES_DB:-bss_timecollection}"]
       interval: 5s
