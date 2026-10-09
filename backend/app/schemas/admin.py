@@ -11,6 +11,8 @@ class TerminalSettings(BaseModel):
     name: str = Field(min_length=1, max_length=160)
     external_device_id: str = Field(min_length=1, max_length=128)
     identification_mode: IdentificationMode = IdentificationMode.BOTH
+    reporter_id_type: str = Field(default="BADGE", min_length=1, max_length=16)
+    oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     active: bool = True
     action_codes: list[str] = Field(default_factory=list)
 
@@ -24,12 +26,22 @@ class TerminalRead(BaseModel):
     name: str
     external_device_id: str
     identification_mode: str
+    reporter_id_type: str
+    oracle_attributes: dict[str, Any]
     active: bool
     action_codes: list[str]
+    provisioned: bool
+    activation_pending: bool
+    activation_token: str | None = None
 
 
 class TerminalActionsUpdate(BaseModel):
     action_codes: list[str]
+
+
+class TerminalProvisioningRead(BaseModel):
+    code: str
+    activation_token: str
 
 
 class ActionSettings(BaseModel):
@@ -37,7 +49,6 @@ class ActionSettings(BaseModel):
     label: str = Field(min_length=1, max_length=120)
     supplier_device_event: str = Field(min_length=1, max_length=128)
     state_effect: StateEffect
-    reporter_id_type: str = Field(default="BADGE", min_length=1, max_length=16)
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     display_order: int = Field(default=100, ge=0, le=100000)
     active: bool = True
@@ -52,7 +63,6 @@ class ActionRead(BaseModel):
     label: str
     supplier_device_event: str
     state_effect: str
-    reporter_id_type: str
     oracle_attributes: dict[str, Any]
     display_order: int
     active: bool
@@ -71,6 +81,7 @@ class EventRead(BaseModel):
     reporter_id_type: str
     identification_method: str
     event_datetime: datetime
+    oracle_attributes: dict[str, Any]
     delivery_status: str
     attempt_count: int
     sent_at: datetime | None

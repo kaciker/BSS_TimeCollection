@@ -52,18 +52,23 @@ jobs:
           docker compose ps
           docker compose logs --no-color --tail=120
           exit 1
-      - name: Smoke test terminal flow
+      - name: Smoke test terminal provisioning and event flow
         run: |
-          curl -fsS http://127.0.0.1:8080/api/v1/terminal/DEMO-01/config | grep -q 'DEMO-01'
-          curl -fsS -H 'Content-Type: application/json' \
+          TOKEN=$(curl -fsS -X POST http://127.0.0.1:8080/api/v1/admin/terminals/DEMO-01/provision | python3 -c 'import json,sys; print(json.load(sys.stdin)["activation_token"])')
+          curl -fsS -c /tmp/bss-cookies.txt -H 'Content-Type: application/json' \
+            -d "{\"token\":\"${TOKEN}\"}" \
+            http://127.0.0.1:8080/api/v1/terminal/activate | grep -q 'DEMO-01'
+          curl -fsS -b /tmp/bss-cookies.txt http://127.0.0.1:8080/api/v1/terminal/config | grep -q 'DEMO-01'
+          curl -fsS -b /tmp/bss-cookies.txt -H 'Content-Type: application/json' \
             -d '{"reporter_id":"CI-900001","identification_method":"KEYPAD"}' \
-            http://127.0.0.1:8080/api/v1/terminal/DEMO-01/scan | grep -q 'ENTRY_RECORDED'
-          curl -fsS -H 'Content-Type: application/json' \
+            http://127.0.0.1:8080/api/v1/terminal/scan | grep -q 'ENTRY_RECORDED'
+          curl -fsS -b /tmp/bss-cookies.txt -H 'Content-Type: application/json' \
             -d '{"reporter_id":"CI-900001","identification_method":"KEYPAD"}' \
-            http://127.0.0.1:8080/api/v1/terminal/DEMO-01/scan | grep -q 'EXIT_REQUIRED'
-          curl -fsS -H 'Content-Type: application/json' \
+            http://127.0.0.1:8080/api/v1/terminal/scan | grep -q 'EXIT_REQUIRED'
+          curl -fsS -b /tmp/bss-cookies.txt -H 'Content-Type: application/json' \
             -d '{"reporter_id":"CI-900001","identification_method":"KEYPAD","action_code":"END_WORK"}' \
-            http://127.0.0.1:8080/api/v1/terminal/DEMO-01/exit | grep -q 'EXIT_RECORDED'
+            http://127.0.0.1:8080/api/v1/terminal/exit | grep -q 'EXIT_RECORDED'
+          curl -fsS 'http://127.0.0.1:8080/api/v1/admin/monitoring/events?reporter_id=CI-900001' | grep -q 'CI-900001'
       - name: Show stack status
         run: docker compose ps
       - name: Stop stack

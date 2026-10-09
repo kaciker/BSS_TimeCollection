@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     oracle_bearer_token: str = ""
     oracle_timeout_seconds: float = 15.0
 
+    terminal_cookie_secure: bool = False
+    terminal_session_days: int = 365
+
     worker_poll_seconds: float = 3.0
     worker_stale_sending_seconds: int = 300
 

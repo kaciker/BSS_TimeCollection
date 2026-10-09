@@ -3,27 +3,46 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.domain.enums import DeliveryStatus, StateEffect
+from app.domain.enums import DeliveryStatus
 from app.models.action import Action
 from app.models.terminal import Terminal
 from app.models.time_event import TimeEvent
-from app.schemas.admin import ActionCreate, ActionRead, EventRead, TerminalActionsUpdate, TerminalCreate, TerminalRead, TerminalSettings, ActionSettings
-
-from app.services.configuration_service import (
-    check_device_id, check_supplier_event, commit_configuration, resolve_actions, validate_actions,
+from app.schemas.admin import (
+    ActionCreate,
+    ActionRead,
+    ActionSettings,
+    EventRead,
+    TerminalActionsUpdate,
+    TerminalCreate,
+    TerminalProvisioningRead,
+    TerminalRead,
+    TerminalSettings,
 )
+from app.services.configuration_service import (
+    check_device_id,
+    check_supplier_event,
+    commit_configuration,
+    resolve_actions,
+    validate_actions,
+)
+from app.services.terminal_identity_service import issue_activation_token
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 
-def _terminal_read(terminal: Terminal) -> TerminalRead:
+def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> TerminalRead:
     return TerminalRead(
         code=terminal.code,
         name=terminal.name,
         external_device_id=terminal.external_device_id,
         identification_mode=terminal.identification_mode,
+        reporter_id_type=terminal.reporter_id_type,
+        oracle_attributes=terminal.oracle_attributes or {},
         active=terminal.active,
         action_codes=sorted(action.code for action in terminal.actions),
+        provisioned=bool(terminal.session_token_hash),
+        activation_pending=bool(terminal.activation_token_hash),
+        activation_token=activation_token,
     )
 
 
@@ -46,13 +65,16 @@ def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
         name=payload.name,
         external_device_id=payload.external_device_id,
         identification_mode=payload.identification_mode.value,
+        reporter_id_type=payload.reporter_id_type,
+        oracle_attributes=payload.oracle_attributes,
         active=payload.active,
         actions=actions,
     )
+    activation_token = issue_activation_token(terminal)
     db.add(terminal)
     commit_configuration(db)
     db.refresh(terminal)
-    return _terminal_read(terminal)
+    return _terminal_read(terminal, activation_token)
 
 
 @router.put("/terminals/{terminal_code}", response_model=TerminalRead)
@@ -67,11 +89,23 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
     terminal.name = payload.name
     terminal.external_device_id = payload.external_device_id
     terminal.identification_mode = payload.identification_mode.value
+    terminal.reporter_id_type = payload.reporter_id_type
+    terminal.oracle_attributes = payload.oracle_attributes
     terminal.active = payload.active
     terminal.actions = actions
     commit_configuration(db)
     db.refresh(terminal)
     return _terminal_read(terminal)
+
+
+@router.post("/terminals/{terminal_code}/provision", response_model=TerminalProvisioningRead)
+def provision_terminal(terminal_code: str, db: Session = Depends(get_db)):
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code))
+    if terminal is None:
+        raise HTTPException(404, "Terminal not found")
+    token = issue_activation_token(terminal)
+    commit_configuration(db)
+    return TerminalProvisioningRead(code=terminal.code, activation_token=token)
 
 
 @router.put("/terminals/{terminal_code}/actions", response_model=TerminalRead)
@@ -104,7 +138,7 @@ def create_action(payload: ActionCreate, db: Session = Depends(get_db)):
         label=payload.label,
         supplier_device_event=payload.supplier_device_event,
         state_effect=payload.state_effect.value,
-        reporter_id_type=payload.reporter_id_type,
+        reporter_id_type="BADGE",
         oracle_attributes=payload.oracle_attributes,
         display_order=payload.display_order,
         active=payload.active,
@@ -121,8 +155,6 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
     if action is None:
         raise HTTPException(404, "Action not found")
     check_supplier_event(db, payload.supplier_device_event, action)
-    # Validate all assigned active terminals before committing the new effect/status.
-    # Historical events retain their snapshots; only future captures use these values.
     for field, value in payload.model_dump().items():
         setattr(action, field, value.value if field == "state_effect" else value)
     try:
@@ -148,8 +180,16 @@ def retry_event(event_id: str, db: Session = Depends(get_db)):
     event = db.get(TimeEvent, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
+    if event.delivery_status == DeliveryStatus.UNKNOWN.value:
+        raise HTTPException(status_code=409, detail="UNKNOWN delivery requires reconciliation before any resend")
+    if event.delivery_status == DeliveryStatus.REJECTED.value:
+        raise HTTPException(status_code=409, detail="REJECTED delivery cannot be replayed blindly; correct the mapping or source data first")
     if event.delivery_status == DeliveryStatus.SENT.value:
         raise HTTPException(status_code=409, detail="A sent event cannot be replayed")
+    if event.delivery_status == DeliveryStatus.SENDING.value:
+        raise HTTPException(status_code=409, detail="An event currently being sent cannot be replayed")
+    if event.delivery_status == DeliveryStatus.PENDING.value:
+        raise HTTPException(status_code=409, detail="This event is already queued for delivery")
     event.delivery_status = DeliveryStatus.PENDING.value
     event.next_attempt_at = None
     db.commit()

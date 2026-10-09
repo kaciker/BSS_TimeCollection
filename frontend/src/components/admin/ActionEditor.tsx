@@ -22,7 +22,7 @@ export function ActionEditor({ action, terminals, onClose, onSaved }: {
     const payload = {
       code: action?.code ?? String(data.get("code")).trim(), label: String(data.get("label")).trim(),
       supplier_device_event: String(data.get("supplier")).trim(), state_effect: data.get("effect"),
-      reporter_id_type: data.get("reporter"), display_order: Number(data.get("order")), oracle_attributes: attributes, active,
+      display_order: Number(data.get("order")), oracle_attributes: attributes, active,
     };
     setBusy(true);
     try {
@@ -42,8 +42,7 @@ export function ActionEditor({ action, terminals, onClose, onSaved }: {
       </div></section>
       <section className="form-section"><h3>Oracle mapping</h3><div className="field-grid">
         <label>Supplier event code<input name="supplier" required maxLength={128} defaultValue={action?.supplier_device_event ?? ""} placeholder="e.g. BSS_MEAL" /><small>Unique supplierDeviceEvent configured in Oracle.</small></label>
-        <label>Reporter ID type<select name="reporter" defaultValue={action?.reporter_id_type ?? "BADGE"}>{Array.from(new Set(["BADGE", "PERSON", action?.reporter_id_type].filter(Boolean))).map(type => <option key={type} value={type}>{type}</option>)}</select></label>
-      </div><details className="advanced-fields"><summary>Optional Oracle attributes</summary><label>Attributes (JSON object)<textarea name="attributes" rows={5} defaultValue={JSON.stringify(action?.oracle_attributes ?? {}, null, 2)} spellCheck={false} /><small>Include only attributes agreed with the Oracle implementation team.</small></label></details></section>
+      </div><details className="advanced-fields"><summary>Optional action-specific Oracle attributes</summary><label>Attributes (JSON object)<textarea name="attributes" rows={5} defaultValue={JSON.stringify(action?.oracle_attributes ?? {}, null, 2)} spellCheck={false} /><small>Action attributes are merged with the terminal context for future captures.</small></label></details></section>
       <section className="form-section"><div className="section-heading"><div><h3>Availability</h3><p>Inactive actions are hidden from worker interaction.</p></div><label className="switch-control"><input type="checkbox" role="switch" checked={active} onChange={event => setActive(event.target.checked)} /><span className="switch-track" aria-hidden="true" /><span>Active action</span></label></div>
         {assigned.length > 0 && <p className="form-notice">Used by {assigned.map(terminal => terminal.code).join(", ")}. Changes apply to future events; existing event records retain their captured values.</p>}
       </section>
