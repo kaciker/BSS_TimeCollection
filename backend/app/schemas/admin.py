@@ -1,16 +1,22 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.enums import IdentificationMode, StateEffect
 
 
-class TerminalCreate(BaseModel):
-    code: str = Field(min_length=1, max_length=64)
+class TerminalSettings(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
     name: str = Field(min_length=1, max_length=160)
     external_device_id: str = Field(min_length=1, max_length=128)
     identification_mode: IdentificationMode = IdentificationMode.BOTH
+    active: bool = True
+    action_codes: list[str] = Field(default_factory=list)
+
+
+class TerminalCreate(TerminalSettings):
+    code: str = Field(min_length=1, max_length=64)
 
 
 class TerminalRead(BaseModel):
@@ -26,14 +32,19 @@ class TerminalActionsUpdate(BaseModel):
     action_codes: list[str]
 
 
-class ActionCreate(BaseModel):
-    code: str = Field(min_length=1, max_length=64)
+class ActionSettings(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
     label: str = Field(min_length=1, max_length=120)
     supplier_device_event: str = Field(min_length=1, max_length=128)
     state_effect: StateEffect
-    reporter_id_type: str = "BADGE"
+    reporter_id_type: str = Field(default="BADGE", min_length=1, max_length=16)
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
-    display_order: int = 100
+    display_order: int = Field(default=100, ge=0, le=100000)
+    active: bool = True
+
+
+class ActionCreate(ActionSettings):
+    code: str = Field(min_length=1, max_length=64)
 
 
 class ActionRead(BaseModel):

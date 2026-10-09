@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import admin, health, terminal
+from app.routers import admin, health, monitoring, terminal
 
 app = FastAPI(
     title="BSS Time Collection",
@@ -11,6 +11,7 @@ app = FastAPI(
 app.include_router(health.router)
 app.include_router(terminal.router)
 app.include_router(admin.router)
+app.include_router(monitoring.router)
 
 
 @app.get("/api/v1/meta")

@@ -44,7 +44,7 @@ def bootstrap() -> None:
             )
             db.add(terminal)
             db.flush()
-        terminal.actions = list(actions_by_code.values())
+            terminal.actions = [item for item in actions_by_code.values() if item.code in {row[0] for row in defaults}]
         db.commit()
 
 

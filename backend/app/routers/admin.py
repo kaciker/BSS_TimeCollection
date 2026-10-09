@@ -7,7 +7,11 @@ from app.domain.enums import DeliveryStatus, StateEffect
 from app.models.action import Action
 from app.models.terminal import Terminal
 from app.models.time_event import TimeEvent
-from app.schemas.admin import ActionCreate, ActionRead, EventRead, TerminalActionsUpdate, TerminalCreate, TerminalRead
+from app.schemas.admin import ActionCreate, ActionRead, EventRead, TerminalActionsUpdate, TerminalCreate, TerminalRead, TerminalSettings, ActionSettings
+
+from app.services.configuration_service import (
+    check_device_id, check_supplier_event, commit_configuration, resolve_actions, validate_actions,
+)
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
@@ -33,14 +37,39 @@ def list_terminals(db: Session = Depends(get_db)):
 def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
     if db.scalar(select(Terminal).where(Terminal.code == payload.code)):
         raise HTTPException(status_code=409, detail="Terminal code already exists")
+    check_device_id(db, payload.external_device_id)
+    actions = resolve_actions(db, payload.action_codes)
+    if payload.active:
+        validate_actions(actions, payload.code)
     terminal = Terminal(
         code=payload.code,
         name=payload.name,
         external_device_id=payload.external_device_id,
         identification_mode=payload.identification_mode.value,
+        active=payload.active,
+        actions=actions,
     )
     db.add(terminal)
-    db.commit()
+    commit_configuration(db)
+    db.refresh(terminal)
+    return _terminal_read(terminal)
+
+
+@router.put("/terminals/{terminal_code}", response_model=TerminalRead)
+def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session = Depends(get_db)):
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code))
+    if terminal is None:
+        raise HTTPException(404, "Terminal not found")
+    check_device_id(db, payload.external_device_id, terminal)
+    actions = resolve_actions(db, payload.action_codes)
+    if payload.active:
+        validate_actions(actions, terminal.code)
+    terminal.name = payload.name
+    terminal.external_device_id = payload.external_device_id
+    terminal.identification_mode = payload.identification_mode.value
+    terminal.active = payload.active
+    terminal.actions = actions
+    commit_configuration(db)
     db.refresh(terminal)
     return _terminal_read(terminal)
 
@@ -50,13 +79,11 @@ def update_terminal_actions(terminal_code: str, payload: TerminalActionsUpdate, 
     terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code))
     if terminal is None:
         raise HTTPException(status_code=404, detail="Terminal not found")
-    actions = db.scalars(select(Action).where(Action.code.in_(payload.action_codes))).all() if payload.action_codes else []
-    if len(actions) != len(set(payload.action_codes)):
-        raise HTTPException(status_code=400, detail="One or more action codes do not exist")
-    if len([item for item in actions if item.active and item.state_effect == StateEffect.ENTER.value]) != 1:
-        raise HTTPException(status_code=400, detail="A terminal must have exactly one active ENTER action")
+    actions = resolve_actions(db, payload.action_codes)
+    if terminal.active:
+        validate_actions(actions, terminal.code)
     terminal.actions = list(actions)
-    db.commit()
+    commit_configuration(db)
     db.refresh(terminal)
     return _terminal_read(terminal)
 
@@ -71,6 +98,7 @@ def list_actions(db: Session = Depends(get_db)):
 def create_action(payload: ActionCreate, db: Session = Depends(get_db)):
     if db.scalar(select(Action).where(Action.code == payload.code)):
         raise HTTPException(status_code=409, detail="Action code already exists")
+    check_supplier_event(db, payload.supplier_device_event)
     action = Action(
         code=payload.code,
         label=payload.label,
@@ -79,9 +107,32 @@ def create_action(payload: ActionCreate, db: Session = Depends(get_db)):
         reporter_id_type=payload.reporter_id_type,
         oracle_attributes=payload.oracle_attributes,
         display_order=payload.display_order,
+        active=payload.active,
     )
     db.add(action)
-    db.commit()
+    commit_configuration(db)
+    db.refresh(action)
+    return ActionRead(**{field: getattr(action, field) for field in ActionRead.model_fields})
+
+
+@router.put("/actions/{action_code}", response_model=ActionRead)
+def update_action(action_code: str, payload: ActionSettings, db: Session = Depends(get_db)):
+    action = db.scalar(select(Action).where(Action.code == action_code))
+    if action is None:
+        raise HTTPException(404, "Action not found")
+    check_supplier_event(db, payload.supplier_device_event, action)
+    # Validate all assigned active terminals before committing the new effect/status.
+    # Historical events retain their snapshots; only future captures use these values.
+    for field, value in payload.model_dump().items():
+        setattr(action, field, value.value if field == "state_effect" else value)
+    try:
+        for terminal in action.terminals:
+            if terminal.active:
+                validate_actions(terminal.actions, terminal.code)
+    except HTTPException:
+        db.rollback()
+        raise
+    commit_configuration(db)
     db.refresh(action)
     return ActionRead(**{field: getattr(action, field) for field in ActionRead.model_fields})
 

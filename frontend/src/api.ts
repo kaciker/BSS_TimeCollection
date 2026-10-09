@@ -5,7 +5,11 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({ detail: response.statusText }));
-    throw new Error(body.detail ?? `HTTP ${response.status}`);
+    const detail = body.detail;
+    const message = Array.isArray(detail)
+      ? detail.map((item: { loc?: string[]; msg?: string }) => `${item.loc?.slice(1).join(".") || "Input"}: ${item.msg || "Invalid value"}`).join("; ")
+      : typeof detail === "string" ? detail : `Request failed (HTTP ${response.status})`;
+    throw new Error(message);
   }
   return response.json() as Promise<T>;
 }
