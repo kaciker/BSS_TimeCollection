@@ -4,7 +4,7 @@ from app.integrations.oracle.client import OracleClient
 from app.models.time_event import TimeEvent
 
 
-def test_oracle_payload_contains_tcd_contract():
+def test_oracle_payload_contains_tcd_contract_and_terminal_context():
     event = TimeEvent(
         id="00000000-0000-0000-0000-000000000001",
         request_number="BSS-DEMO-01-1",
@@ -21,7 +21,7 @@ def test_oracle_payload_contains_tcd_contract():
         identification_method="KEYPAD",
         event_datetime=datetime(2026, 10, 9, 16, 0, tzinfo=timezone.utc),
         event_timezone="Europe/Madrid",
-        oracle_attributes={},
+        oracle_attributes={"Workshop": "Extrusion", "Project": "P42", "Cell": "EX07"},
         delivery_status="PENDING",
     )
     payload = OracleClient().build_payload(event)
@@ -32,3 +32,8 @@ def test_oracle_payload_contains_tcd_contract():
     assert item["reporterIdType"] == "BADGE"
     assert item["supplierDeviceEvent"] == "BSS_START_WORK"
     assert item["eventDateTime"].endswith("+02:00")
+    assert item["timeEventAttributes"] == [
+        {"name": "Workshop", "value": "Extrusion"},
+        {"name": "Project", "value": "P42"},
+        {"name": "Cell", "value": "EX07"},
+    ]

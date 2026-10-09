@@ -1,15 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api";
 import { NumericKeypad } from "../components/NumericKeypad";
 import type { IdentificationMethod, ScanResponse, TerminalAction, TerminalConfig } from "../types";
 
-function terminalCodeFromPath(): string {
-  const parts = window.location.pathname.split("/").filter(Boolean);
-  return parts[0] === "terminal" && parts[1] ? decodeURIComponent(parts[1]) : "DEMO-01";
+function activationTokenFromLocation(): string {
+  if (window.location.pathname !== "/terminal/activate") return "";
+  return window.location.hash.replace(/^#/, "").trim();
 }
 
 export function TerminalPage() {
-  const terminalCode = useMemo(terminalCodeFromPath, []);
   const [config, setConfig] = useState<TerminalConfig | null>(null);
   const [badge, setBadge] = useState("");
   const [method, setMethod] = useState<IdentificationMethod>("KEYPAD");
@@ -19,13 +18,21 @@ export function TerminalPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    api.get<TerminalConfig>(`/api/v1/terminal/${encodeURIComponent(terminalCode)}/config`)
-      .then((value) => {
+    const load = async () => {
+      try {
+        const token = activationTokenFromLocation();
+        const value = token
+          ? await api.post<TerminalConfig>("/api/v1/terminal/activate", { token })
+          : await api.get<TerminalConfig>("/api/v1/terminal/config");
+        if (token) window.history.replaceState({}, "", "/terminal");
         setConfig(value);
         if (value.identification_mode === "RFID") setMethod("RFID");
-      })
-      .catch((err: Error) => setError(err.message));
-  }, [terminalCode]);
+      } catch (err) {
+        setError((err as Error).message);
+      }
+    };
+    void load();
+  }, []);
 
   const reset = () => {
     setBadge("");
@@ -50,7 +57,7 @@ export function TerminalPage() {
     setBusy(true);
     setError("");
     try {
-      handleResponse(await api.post<ScanResponse>(`/api/v1/terminal/${encodeURIComponent(terminalCode)}/scan`, {
+      handleResponse(await api.post<ScanResponse>("/api/v1/terminal/scan", {
         reporter_id: badge,
         identification_method: method,
       }));
@@ -64,7 +71,7 @@ export function TerminalPage() {
     setBusy(true);
     setError("");
     try {
-      handleResponse(await api.post<ScanResponse>(`/api/v1/terminal/${encodeURIComponent(terminalCode)}/exit`, {
+      handleResponse(await api.post<ScanResponse>("/api/v1/terminal/exit", {
         reporter_id: badge,
         identification_method: method,
         action_code: actionCode,
@@ -75,7 +82,7 @@ export function TerminalPage() {
     }
   };
 
-  if (error && !config) return <main className="terminal-shell"><div className="panel error-panel">{error}</div></main>;
+  if (error && !config) return <main className="terminal-shell"><div className="panel error-panel"><h2>Terminal not provisioned</h2><p>{error}</p><p>Provision this browser from Administration and open the generated activation link once.</p></div></main>;
   if (!config) return <main className="terminal-shell"><div className="panel">Loading terminal...</div></main>;
 
   return (
@@ -107,7 +114,7 @@ export function TerminalPage() {
             {(config.identification_mode === "KEYPAD" || config.identification_mode === "BOTH") && (
               <NumericKeypad value={badge} onChange={setBadge} onSubmit={scan} disabled={busy} />
             )}
-            {config.identification_mode === "BOTH" && <div className="method-note">Manual keypad enabled. RFID adapter can use the same terminal API.</div>}
+            {config.identification_mode === "BOTH" && <div className="method-note">Manual keypad enabled. RFID adapter can use the same terminal session.</div>}
             {config.identification_mode === "RFID" && <div className="rfid-placeholder">RFID identification is configured for this terminal. Hardware adapter integration is pending.</div>}
           </>
         )}

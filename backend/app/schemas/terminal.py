@@ -17,6 +17,10 @@ class TerminalConfig(BaseModel):
     actions: list[TerminalAction]
 
 
+class ActivationRequest(BaseModel):
+    token: str = Field(min_length=32, max_length=256)
+
+
 class ScanRequest(BaseModel):
     reporter_id: str = Field(min_length=1, max_length=160)
     identification_method: IdentificationMethod
@@ -38,4 +42,4 @@ class ScanResponse(BaseModel):
     flow: str
     worker_state: str
     event: CapturedEvent | None = None
-    actions: list[TerminalAction] = []
+    actions: list[TerminalAction] = Field(default_factory=list)

@@ -33,8 +33,18 @@ export interface AdminTerminal {
   name: string;
   external_device_id: string;
   identification_mode: IdentificationMode;
+  reporter_id_type: string;
+  oracle_attributes: Record<string, unknown>;
   active: boolean;
   action_codes: string[];
+  provisioned: boolean;
+  activation_pending: boolean;
+  activation_token?: string | null;
+}
+
+export interface TerminalProvisioning {
+  code: string;
+  activation_token: string;
 }
 
 export interface AdminAction {
@@ -42,7 +52,6 @@ export interface AdminAction {
   label: string;
   supplier_device_event: string;
   state_effect: "ENTER" | "EXIT";
-  reporter_id_type: string;
   oracle_attributes: Record<string, unknown>;
   display_order: number;
   active: boolean;

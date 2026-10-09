@@ -38,6 +38,8 @@ def _active_actions(terminal: Terminal, effect: StateEffect) -> list[Action]:
 def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod) -> TimeEvent:
     event_id = str(uuid4())
     event_time = datetime.now(ZoneInfo(settings.event_timezone))
+    oracle_attributes = dict(terminal.oracle_attributes or {})
+    oracle_attributes.update(action.oracle_attributes or {})
     event = TimeEvent(
         id=event_id,
         request_number=f"BSS-{terminal.code}-{event_id}",
@@ -50,11 +52,11 @@ def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: 
         supplier_device_event=action.supplier_device_event,
         state_effect=action.state_effect,
         reporter_id=reporter_id,
-        reporter_id_type=action.reporter_id_type,
+        reporter_id_type=terminal.reporter_id_type,
         identification_method=method.value,
         event_datetime=event_time,
         event_timezone=settings.event_timezone,
-        oracle_attributes=action.oracle_attributes or {},
+        oracle_attributes=oracle_attributes,
         delivery_status="PENDING",
     )
     db.add(event)
