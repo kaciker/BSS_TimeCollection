@@ -23,3 +23,9 @@ Marcos solicita separar eventos, terminales y acciones, corregir alta de termina
 Validación: 10 tests backend; frontend TypeScript/Vite compila. Instalación temporal aislada en 8093: alta/edición terminal, deviceId duplicado, alta/edición acción, JSON inválido, asignación nueva, persistencia tras reinicio, fichajes alternados y salida en otro reloj, historial filtrado y móvil 390px sin desbordamiento. Datos de prueba separados de la DB real. Sin commit/push.
 
 Despliegue final verificado en 8092: cinco secciones separadas, diálogos de terminal/acción, detalle de eventos y recarga directa de rutas funcionan sin errores JavaScript. API/DB/web saludables, ready correcto y Oracle sigue desactivado. Instalación de validación temporal retirada al completar las pruebas.
+
+## 2026-10-09 — Despliegue de identidad de terminal y contexto Oracle
+
+Marcos autoriza actualizar a main (referencia 544883e), respaldar, migrar y validar end-to-end, corrigiendo/confirmando/publicando el bloque estable. Backup DB/config/.env en /opt/backups/BSS_TimeCollection/20261009T204740Z-terminal-identity. Migración 0002 aplicada sin recrear DB. .env original conservado, añadidos Secure=false y sesión 365 días; Oracle sigue false.
+
+Se reprodujo doble consumo concurrente de token (2 éxitos/8 peticiones) y corrigió con lock PostgreSQL en activación/provisión. Se corrigió copia de enlace en HTTP mediante fallback. 15 tests pasan contra entorno PostgreSQL aislado, incluyendo 5 rondas concurrentes; frontend build/Compose correctos. Navegador real: edición de atributos, activación one-shot, cookie HttpOnly, URL /terminal, revocación previa, entrada/salida y monitoring. Payload generado incluye atributos fusionados y reporterIdType de terminal. Se compararon las 18 filas históricas y configuración original sin diferencias. Informe: docs/deployment-validation-2026-10-09.md.

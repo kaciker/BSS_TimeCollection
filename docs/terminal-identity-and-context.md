@@ -37,3 +37,17 @@ This means later edits to Workshop, Project, Cell or any future field affect onl
 ## Delivery safety
 
 `UNKNOWN` events are not manually replayable until they have been reconciled, because Oracle may already have accepted the original request. `REJECTED` events are also blocked from blind replay; mapping or source data must be corrected deliberately first. `SENT` and in-flight `SENDING` events remain non-replayable.
+
+## Concurrent activation and local HTTP
+
+Activation locks the matching terminal row until the token has been consumed, so simultaneous requests cannot each create a valid session. Reprovisioning locks the same row before replacing activation/session hashes.
+
+The Administration copy button supports local HTTP where the Clipboard API is unavailable, with a selected-input fallback and visible copy feedback. This does not change the HttpOnly session boundary.
+
+PostgreSQL-backed concurrency regression test (run only against an isolated test API):
+
+```bash
+IDENTITY_TEST_BASE_URL=http://127.0.0.1:8000 pytest -q
+```
+
+See [deployment validation](deployment-validation-2026-10-09.md) for migration, preservation and browser evidence.

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "../../api";
 import type { AdminAction, AdminTerminal, TerminalProvisioning } from "../../types";
 import { TerminalEditor } from "./TerminalEditor";
@@ -11,6 +11,21 @@ export function TerminalList({ terminals, actions, onChanged }: {
   const [editor, setEditor] = useState<{ terminal: AdminTerminal | null } | null>(null);
   const [provisioning, setProvisioning] = useState<TerminalProvisioning | null>(null);
   const [provisionError, setProvisionError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const activationInput = useRef<HTMLInputElement>(null);
+  const copyActivationUrl = async () => {
+    setProvisionError("");
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(activationUrl);
+      } else {
+        activationInput.current?.focus();
+        activationInput.current?.select();
+        if (!document.execCommand("copy")) throw new Error("Select and copy the activation URL manually.");
+      }
+      setCopied(true);
+    } catch { setProvisionError("Could not copy the link. Select and copy the activation URL manually."); }
+  };
   const filtered = terminals.filter(terminal => `${terminal.code} ${terminal.name} ${terminal.external_device_id}`.toLowerCase().includes(search.toLowerCase()) && (!status || terminal.active === (status === "active")));
   const activationUrl = provisioning ? `${window.location.origin}/terminal/activate#${provisioning.activation_token}` : "";
 
@@ -20,6 +35,7 @@ export function TerminalList({ terminals, actions, onChanged }: {
     try {
       const value = await api.post<TerminalProvisioning>(`/api/v1/admin/terminals/${encodeURIComponent(terminal.code)}/provision`, {});
       setProvisioning(value);
+      setCopied(false);
       onChanged(`Activation link generated for ${terminal.code}.`);
     } catch (err) {
       setProvisionError((err as Error).message);
@@ -30,8 +46,8 @@ export function TerminalList({ terminals, actions, onChanged }: {
     <div className="page-actions"><div className="list-stats"><strong>{terminals.length}</strong> terminals <span className="stat-separator" /><span className="status-dot" />{terminals.filter(terminal => terminal.active).length} active</div><button className="primary" onClick={() => setEditor({terminal:null})}><span aria-hidden="true">＋</span> New terminal</button></div>
     {provisioning && <section className="admin-card">
       <div className="section-heading"><div><h3>Activation link · {provisioning.code}</h3><p>Open this link once on the physical workstation. The token is consumed, stored as an HttpOnly browser session and removed from the address bar.</p></div><button className="icon-button" aria-label="Close activation link" onClick={() => setProvisioning(null)}>×</button></div>
-      <label>One-time activation URL<input readOnly value={activationUrl} onFocus={event => event.currentTarget.select()} /></label>
-      <div className="page-actions"><button className="secondary" onClick={() => void navigator.clipboard.writeText(activationUrl)}>Copy activation URL</button></div>
+      <label>One-time activation URL<input ref={activationInput} readOnly value={activationUrl} onFocus={event => event.currentTarget.select()} /></label>
+      <div className="page-actions"><button className="secondary" onClick={() => void copyActivationUrl()}>{copied ? "Copied" : "Copy activation URL"}</button></div>
     </section>}
     {provisionError && <div className="inline-error" role="alert">{provisionError}</div>}
     <section className="admin-card resource-list" aria-label="Terminal list">
@@ -46,7 +62,7 @@ export function TerminalList({ terminals, actions, onChanged }: {
     </section>
     {editor && <TerminalEditor terminal={editor.terminal} actions={actions} onClose={() => setEditor(null)} onSaved={terminal => {
       setEditor(null);
-      if (terminal.activation_token) setProvisioning({code: terminal.code, activation_token: terminal.activation_token});
+      if (terminal.activation_token) { setProvisioning({code: terminal.code, activation_token: terminal.activation_token}); setCopied(false); }
       onChanged(`Terminal ${terminal.code} ${editor.terminal ? "updated" : "created"} successfully.`);
     }} />}
   </>;

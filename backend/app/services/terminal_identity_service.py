@@ -28,7 +28,13 @@ def issue_activation_token(terminal: Terminal) -> str:
 
 
 def activate_terminal(db: Session, token: str) -> tuple[Terminal, str]:
-    terminal = db.scalar(select(Terminal).where(Terminal.activation_token_hash == _hash_token(token)))
+    # Lock the matching row so concurrent requests cannot consume the same token.
+    # PostgreSQL rechecks the predicate after the previous consumer commits.
+    terminal = db.scalar(
+        select(Terminal)
+        .where(Terminal.activation_token_hash == _hash_token(token))
+        .with_for_update()
+    )
     if terminal is None or not terminal.active:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activation token is invalid, expired or disabled")
     session_token = _new_token()

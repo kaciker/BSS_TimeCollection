@@ -100,7 +100,7 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
 
 @router.post("/terminals/{terminal_code}/provision", response_model=TerminalProvisioningRead)
 def provision_terminal(terminal_code: str, db: Session = Depends(get_db)):
-    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code))
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code).with_for_update())
     if terminal is None:
         raise HTTPException(404, "Terminal not found")
     token = issue_activation_token(terminal)
