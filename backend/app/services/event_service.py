@@ -13,6 +13,7 @@ from app.models.terminal import Terminal
 from app.models.time_event import TimeEvent
 from app.schemas.terminal import CapturedEvent, ScanResponse, TerminalAction
 from app.services.state_service import derive_worker_state
+from app.services.exit_policy import check_exit_policy
 
 
 def _get_terminal(db: Session, terminal_code: str) -> Terminal:
@@ -94,6 +95,7 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
         event = _create_event(db, terminal, entry_actions[0], reporter_id, method)
         return ScanResponse(flow="ENTRY_RECORDED", worker_state=WorkerState.INSIDE.value, event=_event_response(event))
 
+    check_exit_policy(db, terminal, reporter_id)
     enabled_exits = _active_actions(terminal, StateEffect.EXIT)
     enabled_ids = {action.id for action in enabled_exits}
     exit_actions = [action for action in enabled_exits if action.parent_action_id is None or action.parent_action_id not in enabled_ids]
@@ -112,6 +114,7 @@ def record_exit(db: Session, terminal_code: str, reporter_id: str, method: Ident
     if derive_worker_state(db, reporter_id) != WorkerState.INSIDE:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Worker is not currently inside according to local TCD events")
 
+    check_exit_policy(db, terminal, reporter_id)
     exit_actions = _active_actions(terminal, StateEffect.EXIT)
     action = next((item for item in exit_actions if item.code == action_code), None)
     if action is None:
