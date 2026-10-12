@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package.json tsconfig.json vite.config.ts ./
 RUN npm install
 COPY index.html ./
+COPY img ./public/img
 COPY src ./src
 RUN npm run build
 

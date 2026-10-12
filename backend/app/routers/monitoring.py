@@ -19,6 +19,11 @@ from app.schemas.monitoring import (
 router = APIRouter(prefix="/api/v1/admin/monitoring", tags=["monitoring"])
 
 
+@router.get("/clocks", response_model=list[str])
+def clock_codes(db: Session = Depends(get_db)):
+    return db.scalars(select(TimeEvent.terminal_code).distinct().order_by(TimeEvent.terminal_code)).all()
+
+
 def _filters(query, terminal_code, reporter_id):
     if terminal_code:
         query = query.where(TimeEvent.terminal_code == terminal_code)

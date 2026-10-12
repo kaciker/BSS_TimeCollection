@@ -26,9 +26,16 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updated, setUpdated] = useState<string | null>(null);
+  const [historicalClocks, setHistoricalClocks] = useState<string[]>([]);
   const [detail, setDetail] = useState<EventDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const detailRequest = useRef(0);
+
+  useEffect(() => {
+    void api.get<string[]>("/api/v1/admin/monitoring/clocks").then(setHistoricalClocks).catch(() => {});
+  }, []);
+  const activeCodes = new Set(terminals.map(terminal => terminal.code));
+  const removedCodes = historicalClocks.filter(code => !activeCodes.has(code));
 
   useEffect(() => {
     let active = true;
@@ -82,7 +89,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
     <section className="admin-card monitoring">
       <div className="monitor-heading"><div><h2>{view === "cards" ? "Badge register" : view === "events" ? "Captured events" : "Delivery attempts"}</h2></div><button className="secondary" onClick={() => setRevision(value => value + 1)}>Refresh</button></div>
       <form className="monitor-filters" onSubmit={apply}>
-        <label>Clock<select value={draft.clock} onChange={e => setDraft({ ...draft, clock: e.target.value })}><option value="">All clocks</option>{terminals.map(terminal => <option key={terminal.code} value={terminal.code}>{terminal.code} · {terminal.name}</option>)}</select></label>
+        <label>Clock<select value={draft.clock} onChange={e => setDraft({ ...draft, clock: e.target.value })}><option value="">All clocks</option>{terminals.map(terminal => <option key={terminal.code} value={terminal.code}>{terminal.code} · {terminal.name}</option>)}{removedCodes.map(code => <option key={code} value={code}>{code} · removed</option>)}</select></label>
         <label>Badge number<input value={draft.badge} placeholder="Search badge" onChange={e => setDraft({ ...draft, badge: e.target.value })} /></label>
         {view === "cards" ? <label>Local state<select value={draft.state} onChange={e => setDraft({ ...draft, state: e.target.value })}><option value="">All</option><option value="INSIDE">Inside</option><option value="OUTSIDE">Outside</option></select></label> : <label>{view === "events" ? "Delivery" : "Attempt result"}<select value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value })}><option value="">All</option>{statuses.map(status => <option key={status}>{status}</option>)}</select></label>}
         {view === "events" && <><label>From<input type="datetime-local" value={draft.start} onChange={e => setDraft({ ...draft, start: e.target.value })} /></label><label>To<input type="datetime-local" value={draft.end} onChange={e => setDraft({ ...draft, end: e.target.value })} /></label></>}

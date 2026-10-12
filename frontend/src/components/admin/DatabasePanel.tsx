@@ -46,7 +46,7 @@ export function DatabasePanel() {
   return <div className="admin-stack">
     <section className="admin-card">
       <div className="section-heading"><div><h3>Current primary database</h3><p>The password is never exposed through Administration.</p></div></div>
-      {status ? <div className="detail-grid">
+      {status ? <div className="detail-grid database-detail-grid">
         <div><span>Mode</span><strong>{status.source === "local-compose" ? "Local Docker PostgreSQL" : "External database"}</strong></div>
         <div><span>Engine</span><strong>{status.backend}</strong></div>
         <div><span>Host</span><strong>{status.host || "—"}</strong></div>
@@ -58,7 +58,7 @@ export function DatabasePanel() {
 
     <section className="admin-card">
       <div className="section-heading"><div><h3>External PostgreSQL connection</h3><p>Validate a managed external database before changing the deployment configuration. Credentials are used only for this test and are not stored by the application.</p></div></div>
-      {status && !status.connection_test_enabled && <div className="inline-error">Connection testing is disabled on this server. Set <code>DATABASE_ADMIN_TEST_ENABLED=true</code> only on a trusted administration network.</div>}
+      {status && !status.connection_test_enabled && <div className="info-notice">Connection testing is disabled on this server. Set <code>DATABASE_ADMIN_TEST_ENABLED=true</code> only on a trusted administration network.</div>}
       <div className="form-grid">
         <label>Host<input value={form.host} onChange={event => setForm({...form, host:event.target.value})} placeholder="postgres.company.local" /></label>
         <label>Port<input value={form.port} onChange={event => setForm({...form, port:event.target.value})} inputMode="numeric" /></label>
@@ -67,15 +67,14 @@ export function DatabasePanel() {
         <label>Password<input type="password" autoComplete="new-password" value={form.password} onChange={event => setForm({...form, password:event.target.value})} /></label>
         <label>SSL mode<select value={form.sslmode} onChange={event => setForm({...form, sslmode:event.target.value})}><option value="prefer">Prefer</option><option value="require">Require</option><option value="verify-ca">Verify CA</option><option value="verify-full">Verify full</option><option value="disable">Disable</option></select></label>
       </div>
-      <div className="page-actions"><button className="primary" disabled={busy || !form.host || !form.username || !form.password || !status?.connection_test_enabled} onClick={() => void test()}>{busy ? "Testing…" : "Test connection"}</button></div>
+      <div className="form-actions"><button className="primary" disabled={busy || !form.host || !form.username || !form.password || !status?.connection_test_enabled} onClick={() => void test()}>{busy ? "Testing…" : "Test connection"}</button></div>
       {result && <div className="success-notice" role="status"><span aria-hidden="true">✓</span>External PostgreSQL connection validated · {result.host}:{result.port}/{result.database} · {result.latency_ms} ms</div>}
       {error && <div className="inline-error" role="alert">{error}</div>}
     </section>
 
     <section className="admin-card">
-      <h3>Activation</h3>
-      <p>Changing the primary database is intentionally not performed live from this screen. After validation, set the server <code>DATABASE_URL</code>, run Alembic migrations against the target database and restart/redeploy the API and worker. This keeps credentials outside the application database and makes the change auditable and reversible.</p>
-      <p className="subtle">Microsoft SQL Server is not enabled yet. The current production data model and migrations are validated for PostgreSQL.</p>
+      <div className="section-heading"><div><h3>Activation</h3><p>The primary database is changed through deployment configuration after the connection has been validated.</p></div></div>
+      <div className="info-notice">Set <code>DATABASE_URL</code> on the server, run Alembic migrations against the target database, then restart the API and worker. This screen does not change the active connection.</div>
     </section>
   </div>;
 }

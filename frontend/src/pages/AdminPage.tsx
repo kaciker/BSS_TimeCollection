@@ -36,7 +36,7 @@ export function AdminPage() {
   const changed = (message: string) => { setNotice(message); void refresh(); };
   const groups = [t("operations"), t("configuration")];
   return <div className="admin-layout"><aside className="admin-sidebar">
-    <a href="/admin/cards" className="admin-brand" onClick={event => navigate(event,"cards")}><span className="brand-mark">B</span><span><strong>BSS</strong><small>TIME COLLECTION</small></span></a>
+    <a href="/admin/cards" className="admin-brand" aria-label="Hutchinson BSS Time Collection" onClick={event => navigate(event,"cards")}><img src="/img/logobig.png" alt="Hutchinson BSS" /><span className="admin-brand-caption">TIME COLLECTION</span></a>
     <div className="workspace-label"><span className="status-dot" /> {t("administration")}</div>
     <nav aria-label="Administration navigation">{groups.map(group => <div className="nav-group" key={group}><div className="nav-label">{group}</div>{(Object.keys(pages) as Section[]).filter(key => pages[key].group === group).map(key => <a key={key} href={`/admin/${key}`} className={section === key ? "active" : ""} aria-current={section === key ? "page" : undefined} onClick={event => navigate(event,key)}><NavIcon name={pages[key].icon} />{pages[key].title}</a>)}</div>)}</nav>
     <div className="sidebar-footer"><span className="brand-mark small">B</span><div>BSS Time Collection<small>Factory capture platform</small></div></div>

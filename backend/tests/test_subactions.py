@@ -57,3 +57,31 @@ def test_subactions_require_parent_and_terminal_assignment(monitor):
         "parent_action_code": "OTHER",
     })
     assert invalid.status_code == 409
+
+
+def test_existing_standalone_exit_remains_available_when_not_assigned_parent(monitor):
+    client, _ = monitor
+    terminal, payload = configured_terminal(client)
+    parent = client.post("/api/v1/admin/actions", json={
+        "code": "FACTORY_EXIT", "label": "Factory exit", "supplier_device_event": "BSS_FACTORY_EXIT_MENU",
+        "state_effect": "EXIT", "display_order": 20, "oracle_attributes": {}, "requires_subaction": True,
+    })
+    assert parent.status_code == 201, parent.text
+    medical = client.post("/api/v1/admin/actions", json={
+        "code": "MEDICAL", "label": "Medical", "supplier_device_event": "BSS_MEDICAL",
+        "state_effect": "EXIT", "display_order": 30, "oracle_attributes": {}, "parent_action_code": "FACTORY_EXIT",
+    })
+    assert medical.status_code == 201, medical.text
+    assigned = client.put("/api/v1/admin/terminals/CLOCK-A/actions", json={
+        "action_codes": payload["action_codes"] + ["MEDICAL"],
+    })
+    assert assigned.status_code == 200, assigned.text
+    activate_created_terminal(client, terminal)
+    assert client.post("/api/v1/terminal/scan", json={"reporter_id": "legacy-medical", "identification_method": "KEYPAD"}).json()["flow"] == "ENTRY_RECORDED"
+    options = client.post("/api/v1/terminal/scan", json={"reporter_id": "legacy-medical", "identification_method": "KEYPAD"}).json()
+    assert "MEDICAL" in {action["code"] for action in options["actions"]}
+    exit_response = client.post("/api/v1/terminal/exit", json={
+        "reporter_id": "legacy-medical", "identification_method": "KEYPAD", "action_code": "MEDICAL",
+    })
+    assert exit_response.status_code == 200, exit_response.text
+    assert exit_response.json()["worker_state"] == "OUTSIDE"

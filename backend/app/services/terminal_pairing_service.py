@@ -77,7 +77,7 @@ def approve_pairing_request(db: Session, terminal: Terminal, pairing_code: str) 
         raise HTTPException(status_code=410, detail="Pairing code has expired")
     if pairing.status != PAIRING_STATUS_PENDING:
         raise HTTPException(status_code=409, detail="Pairing code has already been used")
-    if not terminal.active:
+    if not terminal.active or terminal.deleted_at is not None:
         raise HTTPException(status_code=409, detail="Inactive terminals cannot be paired")
     pairing.terminal_id = terminal.id
     pairing.status = PAIRING_STATUS_APPROVED
@@ -103,8 +103,8 @@ def poll_pairing_request(db: Session, request_token: str) -> tuple[str, Terminal
         raise HTTPException(status_code=409, detail="Pairing request has already been consumed")
     if pairing.status != PAIRING_STATUS_APPROVED or pairing.terminal_id is None:
         raise HTTPException(status_code=409, detail="Pairing request is in an invalid state")
-    terminal = db.get(Terminal, pairing.terminal_id)
-    if terminal is None or not terminal.active:
+    terminal = db.scalar(select(Terminal).where(Terminal.id == pairing.terminal_id).with_for_update())
+    if terminal is None or not terminal.active or terminal.deleted_at is not None:
         raise HTTPException(status_code=409, detail="Assigned terminal is unavailable")
     session_token = bind_terminal_session(terminal)
     pairing.status = PAIRING_STATUS_CONSUMED

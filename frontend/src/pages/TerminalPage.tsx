@@ -87,12 +87,18 @@ export function TerminalPage() {
     catch (err) { setError((err as Error).message); setBusy(false); }
   };
 
-  if (!config && pairing) return <main className="terminal-shell"><div className="panel"><div className="eyebrow">{t("terminalActivation")}</div><h2>{t("pairBrowser")}</h2><p>{t("pairHelp")}</p><div className="terminal-code">{pairing.pairing_code}</div><p>{t("waitingActivation")}</p><p className="subtle">{t("codeExpires")} {new Date(pairing.expires_at).toLocaleTimeString(language)}.</p></div></main>;
-  if (!config && error) return <main className="terminal-shell"><div className="panel error-panel"><h2>{t("terminalNotProvisioned")}</h2><p>{error}</p><p>{t("pairingAlternative")}</p><button className="primary" onClick={() => void requestPairing()}>{t("generatePairing")}</button></div></main>;
-  if (!config) return <main className="terminal-shell"><div className="panel">{t("loadingTerminal")}</div></main>;
+  if (!config && pairing) return <main className="terminal-shell activation-shell"><section className="panel activation-panel"><img className="activation-logo" src="/img/logobig.png" alt="Hutchinson BSS" /><div className="activation-content"><div className="eyebrow">{t("terminalActivation")}</div><h1>{t("pairBrowser")}</h1><p>{t("pairHelp")}</p><div className="pairing-code" aria-label={pairing.pairing_code}>{pairing.pairing_code}</div><div className="pairing-status"><span className="pairing-pulse" />{t("waitingActivation")}</div><p className="activation-expiry">{t("codeExpires")} {new Date(pairing.expires_at).toLocaleTimeString(language)}.</p></div></section></main>;
+  if (!config && error) return <main className="terminal-shell activation-shell"><section className="panel activation-panel"><img className="activation-logo" src="/img/logobig.png" alt="Hutchinson BSS" /><div className="activation-content"><div className="eyebrow">{t("terminalActivation")}</div><h1>{t("terminalNotProvisioned")}</h1><div className="inline-error" role="alert">{error}</div><p>{t("pairingAlternative")}</p><button className="primary" onClick={() => void requestPairing()}>{t("generatePairing")}</button></div></section></main>;
+  if (!config) return <main className="terminal-shell activation-shell"><section className="panel activation-panel"><img className="activation-logo" src="/img/logobig.png" alt="Hutchinson BSS" /><div className="activation-content">{t("loadingTerminal")}</div></section></main>;
 
-  return <main className="terminal-shell">
-    <header className="terminal-header"><div><div className="eyebrow">BSS TIME COLLECTION</div><h1>{config.name}</h1></div><div className="terminal-code">{config.code}</div></header>
+  return <main className="terminal-shell terminal-operational">
+    <header className="terminal-header">
+      <div className="terminal-heading">
+        <img className="terminal-brand" src="/img/logobig.png" alt="Hutchinson BSS" />
+        <div className="terminal-heading-copy"><div className="eyebrow">TIME COLLECTION</div><h1>{config.name}</h1></div>
+      </div>
+      <div className="terminal-code">{config.code}</div>
+    </header>
     <section className="panel terminal-panel">
       {message ? <div className="success-state"><div className="check">✓</div><h2>{message}</h2><p>{t("eventStored")}</p></div> : exitActions.length ? <div>
         <div className="eyebrow">{t("exit")}</div><h2>{subactionMode ? t("selectSubaction") : t("selectExit")}</h2>

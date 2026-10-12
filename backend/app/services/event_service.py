@@ -17,7 +17,7 @@ from app.services.state_service import derive_worker_state
 
 def _get_terminal(db: Session, terminal_code: str) -> Terminal:
     terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code))
-    if terminal is None or not terminal.active:
+    if terminal is None or not terminal.active or terminal.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Terminal not found or inactive")
     return terminal
 
@@ -94,7 +94,9 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
         event = _create_event(db, terminal, entry_actions[0], reporter_id, method)
         return ScanResponse(flow="ENTRY_RECORDED", worker_state=WorkerState.INSIDE.value, event=_event_response(event))
 
-    exit_actions = [action for action in _active_actions(terminal, StateEffect.EXIT) if action.parent_action_id is None]
+    enabled_exits = _active_actions(terminal, StateEffect.EXIT)
+    enabled_ids = {action.id for action in enabled_exits}
+    exit_actions = [action for action in enabled_exits if action.parent_action_id is None or action.parent_action_id not in enabled_ids]
     if not exit_actions:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Terminal has no active EXIT actions")
     return ScanResponse(
@@ -130,7 +132,7 @@ def record_exit(db: Session, terminal_code: str, reporter_id: str, method: Ident
 
     if action.parent_action_id is not None:
         parent = next((item for item in exit_actions if item.id == action.parent_action_id), None)
-        if parent is None or not parent.requires_subaction:
+        if parent is not None and not parent.requires_subaction:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Sub-action parent is not enabled on this terminal")
 
     event = _create_event(db, terminal, action, reporter_id, method)

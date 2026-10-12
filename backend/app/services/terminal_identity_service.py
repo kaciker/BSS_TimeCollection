@@ -43,7 +43,7 @@ def activate_terminal(db: Session, token: str) -> tuple[Terminal, str]:
         .where(Terminal.activation_token_hash == _hash_token(token))
         .with_for_update()
     )
-    if terminal is None or not terminal.active:
+    if terminal is None or not terminal.active or terminal.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activation token is invalid, expired or disabled")
     session_token = bind_terminal_session(terminal)
     db.commit()
@@ -56,7 +56,7 @@ def resolve_terminal_session(db: Session, request: Request) -> Terminal:
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="This browser is not provisioned as a terminal")
     terminal = db.scalar(select(Terminal).where(Terminal.session_token_hash == _hash_token(token)))
-    if terminal is None or not terminal.active:
+    if terminal is None or not terminal.active or terminal.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Terminal session is invalid, revoked or disabled")
     terminal.last_seen_at = datetime.now(timezone.utc)
     terminal.last_ip = request.client.host if request.client else None

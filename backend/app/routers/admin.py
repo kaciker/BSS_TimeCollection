@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -6,6 +8,7 @@ from app.db.session import get_db
 from app.domain.enums import DeliveryStatus
 from app.models.action import Action
 from app.models.terminal import Terminal
+from app.models.terminal_pairing_request import TerminalPairingRequest
 from app.models.time_event import TimeEvent
 from app.schemas.admin import (
     ActionCreate,
@@ -68,7 +71,7 @@ def _action_read(action: Action) -> ActionRead:
 
 @router.get("/terminals", response_model=list[TerminalRead])
 def list_terminals(db: Session = Depends(get_db)):
-    terminals = db.scalars(select(Terminal).order_by(Terminal.code)).unique().all()
+    terminals = db.scalars(select(Terminal).where(Terminal.deleted_at.is_(None)).order_by(Terminal.code)).unique().all()
     return [_terminal_read(item) for item in terminals]
 
 
@@ -104,7 +107,7 @@ def clone_terminal_configuration(terminal_code: str, db: Session = Depends(get_d
 
 @router.put("/terminals/{terminal_code}", response_model=TerminalRead)
 def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session = Depends(get_db)):
-    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code))
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)))
     if terminal is None:
         raise HTTPException(404, "Terminal not found")
     check_device_id(db, payload.external_device_id, terminal)
@@ -123,9 +126,28 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
     return _terminal_read(terminal)
 
 
+@router.delete("/terminals/{terminal_code}")
+def delete_terminal(terminal_code: str, db: Session = Depends(get_db)):
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)).with_for_update())
+    if terminal is None:
+        raise HTTPException(404, "Terminal not found")
+    terminal.active = False
+    terminal.deleted_at = datetime.now(timezone.utc)
+    terminal.activation_token_hash = None
+    terminal.session_token_hash = None
+    # Keep approved requests for audit; polling checks the removed terminal.
+    for pairing in db.scalars(select(TerminalPairingRequest).where(
+        TerminalPairingRequest.terminal_id == terminal.id,
+        TerminalPairingRequest.status == "APPROVED",
+    )):
+        pairing.status = "CANCELLED"
+    commit_configuration(db)
+    return {"detail": f"Terminal {terminal_code} removed"}
+
+
 @router.post("/terminals/{terminal_code}/provision", response_model=TerminalProvisioningRead)
 def provision_terminal(terminal_code: str, db: Session = Depends(get_db)):
-    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code).with_for_update())
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)).with_for_update())
     if terminal is None:
         raise HTTPException(404, "Terminal not found")
     token = issue_activation_token(terminal)
@@ -135,7 +157,7 @@ def provision_terminal(terminal_code: str, db: Session = Depends(get_db)):
 
 @router.post("/terminals/{terminal_code}/pair", response_model=TerminalRead)
 def pair_terminal_browser(terminal_code: str, payload: TerminalPairingApproval, db: Session = Depends(get_db)):
-    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code).with_for_update())
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)).with_for_update())
     if terminal is None:
         raise HTTPException(404, "Terminal not found")
     approve_pairing_request(db, terminal, payload.pairing_code)
@@ -145,7 +167,7 @@ def pair_terminal_browser(terminal_code: str, payload: TerminalPairingApproval, 
 
 @router.put("/terminals/{terminal_code}/actions", response_model=TerminalRead)
 def update_terminal_actions(terminal_code: str, payload: TerminalActionsUpdate, db: Session = Depends(get_db)):
-    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code))
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)))
     if terminal is None:
         raise HTTPException(status_code=404, detail="Terminal not found")
     actions = resolve_actions(db, payload.action_codes)

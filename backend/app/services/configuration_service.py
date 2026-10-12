@@ -45,14 +45,14 @@ def validate_actions(actions: list[Action], terminal_code: str) -> None:
     if sum(action.state_effect == "ENTER" for action in enabled) != 1:
         raise HTTPException(409, f"Terminal {terminal_code} requires exactly one active entry action")
 
-    top_level_exits = [action for action in enabled if action.state_effect == "EXIT" and action.parent_action_id is None]
+    enabled_ids = {action.id for action in enabled if action.id is not None}
+    top_level_exits = [
+        action for action in enabled
+        if action.state_effect == "EXIT" and (action.parent_action_id is None or action.parent_action_id not in enabled_ids)
+    ]
     if not top_level_exits:
         raise HTTPException(409, f"Terminal {terminal_code} requires at least one active exit action")
 
-    enabled_ids = {action.id for action in enabled if action.id is not None}
-    for action in enabled:
-        if action.parent_action_id is not None and action.parent_action_id not in enabled_ids:
-            raise HTTPException(409, f"Terminal {terminal_code} has a sub-action without its parent action")
     for parent in [action for action in top_level_exits if action.requires_subaction]:
         if not any(child.active and child.parent_action_id == parent.id for child in enabled):
             raise HTTPException(409, f"Terminal {terminal_code} requires at least one active sub-action for {parent.code}")

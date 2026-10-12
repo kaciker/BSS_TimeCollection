@@ -17,7 +17,7 @@ export function NumericKeypad({ value, onChange, onSubmit, disabled, placeholder
 
   return (
     <div className="keypad-wrap">
-      <div className="badge-display">{value || placeholder}</div>
+      <div className={`badge-display${value ? "" : " is-placeholder"}`} aria-live="polite">{value || placeholder}</div>
       <div className="keypad">
         {keys.map((key) => (
           <button key={key} className="key" type="button" onClick={() => press(key)} disabled={disabled}>{key}</button>
