@@ -35,6 +35,10 @@ def _active_actions(terminal: Terminal, effect: StateEffect) -> list[Action]:
     )
 
 
+def _terminal_action(action: Action) -> TerminalAction:
+    return TerminalAction(code=action.code, label=action.label, has_subactions=action.requires_subaction)
+
+
 def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod) -> TimeEvent:
     event_id = str(uuid4())
     event_time = datetime.now(ZoneInfo(settings.event_timezone))
@@ -90,13 +94,13 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
         event = _create_event(db, terminal, entry_actions[0], reporter_id, method)
         return ScanResponse(flow="ENTRY_RECORDED", worker_state=WorkerState.INSIDE.value, event=_event_response(event))
 
-    exit_actions = _active_actions(terminal, StateEffect.EXIT)
+    exit_actions = [action for action in _active_actions(terminal, StateEffect.EXIT) if action.parent_action_id is None]
     if not exit_actions:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Terminal has no active EXIT actions")
     return ScanResponse(
         flow="EXIT_REQUIRED",
         worker_state=WorkerState.INSIDE.value,
-        actions=[TerminalAction(code=action.code, label=action.label) for action in exit_actions],
+        actions=[_terminal_action(action) for action in exit_actions],
     )
 
 
@@ -106,9 +110,28 @@ def record_exit(db: Session, terminal_code: str, reporter_id: str, method: Ident
     if derive_worker_state(db, reporter_id) != WorkerState.INSIDE:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Worker is not currently inside according to local TCD events")
 
-    action = next((item for item in _active_actions(terminal, StateEffect.EXIT) if item.code == action_code), None)
+    exit_actions = _active_actions(terminal, StateEffect.EXIT)
+    action = next((item for item in exit_actions if item.code == action_code), None)
     if action is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Exit action is not enabled on this terminal")
+
+    if action.requires_subaction:
+        children = sorted(
+            [item for item in exit_actions if item.parent_action_id == action.id],
+            key=lambda item: (item.display_order, item.id),
+        )
+        if not children:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Selected exit action has no active sub-actions")
+        return ScanResponse(
+            flow="SUBACTION_REQUIRED",
+            worker_state=WorkerState.INSIDE.value,
+            actions=[_terminal_action(item) for item in children],
+        )
+
+    if action.parent_action_id is not None:
+        parent = next((item for item in exit_actions if item.id == action.parent_action_id), None)
+        if parent is None or not parent.requires_subaction:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Sub-action parent is not enabled on this terminal")
 
     event = _create_event(db, terminal, action, reporter_id, method)
     return ScanResponse(flow="EXIT_RECORDED", worker_state=WorkerState.OUTSIDE.value, event=_event_response(event))

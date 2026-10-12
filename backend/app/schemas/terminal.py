@@ -8,6 +8,7 @@ from app.domain.enums import IdentificationMethod
 class TerminalAction(BaseModel):
     code: str
     label: str
+    has_subactions: bool = False
 
 
 class TerminalConfig(BaseModel):

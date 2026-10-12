@@ -14,12 +14,48 @@ def resolve_actions(db: Session, codes: list[str]) -> list[Action]:
     return rows
 
 
+def resolve_parent_action(db: Session, parent_code: str | None, action: Action | None = None) -> Action | None:
+    if not parent_code:
+        return None
+    parent = db.scalar(select(Action).where(Action.code == parent_code))
+    if parent is None:
+        raise HTTPException(400, "Parent action does not exist")
+    if action is not None and parent.id == action.id:
+        raise HTTPException(400, "An action cannot be its own parent")
+    if parent.state_effect != "EXIT":
+        raise HTTPException(409, "Only EXIT actions can own sub-actions")
+    if parent.parent_action_id is not None:
+        raise HTTPException(409, "Sub-actions are limited to one level")
+    if not parent.requires_subaction:
+        raise HTTPException(409, "Parent action must be marked as requiring sub-actions")
+    return parent
+
+
+def validate_action_hierarchy(action: Action, parent: Action | None) -> None:
+    if action.state_effect != "EXIT" and (action.requires_subaction or parent is not None):
+        raise HTTPException(409, "Only EXIT actions can use sub-actions")
+    if action.requires_subaction and parent is not None:
+        raise HTTPException(409, "A sub-action cannot require another sub-action")
+    if not action.requires_subaction and action.subactions:
+        raise HTTPException(409, "Remove or reassign child actions before disabling sub-actions")
+
+
 def validate_actions(actions: list[Action], terminal_code: str) -> None:
     enabled = [action for action in actions if action.active]
     if sum(action.state_effect == "ENTER" for action in enabled) != 1:
         raise HTTPException(409, f"Terminal {terminal_code} requires exactly one active entry action")
-    if not any(action.state_effect == "EXIT" for action in enabled):
+
+    top_level_exits = [action for action in enabled if action.state_effect == "EXIT" and action.parent_action_id is None]
+    if not top_level_exits:
         raise HTTPException(409, f"Terminal {terminal_code} requires at least one active exit action")
+
+    enabled_ids = {action.id for action in enabled if action.id is not None}
+    for action in enabled:
+        if action.parent_action_id is not None and action.parent_action_id not in enabled_ids:
+            raise HTTPException(409, f"Terminal {terminal_code} has a sub-action without its parent action")
+    for parent in [action for action in top_level_exits if action.requires_subaction]:
+        if not any(child.active and child.parent_action_id == parent.id for child in enabled):
+            raise HTTPException(409, f"Terminal {terminal_code} requires at least one active sub-action for {parent.code}")
 
 
 def commit_configuration(db: Session) -> None:

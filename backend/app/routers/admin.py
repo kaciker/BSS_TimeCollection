@@ -24,6 +24,8 @@ from app.services.configuration_service import (
     check_supplier_event,
     commit_configuration,
     resolve_actions,
+    resolve_parent_action,
+    validate_action_hierarchy,
     validate_actions,
 )
 from app.services.terminal_cloning_service import clone_terminal
@@ -46,6 +48,21 @@ def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> T
         provisioned=bool(terminal.session_token_hash),
         activation_pending=bool(terminal.activation_token_hash),
         activation_token=activation_token,
+    )
+
+
+def _action_read(action: Action) -> ActionRead:
+    return ActionRead(
+        code=action.code,
+        label=action.label,
+        supplier_device_event=action.supplier_device_event,
+        state_effect=action.state_effect,
+        oracle_attributes=action.oracle_attributes or {},
+        display_order=action.display_order,
+        requires_subaction=action.requires_subaction,
+        parent_action_code=action.parent_action.code if action.parent_action else None,
+        subaction_codes=sorted(child.code for child in action.subactions),
+        active=action.active,
     )
 
 
@@ -142,8 +159,8 @@ def update_terminal_actions(terminal_code: str, payload: TerminalActionsUpdate, 
 
 @router.get("/actions", response_model=list[ActionRead])
 def list_actions(db: Session = Depends(get_db)):
-    actions = db.scalars(select(Action).order_by(Action.display_order, Action.code)).all()
-    return [ActionRead(**{field: getattr(item, field) for field in ActionRead.model_fields}) for item in actions]
+    actions = db.scalars(select(Action).order_by(Action.display_order, Action.code)).unique().all()
+    return [_action_read(item) for item in actions]
 
 
 @router.post("/actions", response_model=ActionRead, status_code=status.HTTP_201_CREATED)
@@ -151,6 +168,7 @@ def create_action(payload: ActionCreate, db: Session = Depends(get_db)):
     if db.scalar(select(Action).where(Action.code == payload.code)):
         raise HTTPException(status_code=409, detail="Action code already exists")
     check_supplier_event(db, payload.supplier_device_event)
+    parent = resolve_parent_action(db, payload.parent_action_code)
     action = Action(
         code=payload.code,
         label=payload.label,
@@ -159,12 +177,15 @@ def create_action(payload: ActionCreate, db: Session = Depends(get_db)):
         reporter_id_type="BADGE",
         oracle_attributes=payload.oracle_attributes,
         display_order=payload.display_order,
+        requires_subaction=payload.requires_subaction,
+        parent_action=parent,
         active=payload.active,
     )
+    validate_action_hierarchy(action, parent)
     db.add(action)
     commit_configuration(db)
     db.refresh(action)
-    return ActionRead(**{field: getattr(action, field) for field in ActionRead.model_fields})
+    return _action_read(action)
 
 
 @router.put("/actions/{action_code}", response_model=ActionRead)
@@ -173,10 +194,23 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
     if action is None:
         raise HTTPException(404, "Action not found")
     check_supplier_event(db, payload.supplier_device_event, action)
-    for field, value in payload.model_dump().items():
-        setattr(action, field, value.value if field == "state_effect" else value)
+    parent = resolve_parent_action(db, payload.parent_action_code, action)
+    action.label = payload.label
+    action.supplier_device_event = payload.supplier_device_event
+    action.state_effect = payload.state_effect.value
+    action.oracle_attributes = payload.oracle_attributes
+    action.display_order = payload.display_order
+    action.requires_subaction = payload.requires_subaction
+    action.parent_action = parent
+    action.active = payload.active
     try:
-        for terminal in action.terminals:
+        validate_action_hierarchy(action, parent)
+        affected = {terminal.id: terminal for terminal in action.terminals}
+        if parent:
+            affected.update({terminal.id: terminal for terminal in parent.terminals})
+        for child in action.subactions:
+            affected.update({terminal.id: terminal for terminal in child.terminals})
+        for terminal in affected.values():
             if terminal.active:
                 validate_actions(terminal.actions, terminal.code)
     except HTTPException:
@@ -184,7 +218,7 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
         raise
     commit_configuration(db)
     db.refresh(action)
-    return ActionRead(**{field: getattr(action, field) for field in ActionRead.model_fields})
+    return _action_read(action)
 
 
 @router.get("/events", response_model=list[EventRead])
