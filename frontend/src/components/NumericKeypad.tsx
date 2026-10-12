@@ -3,9 +3,11 @@ interface Props {
   onChange: (value: string) => void;
   onSubmit: () => void;
   disabled?: boolean;
+  placeholder?: string;
+  continueLabel?: string;
 }
 
-export function NumericKeypad({ value, onChange, onSubmit, disabled }: Props) {
+export function NumericKeypad({ value, onChange, onSubmit, disabled, placeholder = "Enter badge number", continueLabel = "Continue" }: Props) {
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "⌫"];
   const press = (key: string) => {
     if (key === "C") onChange("");
@@ -15,17 +17,13 @@ export function NumericKeypad({ value, onChange, onSubmit, disabled }: Props) {
 
   return (
     <div className="keypad-wrap">
-      <div className="badge-display">{value || "Enter badge number"}</div>
+      <div className="badge-display">{value || placeholder}</div>
       <div className="keypad">
         {keys.map((key) => (
-          <button key={key} className="key" type="button" onClick={() => press(key)} disabled={disabled}>
-            {key}
-          </button>
+          <button key={key} className="key" type="button" onClick={() => press(key)} disabled={disabled}>{key}</button>
         ))}
       </div>
-      <button className="primary large" type="button" disabled={disabled || !value} onClick={onSubmit}>
-        Continue
-      </button>
+      <button className="primary large" type="button" disabled={disabled || !value} onClick={onSubmit}>{continueLabel}</button>
     </div>
   );
 }

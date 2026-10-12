@@ -4,6 +4,7 @@ export type IdentificationMethod = "RFID" | "KEYPAD";
 export interface TerminalAction {
   code: string;
   label: string;
+  has_subactions: boolean;
 }
 
 export interface TerminalConfig {
@@ -34,7 +35,7 @@ export interface CapturedEvent {
 }
 
 export interface ScanResponse {
-  flow: "ENTRY_RECORDED" | "EXIT_REQUIRED" | "EXIT_RECORDED";
+  flow: "ENTRY_RECORDED" | "EXIT_REQUIRED" | "SUBACTION_REQUIRED" | "EXIT_RECORDED";
   worker_state: "INSIDE" | "OUTSIDE";
   event?: CapturedEvent;
   actions: TerminalAction[];
@@ -66,6 +67,9 @@ export interface AdminAction {
   state_effect: "ENTER" | "EXIT";
   oracle_attributes: Record<string, unknown>;
   display_order: number;
+  requires_subaction: boolean;
+  parent_action_code?: string | null;
+  subaction_codes: string[];
   active: boolean;
 }
 
