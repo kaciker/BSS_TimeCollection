@@ -36,7 +36,7 @@ def _active_actions(terminal: Terminal, effect: StateEffect) -> list[Action]:
 
 
 def _terminal_action(action: Action) -> TerminalAction:
-    return TerminalAction(code=action.code, label=action.label, has_subactions=action.requires_subaction)
+    return TerminalAction(code=action.code, label=action.label, has_subactions=action.requires_subaction, visual_key=action.visual_key)
 
 
 def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod) -> TimeEvent:

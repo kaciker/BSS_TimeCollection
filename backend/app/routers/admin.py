@@ -63,6 +63,7 @@ def _action_read(action: Action) -> ActionRead:
         oracle_attributes=action.oracle_attributes or {},
         display_order=action.display_order,
         requires_subaction=action.requires_subaction,
+        visual_key=action.visual_key,
         parent_action_code=action.parent_action.code if action.parent_action else None,
         subaction_codes=sorted(child.code for child in action.subactions),
         active=action.active,
@@ -200,6 +201,7 @@ def create_action(payload: ActionCreate, db: Session = Depends(get_db)):
         oracle_attributes=payload.oracle_attributes,
         display_order=payload.display_order,
         requires_subaction=payload.requires_subaction,
+        visual_key=payload.visual_key,
         parent_action=parent,
         active=payload.active,
     )
@@ -223,6 +225,7 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
     action.oracle_attributes = payload.oracle_attributes
     action.display_order = payload.display_order
     action.requires_subaction = payload.requires_subaction
+    action.visual_key = payload.visual_key
     action.parent_action = parent
     action.active = payload.active
     try:

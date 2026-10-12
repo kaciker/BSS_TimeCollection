@@ -30,7 +30,7 @@ def _config(terminal: Terminal) -> TerminalConfig:
         code=terminal.code,
         name=terminal.name,
         identification_mode=terminal.identification_mode,
-        actions=[TerminalAction(code=item.code, label=item.label) for item in actions],
+        actions=[TerminalAction(code=item.code, label=item.label, visual_key=item.visual_key) for item in actions],
     )
 
 

@@ -102,7 +102,7 @@ export function TerminalPage() {
     <section className="panel terminal-panel">
       {message ? <div className="success-state"><div className="check">✓</div><h2>{message}</h2><p>{t("eventStored")}</p></div> : exitActions.length ? <div>
         <div className="eyebrow">{t("exit")}</div><h2>{subactionMode ? t("selectSubaction") : t("selectExit")}</h2>
-        <div className="action-grid">{exitActions.map(action => <button className="action-card" key={action.code} disabled={busy} onClick={() => exit(action.code)}>{action.label}{action.has_subactions ? " ›" : ""}</button>)}</div>
+        <div className="action-grid">{exitActions.map(action => <button className="action-card" key={action.code} disabled={busy} onClick={() => exit(action.code)}>{action.visual_key && ["factory","break","medical","personal","legal","end-work"].includes(action.visual_key) && <img className="action-illustration" src={`/action-visuals/${action.visual_key}.svg`} alt="" /> }<span>{action.label}{action.has_subactions ? " ›" : ""}</span></button>)}</div>
         <button className="secondary" onClick={reset} disabled={busy}>{t("cancel")}</button>
       </div> : <>
         <div className="eyebrow">{t("identification")}</div><h2>{t("presentBadge")}</h2>

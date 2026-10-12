@@ -5,6 +5,7 @@ export interface TerminalAction {
   code: string;
   label: string;
   has_subactions: boolean;
+  visual_key?: string | null;
 }
 
 export interface TerminalConfig {
@@ -70,6 +71,7 @@ export interface AdminAction {
   requires_subaction: boolean;
   parent_action_code?: string | null;
   subaction_codes: string[];
+  visual_key?: string | null;
   active: boolean;
 }
 

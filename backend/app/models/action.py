@@ -16,6 +16,7 @@ class Action(Base):
     state_effect: Mapped[str] = mapped_column(String(16))
     reporter_id_type: Mapped[str] = mapped_column(String(16), default="BADGE")
     oracle_attributes: Mapped[dict] = mapped_column(JSON, default=dict)
+    visual_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
     display_order: Mapped[int] = mapped_column(Integer, default=100)
     requires_subaction: Mapped[bool] = mapped_column(Boolean, default=False)
     parent_action_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("actions.id", ondelete="SET NULL"), nullable=True, index=True)

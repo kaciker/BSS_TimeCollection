@@ -9,6 +9,7 @@ class TerminalAction(BaseModel):
     code: str
     label: str
     has_subactions: bool = False
+    visual_key: str | None = None
 
 
 class TerminalConfig(BaseModel):

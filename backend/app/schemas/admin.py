@@ -55,6 +55,7 @@ class ActionSettings(BaseModel):
     state_effect: StateEffect
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     display_order: int = Field(default=100, ge=0, le=100000)
+    visual_key: str | None = Field(default=None, max_length=64, pattern=r"^[a-z0-9-]+$")
     requires_subaction: bool = False
     parent_action_code: str | None = Field(default=None, max_length=64)
     active: bool = True
@@ -74,6 +75,7 @@ class ActionRead(BaseModel):
     requires_subaction: bool
     parent_action_code: str | None
     subaction_codes: list[str]
+    visual_key: str | None = None
     active: bool
 
 
