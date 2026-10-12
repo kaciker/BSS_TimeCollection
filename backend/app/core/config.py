@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     event_timezone: str = "Europe/Madrid"
 
     database_url: str = "postgresql+psycopg://bss_timecollection:change-me@db:5432/bss_timecollection"
+    database_admin_test_enabled: bool = False
 
     oracle_enabled: bool = False
     oracle_base_url: str = ""

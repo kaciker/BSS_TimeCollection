@@ -3,8 +3,9 @@ import type { MouseEvent } from "react";
 import { api } from "../api";
 import type { AdminAction, AdminTerminal } from "../types";
 import { MonitoringPanel } from "../components/MonitoringPanel";
-import { TerminalList } from "../components/admin/TerminalList";
 import { ActionList } from "../components/admin/ActionList";
+import { DatabasePanel } from "../components/admin/DatabasePanel";
+import { TerminalList } from "../components/admin/TerminalList";
 
 const pages = {
   cards: { title: "Badge status", description: "Current local state of each badge, derived from its latest captured event.", group: "OPERATIONS", icon: "badge" },
@@ -12,6 +13,7 @@ const pages = {
   attempts: { title: "Transmission logs", description: "Review every Oracle transmission attempt and its recorded response.", group: "OPERATIONS", icon: "transmission" },
   terminals: { title: "Terminals", description: "Manage factory clocks, identification methods and assigned worker actions.", group: "CONFIGURATION", icon: "terminal" },
   actions: { title: "Actions", description: "Configure worker actions, English labels and Oracle supplier event mappings.", group: "CONFIGURATION", icon: "actions" },
+  database: { title: "Database", description: "Inspect the primary database and validate a managed external PostgreSQL target.", group: "CONFIGURATION", icon: "database" },
 } as const;
 type Section = keyof typeof pages;
 function sectionFromPath(): Section {
@@ -25,6 +27,7 @@ function NavIcon({name}: {name: string}) {
     transmission: "M3 7h14 M13 3l4 4-4 4 M21 17H7 M11 13l-4 4 4 4",
     terminal: "M3 4h18v13H3z M8 21h8 M12 17v4",
     actions: "M4 6h16 M4 12h16 M4 18h16 M8 3v6 M16 9v6 M10 15v6",
+    database: "M5 5c0-2 14-2 14 0s-14 2-14 0v14c0 2 14 2 14 0V5 M5 12c0 2 14 2 14 0",
   };
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>;
 }
@@ -62,7 +65,7 @@ export function AdminPage() {
       <main className="admin-content"><div className="page-heading"><div className="eyebrow">{pages[section].group}</div><h1>{pages[section].title}</h1><p>{pages[section].description}</p></div>
         {notice && <div className="success-notice" role="status"><span aria-hidden="true">✓</span>{notice}<button className="icon-button" aria-label="Dismiss notification" onClick={() => setNotice("")}>×</button></div>}
         {error && <div className="inline-error" role="alert">{error} <button className="text-button" onClick={() => void refresh()}>Retry</button></div>}
-        {loading ? <div className="admin-card loading-state" role="status">Loading configuration…</div> : section === "terminals" ? <TerminalList key="terminals" terminals={terminals} actions={actions} onChanged={changed} /> : section === "actions" ? <ActionList key="actions" terminals={terminals} actions={actions} onChanged={changed} /> : <MonitoringPanel key={section} terminals={terminals} initialView={section} onNavigate={(next, query = "") => { window.history.pushState({}, "", `/admin/${next}${query}`); setSection(next); }} />}
+        {loading ? <div className="admin-card loading-state" role="status">Loading configuration…</div> : section === "terminals" ? <TerminalList key="terminals" terminals={terminals} actions={actions} onChanged={changed} /> : section === "actions" ? <ActionList key="actions" terminals={terminals} actions={actions} onChanged={changed} /> : section === "database" ? <DatabasePanel key="database" /> : <MonitoringPanel key={section} terminals={terminals} initialView={section} onNavigate={(next, query = "") => { window.history.pushState({}, "", `/admin/${next}${query}`); setSection(next); }} />}
       </main>
     </div>
   </div>;
