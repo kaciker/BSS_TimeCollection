@@ -1,12 +1,12 @@
 """Terminal exit restriction policy, independent of Oracle attendance validation."""
 from fastapi import HTTPException
-from sqlalchemy import Column, ForeignKey, Integer, MetaData, String, Table, select
+from sqlalchemy import Column, Integer, MetaData, String, Table, select
 from sqlalchemy.orm import Session
 
 metadata = MetaData()
 policies = Table("exit_policies", metadata,
     Column("id", Integer, primary_key=True),
-    Column("terminal_id", Integer, ForeignKey("terminals.id"), nullable=True, unique=True),
+    Column("terminal_id", Integer, nullable=True, unique=True),
     Column("mode", String(32), nullable=False),
 )
 MODES = {"DISABLED", "SAME_TERMINAL", "SAME_WORK_CELL"}
