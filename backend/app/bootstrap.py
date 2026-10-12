@@ -13,16 +13,16 @@ def bootstrap() -> None:
     with SessionLocal() as db:
         actions_by_code = {item.code: item for item in db.scalars(select(Action)).all()}
         defaults = [
-            ("START_WORK", "Start work", "BSS_START_WORK", "ENTER", 10, False, None),
-            ("END_WORK", "End work", "BSS_END_WORK", "EXIT", 20, False, None),
-            ("BREAK", "Break", "BSS_BREAK", "EXIT", 30, False, None),
-            ("FACTORY_EXIT", "Factory exit", "BSS_FACTORY_EXIT_MENU", "EXIT", 40, True, None),
-            ("PERSONAL_MATTERS", "Personal matters", "BSS_PERSONAL_MATTERS", "EXIT", 41, False, "FACTORY_EXIT"),
-            ("MEDICAL", "Medical", "BSS_MEDICAL", "EXIT", 42, False, "FACTORY_EXIT"),
-            ("LEGAL_MATTERS", "Legal matters", "BSS_LEGAL_MATTERS", "EXIT", 43, False, "FACTORY_EXIT"),
-            ("NO_WORK", "No work", "BSS_NO_WORK", "EXIT", 50, False, None),
+            ("START_WORK", "Start work", "BSS_START_WORK", "ENTER", 10, False, None, None),
+            ("END_WORK", "End work", "BSS_END_WORK", "EXIT", 20, False, None, "end-work"),
+            ("BREAK", "Break", "BSS_BREAK", "EXIT", 30, False, None, "break"),
+            ("FACTORY_EXIT", "Factory exit", "BSS_FACTORY_EXIT_MENU", "EXIT", 40, True, None, "factory"),
+            ("PERSONAL_MATTERS", "Personal matters", "BSS_PERSONAL_MATTERS", "EXIT", 41, False, "FACTORY_EXIT", "personal"),
+            ("MEDICAL", "Medical", "BSS_MEDICAL", "EXIT", 42, False, "FACTORY_EXIT", "medical"),
+            ("LEGAL_MATTERS", "Legal matters", "BSS_LEGAL_MATTERS", "EXIT", 43, False, "FACTORY_EXIT", "legal"),
+            ("NO_WORK", "No work", "BSS_NO_WORK", "EXIT", 50, False, None, "no-work"),
         ]
-        for code, label, supplier_event, effect, order, requires_subaction, _ in defaults:
+        for code, label, supplier_event, effect, order, requires_subaction, _, visual_key in defaults:
             if code not in actions_by_code:
                 action = Action(
                     code=code,
@@ -33,12 +33,13 @@ def bootstrap() -> None:
                     oracle_attributes={},
                     display_order=order,
                     requires_subaction=requires_subaction,
+                    visual_key=visual_key,
                 )
                 db.add(action)
                 db.flush()
                 actions_by_code[code] = action
 
-        for code, _, supplier_event, _, _, _, parent_code in defaults:
+        for code, _, supplier_event, _, _, _, parent_code, _ in defaults:
             if not parent_code:
                 continue
             action = actions_by_code[code]

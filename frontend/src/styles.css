@@ -59,3 +59,20 @@
 .action-visual-option img{width:100%;height:76px;object-fit:contain}
 .no-visual{display:grid;place-items:center;height:76px;font-size:30px;color:#7c8ca0}
 @media(max-width:620px){.terminal-operational .action-card:has(.action-illustration){min-height:175px}.action-illustration{height:110px}}
+
+/* Action cards use illustrations as the primary recognition cue, with brand blue as an accent. */
+.terminal-operational .action-grid{gap:18px}
+.terminal-operational .action-card{min-height:210px;padding:18px 16px;background:#f8fbff;color:#173f70;border:2px solid #d7e3f2;box-shadow:0 7px 18px rgba(25,57,96,.08);font-size:clamp(17px,1.35vw,21px);line-height:1.25;transition:background .15s,border-color .15s,box-shadow .15s,transform .15s}
+.terminal-operational .action-card:hover:not(:disabled){background:#eef5ff;border-color:#245bdd;box-shadow:0 9px 22px rgba(36,91,221,.14)}
+.terminal-operational .action-card:focus-visible{outline:4px solid rgba(36,91,221,.28);outline-offset:3px}
+.terminal-operational .action-card:has(.action-illustration){justify-content:space-between;gap:10px;min-height:235px;padding:12px 16px 18px}
+.terminal-operational .action-card .action-illustration{height:170px;max-width:100%;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(31,55,86,.08))}
+.terminal-operational .action-card>span{display:block;width:100%;font-weight:800;color:#173f70;text-align:center}
+.terminal-operational .action-card:not(:has(.action-illustration)){background:#f3f7fc;border-style:dashed;color:#34506f}
+.terminal-operational .action-card:not(:has(.action-illustration)):hover:not(:disabled){background:#eaf2fb;border-style:solid}
+.action-visual-picker{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.action-visual-option{background:#fff;min-height:150px;justify-content:space-between;transition:border-color .15s,background .15s,box-shadow .15s}
+.action-visual-option:hover{border-color:#9eb9df;background:#f8fbff}
+.action-visual-option.selected{border-color:#245bdd;background:#eef5ff;box-shadow:0 0 0 2px rgba(36,91,221,.08)}
+.action-visual-option img{height:104px}
+@media(max-width:620px){.terminal-operational .action-card{min-height:96px}.terminal-operational .action-card:has(.action-illustration){min-height:190px}.terminal-operational .action-card .action-illustration{height:125px}}

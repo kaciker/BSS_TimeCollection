@@ -4,6 +4,17 @@ import { api } from "../../api";
 import type { AdminAction, AdminTerminal } from "../../types";
 import { EditorDialog } from "./EditorDialog";
 
+const actionVisuals = [
+  { key: "", name: "No illustration" },
+  { key: "end-work", name: "End work" },
+  { key: "break", name: "Break" },
+  { key: "factory", name: "Factory exit" },
+  { key: "no-work", name: "No work" },
+  { key: "medical", name: "Medical" },
+  { key: "personal", name: "Personal matters" },
+  { key: "legal", name: "Legal matters" },
+];
+
 export function ActionEditor({ action, actions, terminals, onClose, onSaved }: {
   action: AdminAction | null; actions: AdminAction[]; terminals: AdminTerminal[]; onClose: () => void; onSaved: (value: AdminAction) => void;
 }) {
@@ -37,7 +48,7 @@ export function ActionEditor({ action, actions, terminals, onClose, onSaved }: {
         <label>Parent action<select value={parentCode} onChange={event => { setParentCode(event.target.value); if (event.target.value) setRequiresSubaction(false); }}><option value="">Top-level exit action</option>{parentCandidates.map(item => <option value={item.code} key={item.code}>{item.label} · {item.code}</option>)}</select><small>Choose a parent to make this action a second-level reason.</small></label>
         <label className="switch-control"><input type="checkbox" role="switch" checked={requiresSubaction} disabled={!!parentCode} onChange={event => setRequiresSubaction(event.target.checked)} /><span className="switch-track" aria-hidden="true" /><span>Requires sub-action</span></label>
       </div>{requiresSubaction && <p className="form-notice">This action becomes a menu. Selecting it on the terminal opens its active child actions; the parent itself is not recorded as the final exit event.</p>}</section>}
-      <section className="form-section"><h3>Action illustration</h3><p>Optional visual scene displayed on terminal action cards.</p><div className="action-visual-picker">{[{key:"",name:"No illustration"}, {key:"factory",name:"Factory exit"}, {key:"break",name:"Break"}, {key:"medical",name:"Medical"}, {key:"personal",name:"Personal matters"}, {key:"legal",name:"Legal matters"}, {key:"end-work",name:"End work"}].map(option => <label className={`action-visual-option ${visualKey === option.key ? "selected" : ""}`} key={option.key}><input type="radio" name="visual_key" checked={visualKey === option.key} onChange={() => setVisualKey(option.key)} />{option.key ? <img src={`/action-visuals/${option.key}.svg`} alt="" /> : <span className="no-visual">—</span>}<span>{option.name}</span></label>)}</div></section>
+      <section className="form-section"><h3>Action illustration</h3><p>Optional visual scene displayed on terminal action cards.</p><div className="action-visual-picker">{actionVisuals.map(option => <label className={`action-visual-option ${visualKey === option.key ? "selected" : ""}`} key={option.key}><input type="radio" name="visual_key" checked={visualKey === option.key} onChange={() => setVisualKey(option.key)} />{option.key ? <img src={`/action-visuals/${option.key}.svg`} alt="" /> : <span className="no-visual">—</span>}<span>{option.name}</span></label>)}</div></section>
       <section className="form-section"><h3>Oracle mapping</h3><div className="field-grid"><label>Supplier event code<input name="supplier" required maxLength={128} defaultValue={action?.supplier_device_event ?? ""} placeholder="e.g. BSS_FACTORY_EXIT" /></label></div><details className="advanced-fields"><summary>Optional action-specific Oracle attributes</summary><label>Attributes (JSON object)<textarea name="attributes" rows={5} defaultValue={JSON.stringify(action?.oracle_attributes ?? {}, null, 2)} spellCheck={false} /></label></details></section>
       <section className="form-section"><div className="section-heading"><div><h3>Availability</h3><p>Inactive actions are hidden from worker interaction.</p></div><label className="switch-control"><input type="checkbox" role="switch" checked={active} onChange={event => setActive(event.target.checked)} /><span className="switch-track" aria-hidden="true" /><span>Active action</span></label></div>{assigned.length > 0 && <p className="form-notice">Used by {assigned.map(terminal => terminal.code).join(", ")}.</p>}</section>
     </fieldset>{error && <div className="inline-error" role="alert">{error}</div>}</div>
