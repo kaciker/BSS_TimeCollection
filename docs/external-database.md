@@ -20,3 +20,5 @@ Production change procedure:
 `DATABASE_ADMIN_TEST_ENABLED` defaults to `false` because the current administration interface does not yet provide authentication. Enable it only on a trusted administration network.
 
 Microsoft SQL Server is not currently supported as a production primary database. The current schema, migrations and driver stack are validated for PostgreSQL. SQL Server should be added as a separate compatibility block rather than treated as a connection-string-only change.
+
+This administration feature is diagnostic and deployment-oriented; it never persists database passwords or performs a live database cutover.
