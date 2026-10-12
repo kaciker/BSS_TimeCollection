@@ -26,6 +26,7 @@ from app.services.configuration_service import (
     validate_actions,
 )
 from app.services.terminal_identity_service import issue_activation_token
+from app.services.terminal_cloning_service import clone_terminal
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
@@ -75,6 +76,11 @@ def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
     commit_configuration(db)
     db.refresh(terminal)
     return _terminal_read(terminal, activation_token)
+
+
+@router.post("/terminals/{terminal_code}/clone", response_model=TerminalRead, status_code=status.HTTP_201_CREATED)
+def clone_terminal_configuration(terminal_code: str, db: Session = Depends(get_db)):
+    return _terminal_read(clone_terminal(db, terminal_code))
 
 
 @router.put("/terminals/{terminal_code}", response_model=TerminalRead)

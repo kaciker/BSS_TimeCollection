@@ -29,3 +29,9 @@ Despliegue final verificado en 8092: cinco secciones separadas, diálogos de ter
 Marcos autoriza actualizar a main (referencia 544883e), respaldar, migrar y validar end-to-end, corrigiendo/confirmando/publicando el bloque estable. Backup DB/config/.env en /opt/backups/BSS_TimeCollection/20261009T204740Z-terminal-identity. Migración 0002 aplicada sin recrear DB. .env original conservado, añadidos Secure=false y sesión 365 días; Oracle sigue false.
 
 Se reprodujo doble consumo concurrente de token (2 éxitos/8 peticiones) y corrigió con lock PostgreSQL en activación/provisión. Se corrigió copia de enlace en HTTP mediante fallback. 15 tests pasan contra entorno PostgreSQL aislado, incluyendo 5 rondas concurrentes; frontend build/Compose correctos. Navegador real: edición de atributos, activación one-shot, cookie HttpOnly, URL /terminal, revocación previa, entrada/salida y monitoring. Payload generado incluye atributos fusionados y reporterIdType de terminal. Se compararon las 18 filas históricas y configuración original sin diferencias. Informe: docs/deployment-validation-2026-10-09.md.
+
+## 2026-10-09 — Clonar terminal
+
+Marcos solicita clonación con índices en IDs críticos y copia del taller/elecciones del reloj para edición posterior. Se implementa asignación servidor de sufijos -1, -2, etc. comprobando código/deviceId; copia configuración y asociaciones de acciones y abre editor. Sesión original intacta, clon sin tokens ni historial. Backup previo /opt/backups/BSS_TimeCollection/20261009T212241Z-terminal-clone. Tests: 17 pasan (integración de activación concurrente opt-in no ejecutada en esta suite); compilación frontend y Compose correctos. Sin migración.
+
+Validación navegador en instancia real: Clone de TEST-PROVISION-20261009 generó código y deviceId TEST-PROVISION-20261009-1, abrió editor y guardó nombre/contexto propios. Asignaciones copiadas; fuente y sesión original sin cambios; clon no aprovisionado. Backend ready tras despliegue.

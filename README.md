@@ -121,3 +121,9 @@ Terminal creation and editing include name, unique Oracle device ID, identificat
 Actions can be created and edited through the UI: English label, supplier event code, ENTER/EXIT effect, reporter ID type, display order, availability and optional Oracle attributes as a JSON object. Action codes are stable. Supplier event codes must be unique. Changes that would remove the required entry/exit actions of an active terminal are rejected. Reassign or deactivate the affected terminal first. Configuration changes apply to future captures; existing events retain their recorded snapshots.
 
 API: `POST /api/v1/admin/terminals`, `PUT /api/v1/admin/terminals/{terminal_code}`, `POST /api/v1/admin/actions` and `PUT /api/v1/admin/actions/{action_code}`. Terminal payloads include `action_codes` and `active`; action payloads include `active`. PUT accepts the complete settings (stable code is determined by the URL). Demo seeding assigns defaults only when initially creating the demo terminal and no longer replaces saved assignments on startup.
+
+### Clone a terminal
+
+In Terminals, select **Clone** to duplicate a clock's configuration and immediately open the new terminal in the editor. The server assigns the first available numeric suffix (`-1`, `-2`, …) to both the terminal code and Oracle device ID, skipping conflicts on either identifier and preserving field length limits. A new database ID is generated automatically.
+
+The clone copies the display name (with a copy suffix), identification method, reporter ID type, availability, Oracle terminal attributes (including workshop context), and action assignments. It starts unprovisioned: browser sessions, activation tokens, last-seen diagnostics and event/transmission history are not copied. Provision the clone independently after reviewing its settings. Closing the editor keeps the already-created clone. API: `POST /api/v1/admin/terminals/{terminal_code}/clone`.

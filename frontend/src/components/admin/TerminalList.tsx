@@ -12,6 +12,7 @@ export function TerminalList({ terminals, actions, onChanged }: {
   const [provisioning, setProvisioning] = useState<TerminalProvisioning | null>(null);
   const [provisionError, setProvisionError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [cloning, setCloning] = useState<string | null>(null);
   const activationInput = useRef<HTMLInputElement>(null);
   const copyActivationUrl = async () => {
     setProvisionError("");
@@ -28,6 +29,19 @@ export function TerminalList({ terminals, actions, onChanged }: {
   };
   const filtered = terminals.filter(terminal => `${terminal.code} ${terminal.name} ${terminal.external_device_id}`.toLowerCase().includes(search.toLowerCase()) && (!status || terminal.active === (status === "active")));
   const activationUrl = provisioning ? `${window.location.origin}/terminal/activate#${provisioning.activation_token}` : "";
+
+  const clone = async (terminal: AdminTerminal) => {
+    if (cloning) return;
+    setCloning(terminal.code);
+    setProvisionError("");
+    try {
+      const value = await api.post<AdminTerminal>(`/api/v1/admin/terminals/${encodeURIComponent(terminal.code)}/clone`, {});
+      setProvisioning(null);
+      onChanged(`Terminal ${value.code} cloned. Review its configuration and provision its browser separately.`);
+      setEditor({ terminal: value });
+    } catch (err) { setProvisionError((err as Error).message); }
+    finally { setCloning(null); }
+  };
 
   const provision = async (terminal: AdminTerminal) => {
     if (terminal.provisioned && !window.confirm(`Reprovision ${terminal.code}? The existing browser session will be revoked.`)) return;
@@ -56,7 +70,7 @@ export function TerminalList({ terminals, actions, onChanged }: {
         <td><strong>{terminal.name}</strong><div className="cell-secondary"><code>{terminal.code}</code></div></td><td><code>{terminal.external_device_id}</code></td><td>{terminal.identification_mode === "BOTH" ? "Reader + keypad" : terminal.identification_mode === "RFID" ? "Badge reader" : "Keypad"}</td>
         <td><div className="action-tags">{Object.entries(terminal.oracle_attributes).slice(0,3).map(([key, value]) => <span key={key}>{key}: {String(value)}</span>)}{Object.keys(terminal.oracle_attributes).length > 3 && <span>+{Object.keys(terminal.oracle_attributes).length - 3}</span>}{!Object.keys(terminal.oracle_attributes).length && <span className="unconfigured">No context</span>}</div></td>
         <td><span className={`resource-status ${terminal.provisioned ? "is-active" : "is-inactive"}`}><span />{terminal.provisioned ? "Provisioned" : terminal.activation_pending ? "Activation pending" : "Not provisioned"}</span></td>
-        <td><span className={`resource-status ${terminal.active ? "is-active" : "is-inactive"}`}><span />{terminal.active ? "Active" : "Inactive"}</span></td><td><div className="table-controls"><button className="text-button" aria-label={`Edit terminal ${terminal.code}`} onClick={() => setEditor({terminal})}>Edit</button><button className="text-button" onClick={() => void provision(terminal)}>{terminal.provisioned ? "Reprovision" : "Provision"}</button></div></td>
+        <td><span className={`resource-status ${terminal.active ? "is-active" : "is-inactive"}`}><span />{terminal.active ? "Active" : "Inactive"}</span></td><td><div className="table-controls"><button className="text-button" aria-label={`Edit terminal ${terminal.code}`} onClick={() => setEditor({terminal})}>Edit</button><button className="text-button" aria-label={`Clone terminal ${terminal.code}`} disabled={!!cloning} onClick={() => void clone(terminal)}>{cloning === terminal.code ? "Cloning…" : "Clone"}</button><button className="text-button" onClick={() => void provision(terminal)}>{terminal.provisioned ? "Reprovision" : "Provision"}</button></div></td>
       </tr>)}</tbody></table></div>
       {!filtered.length && <div className="empty-state"><h3>No terminals found</h3><p>{terminals.length ? "Try a different search or status filter." : "Create a terminal to configure a factory clock."}</p></div>}
     </section>

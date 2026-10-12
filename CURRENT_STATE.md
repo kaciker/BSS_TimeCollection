@@ -34,3 +34,7 @@ Interfaz reorganizada con navegación lateral y cinco páginas independientes: c
 ## Identidad web y contexto Oracle desplegados
 
 Actualización desde 08808c0 a 544883e, con correcciones de activación atómica ante concurrencia y copia de enlaces en HTTP. Alembic: 0002_terminal_identity_context (head). Runtime por cookie HttpOnly/SameSite=Strict; activación de un uso por /terminal/activate#TOKEN y URL normal /terminal. Reprovisión revoca sesión anterior. Terminales incluyen reporterIdType y oracle_attributes extensibles, copiados/mezclados con atributos de acción al fichaje. UNKNOWN/REJECTED bloquean retry ciego. Oracle sigue desactivado; HTTP local mantiene TERMINAL_COOKIE_SECURE=false. Backup previo, 18 fichajes históricos y configuración preservados. Evidencia y registros de prueba: docs/deployment-validation-2026-10-09.md. Los navegadores físicos existentes requieren aprovisionamiento explícito.
+
+## Clonación de terminales
+
+Administración permite Clone en terminales, con edición inmediata. Código y deviceId reciben sufijo numérico libre; PK nueva. Copia atributos Oracle/taller, reporterIdType, método, disponibilidad y asignaciones de acciones. No copia identidad de navegador, tokens, diagnósticos ni eventos; requiere aprovisionamiento independiente. API POST /api/v1/admin/terminals/{code}/clone; sin migración.
