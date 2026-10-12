@@ -13,6 +13,10 @@ export function TerminalList({ terminals, actions, onChanged }: {
   const [provisionError, setProvisionError] = useState("");
   const [copied, setCopied] = useState(false);
   const [cloning, setCloning] = useState<string | null>(null);
+  const [pairingOpen, setPairingOpen] = useState(false);
+  const [pairingCode, setPairingCode] = useState("");
+  const [pairingTerminal, setPairingTerminal] = useState("");
+  const [pairingBusy, setPairingBusy] = useState(false);
   const activationInput = useRef<HTMLInputElement>(null);
   const copyActivationUrl = async () => {
     setProvisionError("");
@@ -56,8 +60,32 @@ export function TerminalList({ terminals, actions, onChanged }: {
     }
   };
 
+  const pairBrowser = async () => {
+    const terminal = terminals.find(item => item.code === pairingTerminal);
+    if (!terminal || !pairingCode.trim()) return;
+    if (terminal.provisioned && !window.confirm(`Pair a new browser with ${terminal.code}? Its current browser session will be revoked when the new browser completes pairing.`)) return;
+    setPairingBusy(true);
+    setProvisionError("");
+    try {
+      await api.post<AdminTerminal>(`/api/v1/admin/terminals/${encodeURIComponent(terminal.code)}/pair`, { pairing_code: pairingCode.trim() });
+      setPairingCode("");
+      setPairingTerminal("");
+      setPairingOpen(false);
+      onChanged(`Pairing approved for ${terminal.code}. The browser will activate automatically.`);
+    } catch (err) {
+      setProvisionError((err as Error).message);
+    } finally {
+      setPairingBusy(false);
+    }
+  };
+
   return <>
-    <div className="page-actions"><div className="list-stats"><strong>{terminals.length}</strong> terminals <span className="stat-separator" /><span className="status-dot" />{terminals.filter(terminal => terminal.active).length} active</div><button className="primary" onClick={() => setEditor({terminal:null})}><span aria-hidden="true">＋</span> New terminal</button></div>
+    <div className="page-actions"><div className="list-stats"><strong>{terminals.length}</strong> terminals <span className="stat-separator" /><span className="status-dot" />{terminals.filter(terminal => terminal.active).length} active</div><div className="table-controls"><button className="secondary" onClick={() => setPairingOpen(value => !value)}>Pair browser</button><button className="primary" onClick={() => setEditor({terminal:null})}><span aria-hidden="true">＋</span> New terminal</button></div></div>
+    {pairingOpen && <section className="admin-card">
+      <div className="section-heading"><div><h3>Pair browser by code</h3><p>On an unprovisioned workstation, open the terminal URL and enter the code shown there below. The existing activation-link method remains available.</p></div><button className="icon-button" aria-label="Close browser pairing" onClick={() => setPairingOpen(false)}>×</button></div>
+      <div className="form-grid"><label>Pairing code<input value={pairingCode} placeholder="ABCD-EFGH" maxLength={16} onChange={event => setPairingCode(event.target.value.toUpperCase())} /></label><label>Assign to terminal<select value={pairingTerminal} onChange={event => setPairingTerminal(event.target.value)}><option value="">Select terminal</option>{terminals.filter(terminal => terminal.active).map(terminal => <option key={terminal.code} value={terminal.code}>{terminal.code} · {terminal.name}</option>)}</select></label></div>
+      <div className="page-actions"><button className="primary" disabled={pairingBusy || !pairingCode.trim() || !pairingTerminal} onClick={() => void pairBrowser()}>{pairingBusy ? "Pairing…" : "Approve pairing"}</button></div>
+    </section>}
     {provisioning && <section className="admin-card">
       <div className="section-heading"><div><h3>Activation link · {provisioning.code}</h3><p>Open this link once on the physical workstation. The token is consumed, stored as an HttpOnly browser session and removed from the address bar.</p></div><button className="icon-button" aria-label="Close activation link" onClick={() => setProvisioning(null)}>×</button></div>
       <label>One-time activation URL<input ref={activationInput} readOnly value={activationUrl} onFocus={event => event.currentTarget.select()} /></label>

@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     terminal_cookie_secure: bool = False
     terminal_session_days: int = 365
+    terminal_pairing_minutes: int = 10
 
     worker_poll_seconds: float = 3.0
     worker_stale_sending_seconds: int = 300

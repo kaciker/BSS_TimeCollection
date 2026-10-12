@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { NumericKeypad } from "../components/NumericKeypad";
-import type { IdentificationMethod, ScanResponse, TerminalAction, TerminalConfig } from "../types";
+import type { IdentificationMethod, ScanResponse, TerminalAction, TerminalConfig, TerminalPairingStart, TerminalPairingStatus } from "../types";
 
 function activationTokenFromLocation(): string {
   if (window.location.pathname !== "/terminal/activate") return "";
@@ -10,12 +10,22 @@ function activationTokenFromLocation(): string {
 
 export function TerminalPage() {
   const [config, setConfig] = useState<TerminalConfig | null>(null);
+  const [pairing, setPairing] = useState<TerminalPairingStart | null>(null);
   const [badge, setBadge] = useState("");
   const [method, setMethod] = useState<IdentificationMethod>("KEYPAD");
   const [exitActions, setExitActions] = useState<TerminalAction[]>([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const requestPairing = async () => {
+    setError("");
+    try {
+      setPairing(await api.post<TerminalPairingStart>("/api/v1/terminal/pairing", {}));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -27,12 +37,42 @@ export function TerminalPage() {
         if (token) window.history.replaceState({}, "", "/terminal");
         setConfig(value);
         if (value.identification_mode === "RFID") setMethod("RFID");
-      } catch (err) {
-        setError((err as Error).message);
+      } catch {
+        await requestPairing();
       }
     };
     void load();
   }, []);
+
+  useEffect(() => {
+    if (!pairing || config) return;
+    let cancelled = false;
+    let timer = 0;
+    const poll = async () => {
+      try {
+        const result = await api.post<TerminalPairingStatus>("/api/v1/terminal/pairing/status", { request_token: pairing.request_token });
+        if (cancelled) return;
+        if (result.status === "APPROVED" && result.config) {
+          setConfig(result.config);
+          setPairing(null);
+          setError("");
+          if (result.config.identification_mode === "RFID") setMethod("RFID");
+          return;
+        }
+        timer = window.setTimeout(() => void poll(), pairing.poll_after_seconds * 1000);
+      } catch (err) {
+        if (!cancelled) {
+          setPairing(null);
+          setError((err as Error).message);
+        }
+      }
+    };
+    timer = window.setTimeout(() => void poll(), pairing.poll_after_seconds * 1000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [pairing, config]);
 
   const reset = () => {
     setBadge("");
@@ -82,7 +122,8 @@ export function TerminalPage() {
     }
   };
 
-  if (error && !config) return <main className="terminal-shell"><div className="panel error-panel"><h2>Terminal not provisioned</h2><p>{error}</p><p>Provision this browser from Administration and open the generated activation link once.</p></div></main>;
+  if (!config && pairing) return <main className="terminal-shell"><div className="panel"><div className="eyebrow">TERMINAL ACTIVATION</div><h2>Pair this browser</h2><p>Enter this temporary code in Administration and assign it to the terminal you want to use.</p><div className="terminal-code">{pairing.pairing_code}</div><p>Waiting for activation…</p><p className="subtle">This code expires at {new Date(pairing.expires_at).toLocaleTimeString()}.</p></div></main>;
+  if (!config && error) return <main className="terminal-shell"><div className="panel error-panel"><h2>Terminal not provisioned</h2><p>{error}</p><p>You can still use the existing one-time activation link, or generate a new pairing code from this browser.</p><button className="primary" onClick={() => void requestPairing()}>Generate pairing code</button></div></main>;
   if (!config) return <main className="terminal-shell"><div className="panel">Loading terminal...</div></main>;
 
   return (

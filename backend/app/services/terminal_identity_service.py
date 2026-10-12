@@ -27,6 +27,14 @@ def issue_activation_token(terminal: Terminal) -> str:
     return token
 
 
+def bind_terminal_session(terminal: Terminal) -> str:
+    session_token = _new_token()
+    terminal.activation_token_hash = None
+    terminal.session_token_hash = _hash_token(session_token)
+    terminal.activated_at = datetime.now(timezone.utc)
+    return session_token
+
+
 def activate_terminal(db: Session, token: str) -> tuple[Terminal, str]:
     # Lock the matching row so concurrent requests cannot consume the same token.
     # PostgreSQL rechecks the predicate after the previous consumer commits.
@@ -37,10 +45,7 @@ def activate_terminal(db: Session, token: str) -> tuple[Terminal, str]:
     )
     if terminal is None or not terminal.active:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activation token is invalid, expired or disabled")
-    session_token = _new_token()
-    terminal.activation_token_hash = None
-    terminal.session_token_hash = _hash_token(session_token)
-    terminal.activated_at = datetime.now(timezone.utc)
+    session_token = bind_terminal_session(terminal)
     db.commit()
     db.refresh(terminal)
     return terminal, session_token

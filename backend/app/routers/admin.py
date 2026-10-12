@@ -14,6 +14,7 @@ from app.schemas.admin import (
     EventRead,
     TerminalActionsUpdate,
     TerminalCreate,
+    TerminalPairingApproval,
     TerminalProvisioningRead,
     TerminalRead,
     TerminalSettings,
@@ -25,8 +26,9 @@ from app.services.configuration_service import (
     resolve_actions,
     validate_actions,
 )
-from app.services.terminal_identity_service import issue_activation_token
 from app.services.terminal_cloning_service import clone_terminal
+from app.services.terminal_identity_service import issue_activation_token
+from app.services.terminal_pairing_service import approve_pairing_request
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
@@ -112,6 +114,16 @@ def provision_terminal(terminal_code: str, db: Session = Depends(get_db)):
     token = issue_activation_token(terminal)
     commit_configuration(db)
     return TerminalProvisioningRead(code=terminal.code, activation_token=token)
+
+
+@router.post("/terminals/{terminal_code}/pair", response_model=TerminalRead)
+def pair_terminal_browser(terminal_code: str, payload: TerminalPairingApproval, db: Session = Depends(get_db)):
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code).with_for_update())
+    if terminal is None:
+        raise HTTPException(404, "Terminal not found")
+    approve_pairing_request(db, terminal, payload.pairing_code)
+    db.refresh(terminal)
+    return _terminal_read(terminal)
 
 
 @router.put("/terminals/{terminal_code}/actions", response_model=TerminalRead)

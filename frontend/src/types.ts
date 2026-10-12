@@ -13,6 +13,18 @@ export interface TerminalConfig {
   actions: TerminalAction[];
 }
 
+export interface TerminalPairingStart {
+  pairing_code: string;
+  request_token: string;
+  expires_at: string;
+  poll_after_seconds: number;
+}
+
+export interface TerminalPairingStatus {
+  status: "WAITING" | "APPROVED";
+  config?: TerminalConfig | null;
+}
+
 export interface CapturedEvent {
   id: string;
   action_code: string;

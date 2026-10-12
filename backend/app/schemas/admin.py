@@ -44,6 +44,10 @@ class TerminalProvisioningRead(BaseModel):
     activation_token: str
 
 
+class TerminalPairingApproval(BaseModel):
+    pairing_code: str = Field(min_length=8, max_length=16)
+
+
 class ActionSettings(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     label: str = Field(min_length=1, max_length=120)
