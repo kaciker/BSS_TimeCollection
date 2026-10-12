@@ -85,3 +85,42 @@ def test_existing_standalone_exit_remains_available_when_not_assigned_parent(mon
     })
     assert exit_response.status_code == 200, exit_response.text
     assert exit_response.json()["worker_state"] == "OUTSIDE"
+
+
+def test_action_visuals_survive_edit_and_follow_subaction_flow(monitor):
+    client, _ = monitor
+    terminal, payload = configured_terminal(client)
+    parent = client.post("/api/v1/admin/actions", json={
+        "code": "FACTORY_EXIT", "label": "Factory exit", "supplier_device_event": "BSS_FACTORY_EXIT_MENU",
+        "state_effect": "EXIT", "requires_subaction": True, "visual_key": "factory",
+    })
+    assert parent.status_code == 201, parent.text
+    child = client.post("/api/v1/admin/actions", json={
+        "code": "MEDICAL", "label": "Medical", "supplier_device_event": "BSS_MEDICAL",
+        "state_effect": "EXIT", "parent_action_code": "FACTORY_EXIT", "visual_key": "medical",
+    })
+    assert child.status_code == 201, child.text
+    assert client.put("/api/v1/admin/terminals/CLOCK-A/actions", json={
+        "action_codes": payload["action_codes"] + ["FACTORY_EXIT", "MEDICAL"],
+    }).status_code == 200
+    activate_created_terminal(client, terminal)
+    config = client.get("/api/v1/terminal/config").json()
+    assert next(item for item in config["actions"] if item["code"] == "FACTORY_EXIT")["visual_key"] == "factory"
+    assert next(item for item in config["actions"] if item["code"] == "STOP")["visual_key"] is None
+
+    assert client.post("/api/v1/terminal/scan", json={"reporter_id": "visual-test", "identification_method": "KEYPAD"}).json()["flow"] == "ENTRY_RECORDED"
+    exits = client.post("/api/v1/terminal/scan", json={"reporter_id": "visual-test", "identification_method": "KEYPAD"}).json()
+    assert next(item for item in exits["actions"] if item["code"] == "FACTORY_EXIT")["visual_key"] == "factory"
+    children = client.post("/api/v1/terminal/exit", json={
+        "reporter_id": "visual-test", "identification_method": "KEYPAD", "action_code": "FACTORY_EXIT",
+    }).json()
+    assert children["flow"] == "SUBACTION_REQUIRED"
+    assert children["actions"][0]["visual_key"] == "medical"
+
+    updated = client.put("/api/v1/admin/actions/MEDICAL", json={**child.json(), "visual_key": None})
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["visual_key"] is None
+    children = client.post("/api/v1/terminal/exit", json={
+        "reporter_id": "visual-test", "identification_method": "KEYPAD", "action_code": "FACTORY_EXIT",
+    }).json()
+    assert children["actions"][0]["visual_key"] is None

@@ -52,3 +52,9 @@ La pantalla operativa del terminal muestra la marca Hutchinson BSS, identidad de
 ## Baja de terminales
 
 Administration > Terminals ofrece Remove con confirmación. La baja lógica (`deleted_at`, Alembic 0005) oculta el terminal de configuración, lo desactiva y revoca cookie, activación y pairing aprobado; fichajes e intentos permanecen consultables. Código y deviceId quedan reservados para identidad histórica. API DELETE /api/v1/admin/terminals/{code}. Desplegado el 12/10/2026; copia previa en `/opt/backups/BSS_TimeCollection/20261012-terminal-removal/database.dump`.
+
+## Ilustraciones configurables
+
+`main` desde b6a5799, desplegado el 12/10/2026 con Alembic `0006_action_visuals`. Actions y Sub-actions admiten `visual_key` opcional; Admin ofrece seis escenas SVG provisionales, servidas localmente desde la imagen web sin red externa. Se corrigió el Dockerfile para incluirlas y se amplió su tamaño en las tarjetas táctiles. No son obras oficiales de unDraw. Pruebas: 27 passed, 1 skipped; compilación React/TypeScript correcta. Copia previa en `/opt/backups/BSS_TimeCollection/20261012-action-visuals/`. Datos anteriores: 50 eventos, 0 intentos, 10 actions y 10 terminales; conservados tras el despliegue.
+
+En terminales configurados solo para RFID, la pantalla de identificación muestra una tarjeta SVG grande y centrada, servida localmente desde `/img/rfid-card.svg`. Desplegado recreando solo `web` el 12/10/2026; compilación TypeScript/Vite y comprobación visual a 390 px correctas. El aviso de integración de hardware pendiente permanece visible.

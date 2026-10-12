@@ -108,7 +108,7 @@ export function TerminalPage() {
         <div className="eyebrow">{t("identification")}</div><h2>{t("presentBadge")}</h2>
         {(config.identification_mode === "KEYPAD" || config.identification_mode === "BOTH") && <NumericKeypad value={badge} onChange={setBadge} onSubmit={scan} disabled={busy} placeholder={t("enterBadge")} continueLabel={t("continue")} />}
         {config.identification_mode === "BOTH" && <div className="method-note">{t("keypadNote")}</div>}
-        {config.identification_mode === "RFID" && <div className="rfid-placeholder">{t("rfidPending")}</div>}
+        {config.identification_mode === "RFID" && <div className="rfid-placeholder"><img src="/img/rfid-card.svg" alt="Contactless card" /><p>{t("rfidPending")}</p></div>}
       </>}
       {error && config && <div className="inline-error">{error}</div>}
     </section>

@@ -42,17 +42,20 @@
 .terminal-operational .action-card:hover:not(:disabled){background:#194cca}
 .terminal-operational .secondary{border:1px solid #d6e1ef;background:#fff;color:#3e587a}
 .terminal-operational .method-note,.terminal-operational .rfid-placeholder{font-size:12px;line-height:1.5;text-align:center;margin:20px auto 0;max-width:620px}
+.terminal-operational .rfid-placeholder{width:100%;flex:1;min-height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.terminal-operational .rfid-placeholder img{display:block;width:min(100%,400px);height:auto;max-height:clamp(180px,36vh,300px);object-fit:contain}
+.terminal-operational .rfid-placeholder p{margin:0;font-size:clamp(12px,1.2vw,15px);color:#52647c}
 .terminal-operational .success-state{padding:clamp(45px,10vh,100px) 20px}
 @media(max-width:850px){.terminal-operational .terminal-header{align-items:flex-start;flex-direction:column}.terminal-operational .terminal-code{max-width:100%}.terminal-heading{width:100%}}
 @media(max-width:620px){.terminal-operational{padding-block:12px}.terminal-operational .terminal-header{gap:14px;margin-bottom:16px}.terminal-heading{gap:12px;align-items:flex-start;flex-direction:column}.terminal-brand{width:min(245px,75%)}.terminal-heading-copy{border-left:0;padding-left:0}.terminal-operational .terminal-code{font-size:10px;padding:7px 10px}.terminal-operational .terminal-panel{padding:22px 18px}.terminal-operational .terminal-panel h2{margin-bottom:22px}.terminal-operational .keypad-wrap{width:100%}.terminal-operational .key{min-height:56px}.terminal-operational .action-grid{grid-template-columns:1fr;gap:10px}.terminal-operational .action-card{min-height:68px;font-size:17px}.terminal-operational .method-note{font-size:11px}}
 
 /* Optional visual scenes keep action labels readable and touch targets large. */
-.action-card:has(.action-illustration){display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:185px}
-.action-illustration{display:block;width:100%;height:110px;object-fit:contain}
+.action-card:has(.action-illustration){display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:210px}
+.action-illustration{display:block;width:100%;height:140px;object-fit:contain}
 .action-visual-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:12px 0}
 .action-visual-option{border:2px solid #d8e2ef;border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;text-align:center;font-size:12px}
 .action-visual-option.selected{border-color:#245bdd;background:#eff5ff}
 .action-visual-option input{align-self:flex-start}
 .action-visual-option img{width:100%;height:76px;object-fit:contain}
 .no-visual{display:grid;place-items:center;height:76px;font-size:30px;color:#7c8ca0}
-@media(max-width:620px){.terminal-operational .action-card:has(.action-illustration){min-height:150px}.action-illustration{height:80px}}
+@media(max-width:620px){.terminal-operational .action-card:has(.action-illustration){min-height:175px}.action-illustration{height:110px}}
