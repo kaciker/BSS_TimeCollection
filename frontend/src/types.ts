@@ -53,6 +53,9 @@ export interface AdminTerminal {
   action_codes: string[];
   provisioned: boolean;
   activation_pending: boolean;
+  exit_policy_mode: "DISABLED" | "SAME_TERMINAL" | "SAME_WORK_CELL" | "INHERIT";
+  effective_exit_policy_mode: "DISABLED" | "SAME_TERMINAL" | "SAME_WORK_CELL";
+  global_exit_policy_mode: "DISABLED" | "SAME_TERMINAL" | "SAME_WORK_CELL";
   activation_token?: string | null;
 }
 

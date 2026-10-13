@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { NumericKeypad } from "../components/NumericKeypad";
+import { TerminalClock } from "../components/TerminalClock";
 import { useLanguage } from "../i18n";
 import type { IdentificationMethod, ScanResponse, TerminalAction, TerminalConfig, TerminalPairingStart, TerminalPairingStatus } from "../types";
 
@@ -20,6 +21,7 @@ export function TerminalPage() {
   const [exitActions, setExitActions] = useState<TerminalAction[]>([]);
   const [subactionMode, setSubactionMode] = useState(false);
   const [message, setMessage] = useState("");
+  const [recordedAt, setRecordedAt] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -73,8 +75,9 @@ export function TerminalPage() {
       setBusy(false);
       return;
     }
+    setRecordedAt(response.event?.event_datetime ?? null);
     setMessage(response.flow === "ENTRY_RECORDED" ? t("entryRegistered") : t("exitRegistered"));
-    setTimeout(() => { setMessage(""); reset(); }, 2200);
+    setTimeout(() => { setMessage(""); setRecordedAt(null); reset(); }, 2200);
   };
 
   const scan = async () => {
@@ -102,12 +105,13 @@ export function TerminalPage() {
       <div className="terminal-code">{config.code}</div>
     </header>
     <section className="panel terminal-panel">
+      {!message && !exitActions.length && <div className="eyebrow">{t("identification")}</div>}
+      <TerminalClock recordedAt={recordedAt} />
       {message ? <div className="success-state"><div className="check">✓</div><h2>{message}</h2><p>{t("eventStored")}</p></div> : exitActions.length ? <div>
         <div className="eyebrow">{t("exit")}</div><h2>{subactionMode ? t("selectSubaction") : t("selectExit")}</h2>
         <div className="action-grid">{exitActions.map(action => <button className="action-card" key={action.code} disabled={busy} onClick={() => exit(action.code)}>{action.visual_key && actionVisualKeys.has(action.visual_key) && <img className="action-illustration" src={`/action-visuals/${action.visual_key}.png`} alt="" /> }<span>{action.label}{action.has_subactions ? " ›" : ""}</span></button>)}</div>
         <button className="secondary" onClick={reset} disabled={busy}>{t("cancel")}</button>
       </div> : <>
-        <div className="eyebrow">{t("identification")}</div><h2>{t("presentBadge")}</h2>
         {(config.identification_mode === "KEYPAD" || config.identification_mode === "BOTH") && <NumericKeypad value={badge} onChange={setBadge} onSubmit={scan} disabled={busy} placeholder={t("enterBadge")} continueLabel={t("continue")} />}
         {config.identification_mode === "BOTH" && <div className="method-note">{t("keypadNote")}</div>}
         {config.identification_mode === "RFID" && <div className="rfid-placeholder"><img src="/img/rfid-card.svg" alt="Contactless card" /><p>{t("rfidPending")}</p></div>}

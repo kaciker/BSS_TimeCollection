@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, object_session
 
 from app.db.session import get_db
 from app.domain.enums import DeliveryStatus
@@ -31,6 +32,7 @@ from app.services.configuration_service import (
     validate_action_hierarchy,
     validate_actions,
 )
+from app.services.exit_policy import get_mode, save_mode, policies
 from app.services.terminal_cloning_service import clone_terminal
 from app.services.terminal_identity_service import issue_activation_token
 from app.services.terminal_pairing_service import approve_pairing_request
@@ -38,7 +40,20 @@ from app.services.terminal_pairing_service import approve_pairing_request
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 
+def _commit_terminal_settings(db: Session, terminal: Terminal, mode: str | None) -> None:
+    try:
+        if mode is not None:
+            db.flush()
+            save_mode(db, terminal.id, mode, commit=False)
+        commit_configuration(db)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Code, device ID or supplier event already exists")
+
+
 def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> TerminalRead:
+    db = object_session(terminal)
+    override = db.execute(select(policies.c.mode).where(policies.c.terminal_id == terminal.id)).scalar_one_or_none()
     return TerminalRead(
         code=terminal.code,
         name=terminal.name,
@@ -51,6 +66,9 @@ def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> T
         provisioned=bool(terminal.session_token_hash),
         activation_pending=bool(terminal.activation_token_hash),
         activation_token=activation_token,
+        exit_policy_mode=override or "INHERIT",
+        effective_exit_policy_mode=get_mode(db, terminal.id),
+        global_exit_policy_mode=get_mode(db, None),
     )
 
 
@@ -96,7 +114,7 @@ def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
     )
     activation_token = issue_activation_token(terminal)
     db.add(terminal)
-    commit_configuration(db)
+    _commit_terminal_settings(db, terminal, payload.exit_policy_mode)
     db.refresh(terminal)
     return _terminal_read(terminal, activation_token)
 
@@ -108,7 +126,7 @@ def clone_terminal_configuration(terminal_code: str, db: Session = Depends(get_d
 
 @router.put("/terminals/{terminal_code}", response_model=TerminalRead)
 def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session = Depends(get_db)):
-    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)))
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)).with_for_update())
     if terminal is None:
         raise HTTPException(404, "Terminal not found")
     check_device_id(db, payload.external_device_id, terminal)
@@ -122,7 +140,7 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
     terminal.oracle_attributes = payload.oracle_attributes
     terminal.active = payload.active
     terminal.actions = actions
-    commit_configuration(db)
+    _commit_terminal_settings(db, terminal, payload.exit_policy_mode)
     db.refresh(terminal)
     return _terminal_read(terminal)
 

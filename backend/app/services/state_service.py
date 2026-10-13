@@ -10,7 +10,7 @@ def derive_worker_state(db: Session, reporter_id: str) -> WorkerState:
         select(TimeEvent)
         .where(TimeEvent.reporter_id == reporter_id)
         .where(TimeEvent.state_effect.in_([StateEffect.ENTER.value, StateEffect.EXIT.value]))
-        .order_by(TimeEvent.event_datetime.desc(), TimeEvent.created_at.desc())
+        .order_by(TimeEvent.event_datetime.desc(), TimeEvent.created_at.desc(), TimeEvent.id.desc())
         .limit(1)
     )
     if event is None or event.state_effect == StateEffect.EXIT.value:

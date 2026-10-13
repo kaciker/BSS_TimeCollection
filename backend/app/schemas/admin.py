@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.domain.enums import IdentificationMode, StateEffect
 
@@ -15,6 +15,17 @@ class TerminalSettings(BaseModel):
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     active: bool = True
     action_codes: list[str] = Field(default_factory=list)
+    exit_policy_mode: Literal["DISABLED", "SAME_TERMINAL", "SAME_WORK_CELL", "INHERIT"] | None = None
+
+    @field_validator("oracle_attributes")
+    @classmethod
+    def validate_work_cell(cls, attributes):
+        if "work_cell" in attributes:
+            value = attributes["work_cell"]
+            if not isinstance(value, str) or not 0 < len(value.strip()) <= 64:
+                raise ValueError("work_cell must be a non-empty string of at most 64 characters; remove the key to leave it unconfigured")
+            attributes = {**attributes, "work_cell": value.strip()}
+        return attributes
 
 
 class TerminalCreate(TerminalSettings):
@@ -33,6 +44,10 @@ class TerminalRead(BaseModel):
     provisioned: bool
     activation_pending: bool
     activation_token: str | None = None
+    exit_policy_mode: str
+    effective_exit_policy_mode: str
+    global_exit_policy_mode: str
+
 
 
 class TerminalActionsUpdate(BaseModel):

@@ -1,9 +1,10 @@
 from datetime import datetime
+from hashlib import sha256
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -14,6 +15,14 @@ from app.models.time_event import TimeEvent
 from app.schemas.terminal import CapturedEvent, ScanResponse, TerminalAction
 from app.services.state_service import derive_worker_state
 from app.services.exit_policy import check_exit_policy
+
+
+def _lock_badge(db: Session, reporter_id: str) -> None:
+    # Serialize state evaluation and capture across all PostgreSQL terminals.
+    # A transaction advisory lock also covers a badge with no existing events.
+    if db.get_bind().dialect.name == "postgresql":
+        key = int.from_bytes(sha256(reporter_id.encode()).digest()[:8], "big", signed=True)
+        db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": key})
 
 
 def _get_terminal(db: Session, terminal_code: str) -> Terminal:
@@ -81,6 +90,7 @@ def _event_response(event: TimeEvent) -> CapturedEvent:
 
 
 def scan(db: Session, terminal_code: str, reporter_id: str, method: IdentificationMethod) -> ScanResponse:
+    _lock_badge(db, reporter_id)
     terminal = _get_terminal(db, terminal_code)
     _validate_method(terminal, method)
     current_state = derive_worker_state(db, reporter_id)
@@ -109,6 +119,7 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
 
 
 def record_exit(db: Session, terminal_code: str, reporter_id: str, method: IdentificationMethod, action_code: str) -> ScanResponse:
+    _lock_badge(db, reporter_id)
     terminal = _get_terminal(db, terminal_code)
     _validate_method(terminal, method)
     if derive_worker_state(db, reporter_id) != WorkerState.INSIDE:

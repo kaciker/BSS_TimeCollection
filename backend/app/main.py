@@ -1,10 +1,7 @@
 from fastapi import FastAPI
-from app.db.session import engine
-from app.services.exit_policy import ensure_policy_table
 
 from app.routers import admin, database_admin, health, monitoring, terminal, policies
 
-ensure_policy_table(engine)
 
 app = FastAPI(
     title="BSS Time Collection",
