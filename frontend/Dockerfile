@@ -12,7 +12,8 @@ COPY index.html ./
 COPY img ./public/img
 COPY public/action-visuals ./public/action-visuals
 COPY src ./src
-RUN npm run build
+COPY tests ./tests
+RUN npm test && npm run build
 
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf

@@ -44,9 +44,13 @@ changes must remain on `corp`; do not merge them into application `main`.
 - A live 24-hour terminal clock; successful capture briefly shows the timestamp
   returned by the API in the browser's local timezone.
 
-Physical RFID reader integration remains pending. RFID mode currently displays
-its card illustration and a hardware integration notice; selecting the mode does
-not install or configure a reader.
+USB HID / keyboard-wedge RFID readers are supported on provisioned terminals in
+`RFID` and `BOTH` modes. Rapid character bursts are captured automatically and
+submitted as `RFID`, preserving string IDs and leading zeros. Manual keypad
+submissions remain `KEYPAD`. The operational browser/window must have focus:
+the reader types into the operating-system window that is active. Production
+terminals should keep T&A active, normally in kiosk mode. Background OS keyboard
+capture is not available to this web application. See [RFID support](docs/rfid.md).
 
 BSS does not calculate worked hours, shifts, overtime, payroll or authoritative
 attendance. Employee master data, schedules, approvals, time cards, missing-punch
@@ -293,7 +297,7 @@ External connection testing is disabled by default through
 
 Keep `.env`, credentials, activation/session/pairing tokens, deployment backups,
 logs and database files outside Git. `.env.example` contains configuration
-placeholders only. Retention, reconciliation, reader integration and Oracle
+placeholders only. Retention, reconciliation, additional reader protocols and Oracle
 production mappings remain explicit pending decisions.
 
 ## Repository and documentation

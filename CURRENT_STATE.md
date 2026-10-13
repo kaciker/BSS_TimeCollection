@@ -26,7 +26,7 @@ Marca Hutchinson BSS en Admin/terminal/pairing y favicon común; recursos locale
 
 Los siete PNG originales de Marcos (720×720 RGBA) se publicaron en main `d66c88a` y desplegaron el 12/10. Claves locales estables: end-work, break, factory, medical, personal, legal, no-work; visual_key opcional en Actions/Sub-actions. Se conservan proporciones, transparencia, fondos claros y configuración. FACTORY_EXIT usa factory; otras asignaciones intactas. ZIP original local sin versionar, archivos HTTP idénticos al ZIP. Backup y evidencia: `docs/action-png-validation-2026-10-12.md`; respaldo `/opt/backups/BSS_TimeCollection/20261012-original-png-illustrations/`. Backend 27 passed/1 skipped y build correcto; matriz desktop/táctil emulada 320–1920 px. Los 60 eventos previos quedaron intactos y aparecieron 5 más durante operación.
 
-RFID mantiene `/img/rfid-card.svg` grande y centrado con aviso de hardware pendiente. Administración tiene scroll vertical propio de sidebar desktop y navegación horizontal móvil; corrección de admin.css incluida.
+RFID mantiene `/img/rfid-card.svg` grande y centrado; lectores USB HID soportados en RFID/BOTH, ventana activa requerida. Captura/validación: `docs/rfid.md`. Administración tiene scroll vertical propio de sidebar desktop y navegación horizontal móvil; corrección de admin.css incluida.
 
 ## Policies / Same Terminal Exit
 
