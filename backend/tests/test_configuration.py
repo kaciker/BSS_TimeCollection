@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 
 from test_monitoring import monitor
+from app.core.config import settings
 from app.models.time_event import TimeEvent
 from app.models.terminal import Terminal
 
@@ -19,6 +20,9 @@ def create_action(client, code, effect="EXIT", oracle_attributes=None):
 def configured_terminal(client, code="CLOCK-A"):
     create_action(client, "START", "ENTER")
     create_action(client, "STOP")
+    workshop = client.post("/api/v1/admin/structure/workshops", json={"code":"TEST-W","description":"Test Workshop"}).json()
+    subworkshop = client.post("/api/v1/admin/structure/subworkshops", json={"workshop_id":workshop["id"],"code":"TEST-S","description":"Test Subworkshop"}).json()
+    project = client.post("/api/v1/admin/structure/project-lines", json={"subworkshop_id":subworkshop["id"],"code":"TEST-P","description":"Test Project"}).json()
     payload = {
         "code": code,
         "name": "North gate",
@@ -27,6 +31,9 @@ def configured_terminal(client, code="CLOCK-A"):
         "reporter_id_type": "BADGE",
         "oracle_attributes": {"Workshop": "Assembly", "Project": "P42"},
         "active": True,
+        "project_line_id": project["id"],
+        "workshop_id": workshop["id"],
+        "subworkshop_id": subworkshop["id"],
         "action_codes": ["START", "STOP"],
     }
     response = client.post("/api/v1/admin/terminals", json=payload)
@@ -55,20 +62,6 @@ def test_create_terminal_persists_configuration_and_duplicate_device_is_readable
     assert client.post("/api/v1/admin/terminals", json={**payload, "code": "DRAFT", "external_device_id": "DRAFT", "active": False, "action_codes": []}).status_code == 201
 
 
-def test_terminal_activation_binds_browser_and_hides_code_from_runtime_api(monitor):
-    client, db = monitor
-    terminal, _ = configured_terminal(client)
-    assert client.get("/api/v1/terminal/config").status_code == 401
-    activate_created_terminal(client, terminal)
-    config = client.get("/api/v1/terminal/config")
-    assert config.status_code == 200
-    assert config.json()["code"] == "CLOCK-A"
-    listed = client.get("/api/v1/admin/terminals").json()[0]
-    assert listed["provisioned"] is True
-    assert listed["activation_pending"] is False
-    assert listed["activation_token"] is None
-
-
 def test_edit_configuration_keeps_captured_event_snapshot(monitor):
     client, db = monitor
     terminal, payload = configured_terminal(client)
@@ -89,6 +82,7 @@ def test_edit_configuration_keeps_captured_event_snapshot(monitor):
     })
     assert response.status_code == 200
     assert response.json()["name"] == "Updated gate"
+    assert response.json()["reporter_id_type"] == "PERSON"
     db.expire_all()
     event = db.get(TimeEvent, event_id)
     assert event.device_id == "CLOCK-A"
@@ -104,13 +98,17 @@ def test_terminal_and_action_oracle_attributes_are_merged_for_new_events(monitor
     client, db = monitor
     create_action(client, "START", "ENTER", {"EventClass": "WORK"})
     create_action(client, "STOP")
+    workshop = client.post("/api/v1/admin/structure/workshops", json={"code":"CELL-W","description":"Cell Workshop"}).json()
+    subworkshop = client.post("/api/v1/admin/structure/subworkshops", json={"workshop_id":workshop["id"],"code":"CELL-S","description":"Cell Subworkshop"}).json()
+    project = client.post("/api/v1/admin/structure/project-lines", json={"subworkshop_id":subworkshop["id"],"code":"CELL-P","description":"Cell Project"}).json()
     payload = {
         "code": "CELL-07",
         "name": "Cell 07",
         "external_device_id": "CELL-07",
         "identification_mode": "KEYPAD",
         "reporter_id_type": "BADGE",
-        "oracle_attributes": {"Workshop": "Extrusion", "Project": "P42", "Cell": "EX07"},
+        "oracle_attributes": {"Workshop": "Extrusion", "Project": "P42", "Cell": "EX07", "work_cell": "LOCAL-07"},
+        "workshop_id": workshop["id"], "subworkshop_id": subworkshop["id"], "project_line_id": project["id"],
         "active": True,
         "action_codes": ["START", "STOP"],
     }

@@ -57,6 +57,7 @@ export interface AdminTerminal {
   effective_exit_policy_mode: "DISABLED" | "SAME_TERMINAL" | "SAME_WORK_CELL";
   global_exit_policy_mode: "DISABLED" | "SAME_TERMINAL" | "SAME_WORK_CELL";
   activation_token?: string | null;
+  project_line_id?: number | null; workshop_id?: number | null; subworkshop_id?: number | null; structure_path?: string | null;
 }
 
 export interface TerminalProvisioning {
@@ -87,3 +88,6 @@ export interface AdminEvent {
   delivery_status: string;
   attempt_count: number;
 }
+
+export interface StructureItem { id: number; code: string; description: string; active: boolean; workshop_id?: number; subworkshop_id?: number }
+export interface StructureData { workshops: StructureItem[]; subworkshops: StructureItem[]; project_lines: StructureItem[] }

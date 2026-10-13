@@ -52,9 +52,21 @@ def _terminal_action(action: Action) -> TerminalAction:
 def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod) -> TimeEvent:
     event_id = str(uuid4())
     event_time = datetime.now(ZoneInfo(settings.event_timezone))
-    oracle_attributes = dict(terminal.oracle_attributes or {})
-    oracle_attributes.update(action.oracle_attributes or {})
+    # work_cell is a local exit-policy attribute, not part of the Oracle TCD context.
+    oracle_attributes = {key: value for key, value in (terminal.oracle_attributes or {}).items() if key != "work_cell"}
+    oracle_attributes.update({key: value for key, value in (action.oracle_attributes or {}).items() if key != "work_cell"})
+    structure = terminal.project_line
+    branch = structure.subworkshop if structure else None
+    workshop = branch.workshop if branch else None
+    if structure and (not structure.active or not branch.active or not workshop.active):
+        raise HTTPException(status_code=409, detail="Assigned operational structure is inactive")
     event = TimeEvent(
+        workshop_code=workshop.code if workshop else None,
+        workshop_description=workshop.description if workshop else None,
+        subworkshop_code=branch.code if branch else None,
+        subworkshop_description=branch.description if branch else None,
+        project_line_code=structure.code if structure else None,
+        project_line_description=structure.description if structure else None,
         id=event_id,
         request_number=f"BSS-{terminal.code}-{event_id}",
         terminal_id=terminal.id,

@@ -36,6 +36,7 @@ def clone_terminal(db: Session, terminal_code: str) -> Terminal:
         identification_mode=source.identification_mode,
         reporter_id_type=source.reporter_id_type,
         oracle_attributes=deepcopy(source.oracle_attributes or {}),
+        project_line_id=source.project_line_id,
         active=source.active,
         actions=list(source.actions),
     )
