@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, object_session
 
+from app.core.config import settings
 from app.db.session import get_db
 from app.domain.enums import DeliveryStatus
 from app.models.action import Action
@@ -34,6 +35,7 @@ from app.services.configuration_service import (
 )
 from app.services.exit_policy import get_mode, save_mode, policies
 from app.services.terminal_cloning_service import clone_terminal
+from app.services.terminal_code_service import allocate_terminal_code
 from app.services.terminal_identity_service import issue_activation_token
 from app.services.terminal_pairing_service import approve_pairing_request
 
@@ -59,7 +61,7 @@ def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> T
         name=terminal.name,
         external_device_id=terminal.external_device_id,
         identification_mode=terminal.identification_mode,
-        reporter_id_type=terminal.reporter_id_type,
+        reporter_id_type=settings.oracle_reporter_id_type,
         oracle_attributes=terminal.oracle_attributes or {},
         active=terminal.active,
         action_codes=sorted(action.code for action in terminal.actions),
@@ -88,6 +90,15 @@ def _action_read(action: Action) -> ActionRead:
     )
 
 
+@router.get("/integration-settings")
+def integration_settings():
+    return {
+        "oracle_enabled": settings.oracle_enabled,
+        "oracle_source_id": settings.oracle_source_id,
+        "reporter_id_type": settings.oracle_reporter_id_type,
+    }
+
+
 @router.get("/terminals", response_model=list[TerminalRead])
 def list_terminals(db: Session = Depends(get_db)):
     terminals = db.scalars(select(Terminal).where(Terminal.deleted_at.is_(None)).order_by(Terminal.code)).unique().all()
@@ -96,18 +107,19 @@ def list_terminals(db: Session = Depends(get_db)):
 
 @router.post("/terminals", response_model=TerminalRead, status_code=status.HTTP_201_CREATED)
 def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
-    if db.scalar(select(Terminal).where(Terminal.code == payload.code)):
+    terminal_code = payload.code or allocate_terminal_code(db)
+    if db.scalar(select(Terminal).where(Terminal.code == terminal_code)):
         raise HTTPException(status_code=409, detail="Terminal code already exists")
     check_device_id(db, payload.external_device_id)
     actions = resolve_actions(db, payload.action_codes)
     if payload.active:
-        validate_actions(actions, payload.code)
+        validate_actions(actions, terminal_code)
     terminal = Terminal(
-        code=payload.code,
+        code=terminal_code,
         name=payload.name,
         external_device_id=payload.external_device_id,
         identification_mode=payload.identification_mode.value,
-        reporter_id_type=payload.reporter_id_type,
+        reporter_id_type=settings.oracle_reporter_id_type,
         oracle_attributes=payload.oracle_attributes,
         active=payload.active,
         actions=actions,
@@ -136,7 +148,7 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
     terminal.name = payload.name
     terminal.external_device_id = payload.external_device_id
     terminal.identification_mode = payload.identification_mode.value
-    terminal.reporter_id_type = payload.reporter_id_type
+    terminal.reporter_id_type = settings.oracle_reporter_id_type
     terminal.oracle_attributes = payload.oracle_attributes
     terminal.active = payload.active
     terminal.actions = actions
