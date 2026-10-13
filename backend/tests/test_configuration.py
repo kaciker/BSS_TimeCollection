@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 
 from test_monitoring import monitor
+from app.core.config import settings
 from app.models.time_event import TimeEvent
 from app.models.terminal import Terminal
 
@@ -55,6 +56,34 @@ def test_create_terminal_persists_configuration_and_duplicate_device_is_readable
     assert client.post("/api/v1/admin/terminals", json={**payload, "code": "DRAFT", "external_device_id": "DRAFT", "active": False, "action_codes": []}).status_code == 201
 
 
+def test_terminal_code_is_allocated_and_retired_codes_are_not_reused(monitor):
+    client, db = monitor
+    _, payload = configured_terminal(client)
+    automatic_payload = {key: value for key, value in payload.items() if key != "code"}
+    first = client.post("/api/v1/admin/terminals", json={**automatic_payload, "external_device_id": "AUTO-DEVICE-1"})
+    assert first.status_code == 201, first.text
+    assert first.json()["code"] == "T0001"
+    assert client.delete("/api/v1/admin/terminals/T0001").status_code == 200
+    second = client.post("/api/v1/admin/terminals", json={**automatic_payload, "external_device_id": "AUTO-DEVICE-2"})
+    assert second.status_code == 201, second.text
+    assert second.json()["code"] == "T0002"
+
+
+def test_reporter_id_type_is_global_integration_configuration(monitor, monkeypatch):
+    client, db = monitor
+    monkeypatch.setattr(settings, "oracle_reporter_id_type", "PERSON")
+    terminal, _ = configured_terminal(client)
+    assert terminal["reporter_id_type"] == "PERSON"
+    integration = client.get("/api/v1/admin/integration-settings")
+    assert integration.status_code == 200
+    assert integration.json()["reporter_id_type"] == "PERSON"
+    activate_created_terminal(client, terminal)
+    response = client.post("/api/v1/terminal/scan", json={"reporter_id": "0001", "identification_method": "KEYPAD"})
+    assert response.status_code == 200
+    event = db.get(TimeEvent, response.json()["event"]["id"])
+    assert event.reporter_id_type == "PERSON"
+
+
 def test_terminal_activation_binds_browser_and_hides_code_from_runtime_api(monitor):
     client, db = monitor
     terminal, _ = configured_terminal(client)
@@ -89,6 +118,7 @@ def test_edit_configuration_keeps_captured_event_snapshot(monitor):
     })
     assert response.status_code == 200
     assert response.json()["name"] == "Updated gate"
+    assert response.json()["reporter_id_type"] == "BADGE"
     db.expire_all()
     event = db.get(TimeEvent, event_id)
     assert event.device_id == "CLOCK-A"
@@ -110,7 +140,7 @@ def test_terminal_and_action_oracle_attributes_are_merged_for_new_events(monitor
         "external_device_id": "CELL-07",
         "identification_mode": "KEYPAD",
         "reporter_id_type": "BADGE",
-        "oracle_attributes": {"Workshop": "Extrusion", "Project": "P42", "Cell": "EX07"},
+        "oracle_attributes": {"Workshop": "Extrusion", "Project": "P42", "Cell": "EX07", "work_cell": "LOCAL-07"},
         "active": True,
         "action_codes": ["START", "STOP"],
     }
