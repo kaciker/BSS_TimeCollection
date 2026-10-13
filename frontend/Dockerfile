@@ -1,4 +1,10 @@
-FROM node:alpine AS build
+FROM node:22-bookworm-slim AS build
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
 WORKDIR /app
 COPY package.json tsconfig.json vite.config.ts ./
 RUN npm install

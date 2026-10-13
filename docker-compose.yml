@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:alpine
+    image: postgres:16.4-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-bss_timecollection}
       POSTGRES_USER: ${POSTGRES_USER:-bss_timecollection}
@@ -17,6 +17,13 @@ services:
   api:
     build:
       context: ./backend
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,::1,api,worker,web,db}
+        http_proxy: ${http_proxy:-}
+        https_proxy: ${https_proxy:-}
+        no_proxy: ${no_proxy:-localhost,127.0.0.1,::1,api,worker,web,db}
     env_file:
       - .env
     depends_on:
@@ -32,6 +39,13 @@ services:
   worker:
     build:
       context: ./backend
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,::1,api,worker,web,db}
+        http_proxy: ${http_proxy:-}
+        https_proxy: ${https_proxy:-}
+        no_proxy: ${no_proxy:-localhost,127.0.0.1,::1,api,worker,web,db}
     command: ["python", "-m", "app.worker"]
     env_file:
       - .env
@@ -43,6 +57,13 @@ services:
   web:
     build:
       context: ./frontend
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,::1,api,worker,web,db}
+        http_proxy: ${http_proxy:-}
+        https_proxy: ${https_proxy:-}
+        no_proxy: ${no_proxy:-localhost,127.0.0.1,::1,api,worker,web,db}
     depends_on:
       api:
         condition: service_healthy

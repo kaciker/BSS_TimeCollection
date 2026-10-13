@@ -41,3 +41,7 @@ Corrección de ubicación solicitada el 13/10/2026: Policies conserva exclusivam
 ## Reloj del terminal
 
 Present your badge sustituido el 13/10 por reloj HH:MM:SS de 24 h. Tras corrección de Marcos, reloj centrado con el mismo ancho que el teclado (máximo 620 px), tanto KEYPAD/BOTH como solo RFID; cifras hasta 104 px, sin ocupar toda la tarjeta/pantalla. Visible en identificación, selección de salida y confirmación. Hora viva local del navegador, actualizada al segundo y al volver a la pestaña; confirmación congela 2,2 s el event_datetime real de API en hora local. Backend, fichajes, Oracle y DB intactos. Build correcto; validación inicial de avance/confirmación con API/reloj simulados y 15 escenarios a 320–1920 px. Corrección de tamaño verificada en producción con 21 escenarios (3 modos × 320/390/620/768/1280/1920/3200): mismo ancho/centrado del teclado, RFID idéntico, sin overflow, cero fichajes reales. Solo web recreado y sano. Backups: `/opt/backups/BSS_TimeCollection/20261013-terminal-clock/` y `/opt/backups/BSS_TimeCollection/20261013-clock-keypad-width/`. Screenshot actual: `docs/terminal-clock-keypad-validation.png`. Implementación incluida en main con este estado.
+
+## Despliegue CORP
+
+Rama operativa `corp`, basada en main `27db149`, conserva imágenes y proxy solo de build validados. Puerto 8080, Oracle y seed desactivados. DB y sesiones intactas; conservar también volumen anónimo PGDATA de PostgreSQL 16. Operación: `docs/corp-deployment.md`.
