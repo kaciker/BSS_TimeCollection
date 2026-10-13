@@ -11,7 +11,6 @@ class TerminalSettings(BaseModel):
     name: str = Field(min_length=1, max_length=160)
     external_device_id: str = Field(min_length=1, max_length=128)
     identification_mode: IdentificationMode = IdentificationMode.BOTH
-    reporter_id_type: str = Field(default="BADGE", min_length=1, max_length=16)
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     active: bool = True
     action_codes: list[str] = Field(default_factory=list)
@@ -29,7 +28,9 @@ class TerminalSettings(BaseModel):
 
 
 class TerminalCreate(TerminalSettings):
-    code: str = Field(min_length=1, max_length=64)
+    # Optional only for migration/test compatibility. Normal administration omits it
+    # and the backend allocates an immutable application-managed code.
+    code: str | None = Field(default=None, min_length=1, max_length=64)
 
 
 class TerminalRead(BaseModel):
@@ -47,7 +48,6 @@ class TerminalRead(BaseModel):
     exit_policy_mode: str
     effective_exit_policy_mode: str
     global_exit_policy_mode: str
-
 
 
 class TerminalActionsUpdate(BaseModel):
