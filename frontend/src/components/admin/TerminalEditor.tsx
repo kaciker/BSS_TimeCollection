@@ -16,6 +16,33 @@ function customOracleAttributes(attributes: Record<string, unknown>): Record<str
   return Object.fromEntries(Object.entries(attributes).filter(([key]) => !ORACLE_CONTEXT_KEYS.has(key)));
 }
 
+function buildOracleContext(customAttributes: string, plant: string, workshop: string, oracleCell: string, project: string): { attributes?: Record<string, unknown>; error?: string } {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(customAttributes || "{}");
+  } catch {
+    return { error: "Advanced Oracle attributes must be valid JSON." };
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return { error: "Advanced Oracle attributes must be a JSON object." };
+  }
+  const custom = parsed as Record<string, unknown>;
+  const reserved = Object.keys(custom).find(key => ORACLE_CONTEXT_KEYS.has(key));
+  if (reserved) {
+    return { error: `${reserved} is managed by the structured terminal fields and cannot be repeated in Advanced Oracle attributes.` };
+  }
+  const attributes: Record<string, unknown> = { ...custom };
+  const setContext = (key: string, value: string) => {
+    const trimmed = value.trim();
+    if (trimmed) attributes[key] = trimmed;
+  };
+  setContext("Plant", plant);
+  setContext("Workshop", workshop);
+  setContext("Cell", oracleCell);
+  setContext("Project", project);
+  return { attributes };
+}
+
 export function TerminalEditor({ terminal, actions, onClose, onSaved }: { terminal: AdminTerminal | null; actions: AdminAction[]; onClose: () => void; onSaved: (value: AdminTerminal) => void; }) {
   const existingAttributes = terminal?.oracle_attributes ?? {};
   const [selected, setSelected] = useState<string[]>(terminal?.action_codes ?? []); const [enabled, setEnabled] = useState(terminal?.active ?? true); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
@@ -28,6 +55,8 @@ export function TerminalEditor({ terminal, actions, onClose, onSaved }: { termin
   const [oracleCell, setOracleCell] = useState(attributeText(existingAttributes, "Cell"));
   const [customAttributes, setCustomAttributes] = useState(JSON.stringify(customOracleAttributes(existingAttributes), null, 2));
   const effectivePolicy = exitPolicy === "INHERIT" ? globalPolicy : exitPolicy;
+  const generatedOracleContext = buildOracleContext(customAttributes, plant, workshop, oracleCell, project);
+  const generatedOraclePreview = generatedOracleContext.attributes ? JSON.stringify(generatedOracleContext.attributes, null, 2) : "";
   useEffect(() => {
     let cancelled = false;
     void api.get<{global_mode:ExitPolicyMode}>("/api/v1/admin/policies/same-terminal-exit")
@@ -55,18 +84,9 @@ export function TerminalEditor({ terminal, actions, onClose, onSaved }: { termin
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault(); const data = new FormData(event.currentTarget);
     if (enabled && (!entry || !topLevelExitCount)) { setError("Select one entry action and at least one top-level exit action for an active terminal."); return; }
-    let attributes: unknown;
-    try { attributes = JSON.parse(customAttributes || "{}"); } catch { setError("Advanced Oracle attributes must be valid JSON."); return; }
-    if (!attributes || typeof attributes !== "object" || Array.isArray(attributes)) { setError("Advanced Oracle attributes must be a JSON object."); return; }
-    const custom = attributes as Record<string, unknown>;
-    const reserved = Object.keys(custom).find(key => ORACLE_CONTEXT_KEYS.has(key));
-    if (reserved) { setError(`${reserved} is managed by the structured terminal fields and cannot be repeated in Advanced Oracle attributes.`); return; }
-    const oracleAttributes: Record<string, unknown> = { ...custom };
-    const setContext = (key: string, value: string) => { const trimmed = value.trim(); if (trimmed) oracleAttributes[key] = trimmed; };
-    setContext("Plant", plant);
-    setContext("Workshop", workshop);
-    setContext("Project", project);
-    setContext("Cell", oracleCell);
+    const generated = buildOracleContext(customAttributes, plant, workshop, oracleCell, project);
+    if (!generated.attributes) { setError(generated.error ?? "Unable to generate Oracle terminal context."); return; }
+    const oracleAttributes: Record<string, unknown> = { ...generated.attributes };
     const cell = workCell.trim();
     if (cell) oracleAttributes.work_cell = cell;
     setBusy(true); setError("");
@@ -86,7 +106,9 @@ export function TerminalEditor({ terminal, actions, onClose, onSaved }: { termin
         <label>Workshop<input value={workshop} onChange={event => setWorkshop(event.target.value)} maxLength={160} placeholder="e.g. Extrusion" /></label>
         <label>Oracle cell<input value={oracleCell} onChange={event => setOracleCell(event.target.value)} maxLength={160} placeholder="e.g. EX07" /></label>
         <label>Project<input value={project} onChange={event => setProject(event.target.value)} maxLength={160} placeholder="Optional" /></label>
-      </div><details><summary>Advanced Oracle attributes</summary><p className="form-hint">Optional non-standard attributes only. Plant, Workshop, Cell, Project and work_cell are managed above.</p><label>Custom attributes (JSON object)<textarea rows={6} value={customAttributes} onChange={event => setCustomAttributes(event.target.value)} spellCheck={false} /></label></details></section>
+      </div>
+      <div className="assignment-group"><label className="field-label">Generated Oracle context (read-only)</label><p className="form-hint">Live preview of the Oracle attribute object generated from the structured fields and custom attributes. Work cell is policy-only and is not included.</p>{generatedOracleContext.error ? <div className="inline-error" role="alert">{generatedOracleContext.error}</div> : <textarea rows={7} value={generatedOraclePreview} readOnly spellCheck={false} />}</div>
+      <details><summary>Advanced Oracle attributes</summary><p className="form-hint">Optional non-standard attributes only. Plant, Workshop, Cell, Project and work_cell are managed above.</p><label>Custom attributes (JSON object)<textarea rows={6} value={customAttributes} onChange={event => setCustomAttributes(event.target.value)} spellCheck={false} /></label></details></section>
       <section className="form-section"><div className="section-heading"><div><h3>Availability</h3><p>Inactive terminals cannot capture new events.</p></div><label className="switch-control"><input type="checkbox" role="switch" checked={enabled} onChange={event => setEnabled(event.target.checked)} /><span className="switch-track" /><span>Active terminal</span></label></div></section>
       <section className="form-section"><h3>Worker actions</h3><p>Selecting an exit menu automatically selects its active sub-actions.</p><div className="assignment-group"><label className="field-label" htmlFor="entry-action">Automatic entry</label><select id="entry-action" value={entry?.code ?? ""} onChange={event => event.target.value ? setEntry(event.target.value) : setSelected(selected.filter(code => actions.find(action => action.code === code)?.state_effect !== "ENTER"))}><option value="">Select an entry action</option>{available.filter(action => action.active && action.state_effect === "ENTER").map(action => <option key={action.code} value={action.code}>{action.label} · {action.code}</option>)}</select></div>
         <div className="field-label">Exit reasons <span className="subtle">{topLevelExitCount} top-level selected</span></div><div className="assignment-list">{available.filter(action => action.state_effect === "EXIT").map(action => <label className={`assignment-option ${selected.includes(action.code) ? "selected" : ""}`} key={action.code} style={action.parent_action_code ? {marginLeft:"24px"} : undefined}><input type="checkbox" checked={selected.includes(action.code)} onChange={() => toggleExit(action.code)} /><span><strong>{action.parent_action_code ? "↳ " : ""}{action.label}</strong><small>{action.code}{action.requires_subaction ? ` · ${action.subaction_codes.length} sub-actions` : action.parent_action_code ? ` · child of ${action.parent_action_code}` : ""}</small></span><span className="subtle">EXIT</span></label>)}</div>
