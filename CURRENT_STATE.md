@@ -44,4 +44,4 @@ Present your badge sustituido el 13/10 por reloj HH:MM:SS de 24 h. Tras correcci
 
 ## Despliegue CORP
 
-Rama operativa `corp`, basada en main `27db149`, conserva imágenes y proxy solo de build validados. Puerto 8080, Oracle y seed desactivados. DB y sesiones intactas; conservar también volumen anónimo PGDATA de PostgreSQL 16. Operación: `docs/corp-deployment.md`.
+Rama `corp`, base main `27db149`. GitLab corporativo: A0H84018/bss_timecollection_corp; README operativo en inglés. Imágenes/proxy solo build validados, puerto 8080, Oracle/seed desactivados. DB/sesiones intactas; conservar volumen anónimo PGDATA PostgreSQL 16. Guía: `docs/corp-deployment.md`.
