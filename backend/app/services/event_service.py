@@ -52,8 +52,9 @@ def _terminal_action(action: Action) -> TerminalAction:
 def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod) -> TimeEvent:
     event_id = str(uuid4())
     event_time = datetime.now(ZoneInfo(settings.event_timezone))
-    oracle_attributes = dict(terminal.oracle_attributes or {})
-    oracle_attributes.update(action.oracle_attributes or {})
+    # work_cell is a local exit-policy attribute, not part of the Oracle TCD context.
+    oracle_attributes = {key: value for key, value in (terminal.oracle_attributes or {}).items() if key != "work_cell"}
+    oracle_attributes.update({key: value for key, value in (action.oracle_attributes or {}).items() if key != "work_cell"})
     event = TimeEvent(
         id=event_id,
         request_number=f"BSS-{terminal.code}-{event_id}",
@@ -66,7 +67,7 @@ def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: 
         supplier_device_event=action.supplier_device_event,
         state_effect=action.state_effect,
         reporter_id=reporter_id,
-        reporter_id_type=terminal.reporter_id_type,
+        reporter_id_type=settings.oracle_reporter_id_type,
         identification_method=method.value,
         event_datetime=event_time,
         event_timezone=settings.event_timezone,
