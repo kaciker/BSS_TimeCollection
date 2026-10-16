@@ -11,9 +11,11 @@ class TerminalSettings(BaseModel):
     name: str = Field(min_length=1, max_length=160)
     external_device_id: str = Field(min_length=1, max_length=128)
     identification_mode: IdentificationMode = IdentificationMode.BOTH
-    reporter_id_type: str = Field(default="BADGE", min_length=1, max_length=16)
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     active: bool = True
+    project_line_id: int | None = None
+    workshop_id: int | None = None
+    subworkshop_id: int | None = None
     action_codes: list[str] = Field(default_factory=list)
     exit_policy_mode: Literal["DISABLED", "SAME_TERMINAL", "SAME_WORK_CELL", "INHERIT"] | None = None
 
@@ -29,7 +31,9 @@ class TerminalSettings(BaseModel):
 
 
 class TerminalCreate(TerminalSettings):
-    code: str = Field(min_length=1, max_length=64)
+    # Optional only for migration/test compatibility. Normal administration omits it
+    # and the backend allocates an immutable application-managed code.
+    code: str | None = Field(default=None, min_length=1, max_length=64)
 
 
 class TerminalRead(BaseModel):
@@ -44,10 +48,13 @@ class TerminalRead(BaseModel):
     provisioned: bool
     activation_pending: bool
     activation_token: str | None = None
+    project_line_id: int | None = None
+    workshop_id: int | None = None
+    subworkshop_id: int | None = None
+    structure_path: str | None = None
     exit_policy_mode: str
     effective_exit_policy_mode: str
     global_exit_policy_mode: str
-
 
 
 class TerminalActionsUpdate(BaseModel):
@@ -108,6 +115,12 @@ class EventRead(BaseModel):
     identification_method: str
     event_datetime: datetime
     oracle_attributes: dict[str, Any]
+    workshop_code: str | None = None
+    workshop_description: str | None = None
+    subworkshop_code: str | None = None
+    subworkshop_description: str | None = None
+    project_line_code: str | None = None
+    project_line_description: str | None = None
     delivery_status: str
     attempt_count: int
     sent_at: datetime | None

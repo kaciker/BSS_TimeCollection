@@ -1,0 +1,7 @@
+services:
+  api:
+    image: bsstimecollection-api:issue2
+  worker:
+    image: bsstimecollection-api:issue2
+  web:
+    image: bsstimecollection-web:issue2

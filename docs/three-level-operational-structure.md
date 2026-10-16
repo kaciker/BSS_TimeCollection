@@ -1,6 +1,6 @@
 # Three-level operational structure
 
-Status: **Approved functional requirement**  
+Status: **Approved functional requirement**
 Date: 2026-10-13
 
 ## Decision

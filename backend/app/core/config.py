@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     oracle_base_url: str = ""
     oracle_api_path: str = "/hcmRestApi/resources/11.13.18.05/timeEventRequests"
     oracle_source_id: str = "HWM_CLOCK_TIME"
+    oracle_reporter_id_type: str = "BADGE"
     oracle_auth_mode: str = "none"
     oracle_username: str = ""
     oracle_password: str = ""

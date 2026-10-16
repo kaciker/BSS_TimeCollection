@@ -20,3 +20,13 @@ dist/
 # Runtime
 *.log
 coverage/
+
+# Local deployment backups and orchestrator runtime
+.env.*
+!.env.example
+*.backup.*
+*.pre-proxy-align.*
+*.pre-image-pin.*
+.cptr/
+
+*.tsbuildinfo

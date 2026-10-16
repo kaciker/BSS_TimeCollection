@@ -28,6 +28,12 @@ class TimeEvent(Base):
     event_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     event_timezone: Mapped[str] = mapped_column(String(64))
     oracle_attributes: Mapped[dict] = mapped_column(JSON, default=dict)
+    workshop_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    workshop_description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    subworkshop_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    subworkshop_description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    project_line_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    project_line_description: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     delivery_status: Mapped[str] = mapped_column(String(16), default="PENDING", index=True)
     attempt_count: Mapped[int] = mapped_column(Integer, default=0)

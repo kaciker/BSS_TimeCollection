@@ -35,3 +35,8 @@
 @media(max-width:1100px){.admin-layout .admin-brand img{width:170px}}
 @media(max-width:760px){.admin-layout .admin-brand{min-height:0;padding:0;gap:4px}.admin-layout .admin-brand img{width:164px}.admin-layout .form-grid,.admin-layout .database-detail-grid{grid-template-columns:1fr}.admin-layout .admin-card .section-heading{flex-direction:row}.admin-layout .admin-card .section-heading p{font-size:11px}.admin-layout .form-actions{justify-content:stretch}.admin-layout .form-actions button{flex:1}}
 .admin-layout .delete-button{color:#b42332}.admin-layout .delete-button:hover{background:#fff0f1}.admin-layout .delete-button:disabled{opacity:.55;cursor:wait}
+/* Operational structure controls wrap on narrow admin screens. */
+.admin-layout .list-toolbar{display:flex;flex-wrap:wrap;gap:10px}
+.admin-layout .list-toolbar>input,.admin-layout .list-toolbar>select{max-width:100%;min-width:0}
+.admin-layout .page-actions .table-controls{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:600px){.admin-layout .list-toolbar>input,.admin-layout .list-toolbar>select{width:100%}.admin-layout .page-actions .table-controls>button{flex:1 1 100%}}

@@ -2,6 +2,10 @@
 
 Actualizado: 13 de octubre de 2026.
 
+## Issue #2 — estructura operativa (2026-10-13)
+
+Implementada y desplegada la jerarquía exacta Workshop → Subworkshop → Project / Line en rama `issue/2-three-level-operational-structure`. Alembic `0009_operational_structure` añade tablas normalizadas, FK nullable del terminal a la hoja y seis campos snapshot nullable en eventos. Admin dispone de Structure con tabla, filtros y acciones; terminales usan selectores dependientes. Oracle/Fizz mapping sigue pendiente y no se emiten atributos inventados. `work_cell` y atributos Oracle previos se conservan. Los 4 terminales heredados permanecen sin asignación hasta que Admin construya la estructura; nuevas altas requieren hoja activa; 24 eventos y 0 intentos previos intactos. Backup: `/opt/backups/BSS_TimeCollection/issue-2-pre-migration.dump`; migración probada sobre restauración aislada. Validación: backend 47 passed/5 skipped, frontend 20 passed/build, HTTP ready/structure/terminals/eventos correctos; navegador 320/390/768/1280 px sin overflow ni errores JS. API/web healthy, DB no recreada. El override Compose usado es `docker-compose.issue2.yml`; detalles en `docs/issue-2-implementation.md`. No se habilitó Oracle.
+
 ## Objetivo y referencia
 
 Proporcionar la captura de fichajes de fábrica mediante terminales RFID/tarjeta o identificación manual, persistir cada evento localmente y transmitirlo a Oracle HCM Time and Labor de forma asíncrona y auditable. Oracle conserva la responsabilidad sobre la interpretación funcional y el procesamiento T&A.
@@ -26,7 +30,7 @@ Marca Hutchinson BSS en Admin/terminal/pairing y favicon común; recursos locale
 
 Los siete PNG originales de Marcos (720×720 RGBA) se publicaron en main `d66c88a` y desplegaron el 12/10. Claves locales estables: end-work, break, factory, medical, personal, legal, no-work; visual_key opcional en Actions/Sub-actions. Se conservan proporciones, transparencia, fondos claros y configuración. FACTORY_EXIT usa factory; otras asignaciones intactas. ZIP original local sin versionar, archivos HTTP idénticos al ZIP. Backup y evidencia: `docs/action-png-validation-2026-10-12.md`; respaldo `/opt/backups/BSS_TimeCollection/20261012-original-png-illustrations/`. Backend 27 passed/1 skipped y build correcto; matriz desktop/táctil emulada 320–1920 px. Los 60 eventos previos quedaron intactos y aparecieron 5 más durante operación.
 
-RFID mantiene `/img/rfid-card.svg` grande y centrado con aviso de hardware pendiente. Administración tiene scroll vertical propio de sidebar desktop y navegación horizontal móvil; corrección de admin.css incluida.
+RFID mantiene `/img/rfid-card.svg` grande y centrado; lectores USB HID soportados en RFID/BOTH, ventana activa requerida. Captura/validación: `docs/rfid.md`. Administración tiene scroll vertical propio de sidebar desktop y navegación horizontal móvil; corrección de admin.css incluida.
 
 ## Policies / Same Terminal Exit
 
@@ -41,3 +45,7 @@ Corrección de ubicación solicitada el 13/10/2026: Policies conserva exclusivam
 ## Reloj del terminal
 
 Present your badge sustituido el 13/10 por reloj HH:MM:SS de 24 h. Tras corrección de Marcos, reloj centrado con el mismo ancho que el teclado (máximo 620 px), tanto KEYPAD/BOTH como solo RFID; cifras hasta 104 px, sin ocupar toda la tarjeta/pantalla. Visible en identificación, selección de salida y confirmación. Hora viva local del navegador, actualizada al segundo y al volver a la pestaña; confirmación congela 2,2 s el event_datetime real de API en hora local. Backend, fichajes, Oracle y DB intactos. Build correcto; validación inicial de avance/confirmación con API/reloj simulados y 15 escenarios a 320–1920 px. Corrección de tamaño verificada en producción con 21 escenarios (3 modos × 320/390/620/768/1280/1920/3200): mismo ancho/centrado del teclado, RFID idéntico, sin overflow, cero fichajes reales. Solo web recreado y sano. Backups: `/opt/backups/BSS_TimeCollection/20261013-terminal-clock/` y `/opt/backups/BSS_TimeCollection/20261013-clock-keypad-width/`. Screenshot actual: `docs/terminal-clock-keypad-validation.png`. Implementación incluida en main con este estado.
+
+## Despliegue CORP
+
+Rama `corp`, base main `27db149`. GitLab corporativo: A0H84018/bss_timecollection_corp; README operativo en inglés. Imágenes/proxy solo build validados, puerto 8080, Oracle/seed desactivados. DB/sesiones intactas; conservar volumen anónimo PGDATA PostgreSQL 16. Guía: `docs/corp-deployment.md`.

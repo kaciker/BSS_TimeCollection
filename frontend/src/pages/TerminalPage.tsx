@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { KeyboardWedge } from "../keyboardWedge";
 import { api } from "../api";
 import { NumericKeypad } from "../components/NumericKeypad";
 import { TerminalClock } from "../components/TerminalClock";
@@ -24,6 +25,9 @@ export function TerminalPage() {
   const [recordedAt, setRecordedAt] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const requestLocked = useRef(false);
+  const confirmationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(confirmationTimer.current), []);
 
   const requestPairing = async () => {
     setError("");
@@ -38,7 +42,6 @@ export function TerminalPage() {
         const value = token ? await api.post<TerminalConfig>("/api/v1/terminal/activate", { token }) : await api.get<TerminalConfig>("/api/v1/terminal/config");
         if (token) window.history.replaceState({}, "", "/terminal");
         setConfig(value);
-        if (value.identification_mode === "RFID") setMethod("RFID");
       } catch { await requestPairing(); }
     };
     void load();
@@ -54,7 +57,6 @@ export function TerminalPage() {
         if (cancelled) return;
         if (result.status === "APPROVED" && result.config) {
           setConfig(result.config); setPairing(null); setError("");
-          if (result.config.identification_mode === "RFID") setMethod("RFID");
           return;
         }
         timer = window.setTimeout(() => void poll(), pairing.poll_after_seconds * 1000);
@@ -66,31 +68,57 @@ export function TerminalPage() {
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [pairing, config]);
 
-  const reset = () => { setBadge(""); setExitActions([]); setSubactionMode(false); setBusy(false); };
+  const reset = () => { requestLocked.current = false; setMethod("KEYPAD"); setBadge(""); setExitActions([]); setSubactionMode(false); setBusy(false); };
 
   const handleResponse = (response: ScanResponse) => {
     if (response.flow === "EXIT_REQUIRED" || response.flow === "SUBACTION_REQUIRED") {
       setExitActions(response.actions);
       setSubactionMode(response.flow === "SUBACTION_REQUIRED");
+      requestLocked.current = false;
       setBusy(false);
       return;
     }
     setRecordedAt(response.event?.event_datetime ?? null);
     setMessage(response.flow === "ENTRY_RECORDED" ? t("entryRegistered") : t("exitRegistered"));
-    setTimeout(() => { setMessage(""); setRecordedAt(null); reset(); }, 2200);
+    confirmationTimer.current = setTimeout(() => { setMessage(""); setRecordedAt(null); reset(); }, 2200);
   };
 
-  const scan = async () => {
+  const scanReporter = async (reporterId: string, identificationMethod: IdentificationMethod) => {
+    if (requestLocked.current || message || exitActions.length) return;
+    requestLocked.current = true;
+    setBadge(reporterId); setMethod(identificationMethod);
     setBusy(true); setError("");
-    try { handleResponse(await api.post<ScanResponse>("/api/v1/terminal/scan", { reporter_id: badge, identification_method: method })); }
-    catch (err) { setError((err as Error).message); setBusy(false); }
+    try { handleResponse(await api.post<ScanResponse>("/api/v1/terminal/scan", { reporter_id: reporterId, identification_method: identificationMethod })); }
+    catch (err) { setError((err as Error).message); requestLocked.current = false; setBusy(false); }
   };
 
   const exit = async (actionCode: string) => {
+    if (requestLocked.current) return;
+    requestLocked.current = true;
     setBusy(true); setError("");
     try { handleResponse(await api.post<ScanResponse>("/api/v1/terminal/exit", { reporter_id: badge, identification_method: method, action_code: actionCode })); }
-    catch (err) { setError((err as Error).message); setBusy(false); }
+    catch (err) { setError((err as Error).message); requestLocked.current = false; setBusy(false); }
   };
+
+  // Keep the listener stable while reading the current React flow on every scan.
+  const scanCurrent = useRef(scanReporter);
+  scanCurrent.current = scanReporter;
+  const rfidEnabled = !!config && (config.identification_mode === "RFID" || config.identification_mode === "BOTH");
+  useEffect(() => {
+    if (!rfidEnabled) return;
+    const reader = new KeyboardWedge(value => {
+      if (!document.hidden && document.hasFocus()) void scanCurrent.current(value, "RFID");
+    });
+    window.addEventListener("keydown", reader.keydown);
+    window.addEventListener("blur", reader.reset);
+    document.addEventListener("visibilitychange", reader.reset);
+    return () => {
+      reader.reset();
+      window.removeEventListener("keydown", reader.keydown);
+      window.removeEventListener("blur", reader.reset);
+      document.removeEventListener("visibilitychange", reader.reset);
+    };
+  }, [rfidEnabled]);
 
   if (!config && pairing) return <main className="terminal-shell activation-shell"><section className="panel activation-panel"><img className="activation-logo" src="/img/logobig.png" alt="Hutchinson BSS" /><div className="activation-content"><div className="eyebrow">{t("terminalActivation")}</div><h1>{t("pairBrowser")}</h1><p>{t("pairHelp")}</p><div className="pairing-code" aria-label={pairing.pairing_code}>{pairing.pairing_code}</div><div className="pairing-status"><span className="pairing-pulse" />{t("waitingActivation")}</div><p className="activation-expiry">{t("codeExpires")} {new Date(pairing.expires_at).toLocaleTimeString(language)}.</p></div></section></main>;
   if (!config && error) return <main className="terminal-shell activation-shell"><section className="panel activation-panel"><img className="activation-logo" src="/img/logobig.png" alt="Hutchinson BSS" /><div className="activation-content"><div className="eyebrow">{t("terminalActivation")}</div><h1>{t("terminalNotProvisioned")}</h1><div className="inline-error" role="alert">{error}</div><p>{t("pairingAlternative")}</p><button className="primary" onClick={() => void requestPairing()}>{t("generatePairing")}</button></div></section></main>;
@@ -112,9 +140,9 @@ export function TerminalPage() {
         <div className="action-grid">{exitActions.map(action => <button className="action-card" key={action.code} disabled={busy} onClick={() => exit(action.code)}>{action.visual_key && actionVisualKeys.has(action.visual_key) && <img className="action-illustration" src={`/action-visuals/${action.visual_key}.png`} alt="" /> }<span>{action.label}{action.has_subactions ? " ›" : ""}</span></button>)}</div>
         <button className="secondary" onClick={reset} disabled={busy}>{t("cancel")}</button>
       </div> : <>
-        {(config.identification_mode === "KEYPAD" || config.identification_mode === "BOTH") && <NumericKeypad value={badge} onChange={setBadge} onSubmit={scan} disabled={busy} placeholder={t("enterBadge")} continueLabel={t("continue")} />}
-        {config.identification_mode === "BOTH" && <div className="method-note">{t("keypadNote")}</div>}
-        {config.identification_mode === "RFID" && <div className="rfid-placeholder"><img src="/img/rfid-card.svg" alt="Contactless card" /><p>{t("rfidPending")}</p></div>}
+        {(config.identification_mode === "KEYPAD" || config.identification_mode === "BOTH") && <NumericKeypad value={badge} onChange={setBadge} onSubmit={() => void scanReporter(badge, "KEYPAD")} disabled={busy} placeholder={t("enterBadge")} continueLabel={t("continue")} />}
+        {config.identification_mode === "BOTH" && <div className="method-note">{busy && method === "RFID" ? t("readingCard") : t("keypadNote")}</div>}
+        {config.identification_mode === "RFID" && <div className="rfid-placeholder"><img src="/img/rfid-card.svg" alt="Contactless card" /><p role="status">{busy ? t("readingCard") : t("presentCard")}</p></div>}
       </>}
       {error && config && <div className="inline-error">{error}</div>}
     </section>

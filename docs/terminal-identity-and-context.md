@@ -15,24 +15,38 @@ Reprovisioning generates a fresh activation token and revokes the previous brows
 
 For HTTPS production deployments set `TERMINAL_COOKIE_SECURE=true`.
 
-## Configurable Oracle terminal context
+## Application-managed terminal code
 
-Each terminal owns an extensible `oracle_attributes` JSON object. Example:
+The normal Administration flow does not ask an operator to invent a terminal code. The backend allocates stable codes in the form `T0001`, `T0002`, and so on. Codes are immutable and logically deleted terminals keep their code reserved, so historical identifiers are never reused.
 
-```json
-{
-  "Workshop": "Extrusion",
-  "Project": "P42",
-  "Cell": "EX07",
-  "Plant": "Debica"
-}
-```
+Cloning also allocates a fresh application-managed terminal code. The Oracle device ID remains a separate integration identifier and can be reviewed or changed before provisioning the cloned browser.
 
-These values are editable in Administration. On capture, BSS copies the terminal attributes into the immutable event snapshot and then overlays any action-specific Oracle attributes. The resulting snapshot is what the Oracle adapter serializes as `timeEventAttributes`.
+The create API still accepts an explicit `code` for migration and automated-test compatibility. Normal UI creation omits it and delegates allocation to the application.
 
-This means later edits to Workshop, Project, Cell or any future field affect only future captures. Historical events and already-recorded transmission attempts remain unchanged.
+## Global reporter ID type
 
-`reporterIdType` is terminal/integration configuration, not an action property. The event stores its resolved value at capture time.
+`reporterIdType` describes the meaning of the worker identifier sent to Oracle, not how the identifier was captured. It is therefore global Oracle integration configuration rather than a per-terminal setting.
+
+The backend setting is `ORACLE_REPORTER_ID_TYPE`, defaulting to `BADGE`. RFID and keypad remain capture methods; both can produce a reporter ID whose Oracle type is `BADGE`. New event snapshots use the global value at capture time.
+
+Administration Settings exposes the effective reporter ID type, Oracle source ID and delivery enabled/disabled state as read-only integration information.
+
+## Structured Oracle terminal context
+
+Administration presents the standard terminal context as structured fields:
+
+- `Plant`
+- `Workshop`
+- `Cell`
+- `Project`
+
+The UI builds the `oracle_attributes` object automatically when the terminal is saved. Administrators do not need to construct the normal context as JSON. A collapsed **Advanced Oracle attributes** editor remains available only for additional, non-standard Oracle attributes.
+
+The Same Work Cell exit policy uses the separate local `work_cell` value. It is stored with terminal configuration for backward compatibility but is removed when a new event snapshot is built, so it is not emitted as an Oracle `timeEventAttribute`. Oracle `Cell` and local policy `work_cell` are intentionally distinct concepts.
+
+On capture, BSS copies the structured terminal Oracle attributes into the immutable event snapshot and then overlays any action-specific Oracle attributes. The resulting snapshot is what the Oracle adapter serializes as `timeEventAttributes`.
+
+Later edits to Plant, Workshop, Cell, Project or custom attributes affect only future captures. Historical events and already-recorded transmission attempts remain unchanged.
 
 ## Delivery safety
 

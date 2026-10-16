@@ -1,131 +1,323 @@
-# BSS Time Collection
+# BSS Time Collection — CORP
 
-BSS Time Collection is an **External Time Collection Device (TCD)** application designed to capture factory attendance events and reliably deliver them to Oracle HCM Time and Labor.
+Factory attendance capture for **Oracle HCM Time and Labor**, deployed on the
+CORP server. BSS acts as an **External Time Collection Device (TCD)**: it captures
+attendance facts, persists them in PostgreSQL, and provides auditable asynchronous
+delivery to Oracle. Oracle remains the functional system of record.
 
-The application intentionally **does not implement Time & Attendance business logic**. It records facts; Oracle interprets them.
+[Corporate GitLab repository](https://git.hut.chem.corp.local/A0H84018/bss_timecollection_corp)
+· Operational branch: **`corp`**
+· [CORP deployment guide](docs/corp-deployment.md)
 
-## Scope
+## Current CORP configuration
 
-The application provides:
+| Setting | Validated value |
+| --- | --- |
+| Deployment directory | `/opt/BSSTimeCollection` |
+| Public application port | `8080`, configurable through `WEB_PORT` |
+| Oracle delivery | Disabled: `ORACLE_ENABLED=false` |
+| Automatic demo seeding | Disabled: `APP_SEED_DEFAULTS=false` |
+| PostgreSQL image | `postgres:16.4-alpine` |
+| API / worker base image | `python:3.12-slim` |
+| Frontend build image | `node:22-bookworm-slim` |
+| Frontend runtime image | `nginx:alpine` |
+| Corporate proxy | Build arguments inherited from the host shell |
+| Runtime proxy | None by default |
 
-- Terminal identity and configuration.
-- RFID/badge identifier capture and manual keypad input.
-- Configurable identification mode per terminal: `RFID`, `KEYPAD`, or `BOTH`.
-- Configurable actions per terminal.
-- Automatic entry registration when the last locally captured state is outside.
-- Exit-reason selection when the last locally captured state is inside.
-- Durable event storage in the BSS PostgreSQL database.
-- Independent technical transmission history.
-- Asynchronous Oracle REST delivery with retries.
-- Conservative handling of ambiguous delivery timeouts to avoid blind duplicate retries.
-- Oracle request/event identifiers stored when returned.
-- Admin API and basic administration UI.
-- Docker Compose deployment.
+The `corp` branch preserves the validated corporate deployment configuration.
+GitHub application history is retained in this repository. Deployment-specific
+changes must remain on `corp`; do not merge them into application `main`.
 
-## Explicitly out of scope
+## Features and boundaries
 
-The application does **not** manage:
+- Browser provisioning through a one-time activation link or temporary pairing code.
+- Per-terminal identification modes: `KEYPAD`, `RFID`, or `BOTH`.
+- Touch-friendly numeric keypad, configurable exit actions and sub-actions.
+- Local ENTER/EXIT state shared across terminals to simplify capture.
+- Global exit restrictions with per-terminal overrides and configurable work cells.
+- PostgreSQL event storage with immutable terminal, action and Oracle attribute snapshots.
+- Separate transmission history, retry state and historical request/response payloads.
+- Administration pages for badge status, event logs, transmission logs and configuration.
+- Local action illustrations and Hutchinson BSS branding packaged in the web image.
+- Browser-local interface languages: English, Spanish, French and Polish.
+  API messages and event labels remain in English.
+- A live 24-hour terminal clock; successful capture briefly shows the timestamp
+  returned by the API in the browser's local timezone.
 
-- Employee master data or employee names.
-- Shifts, schedules, calendars, worked hours, overtime or payroll.
-- Oracle time cards.
-- Missing-punch correction.
-- Functional validation of attendance events.
-- Approval workflows.
-- Oracle business rules or IN/OUT pairing.
+USB HID / keyboard-wedge RFID readers are supported on provisioned terminals in
+`RFID` and `BOTH` modes. Rapid character bursts are captured automatically and
+submitted as `RFID`, preserving string IDs and leading zeros. Manual keypad
+submissions remain `KEYPAD`. The operational browser/window must have focus:
+the reader types into the operating-system window that is active. Production
+terminals should keep T&A active, normally in kiosk mode. Background OS keyboard
+capture is not available to this web application. See [RFID support](docs/rfid.md).
 
-Oracle HCM Time and Labor remains the functional system of record.
-
-## Worker state
-
-A minimal state is derived only to simplify terminal UX:
-
-- Last relevant event has `state_effect=ENTER` -> worker is considered `INSIDE` by the terminal UI.
-- Last relevant event has `state_effect=EXIT` or no event exists -> worker is considered `OUTSIDE`.
-
-This state is **not** an authoritative attendance status. It exists only so a worker does not need to choose IN or OUT manually.
-
-## Authentication
-
-Authentication is deliberately **not implemented in this version**. The application is currently open inside its trusted deployment boundary.
-
-This is intentional because the final authentication model is pending a product decision: the module may be embedded in another authenticated application or receive its own authentication layer later. Keep authentication concerns outside the domain/event services when adding it.
+BSS does not calculate worked hours, shifts, overtime, payroll or authoritative
+attendance. Employee master data, schedules, approvals, time cards, missing-punch
+correction and functional IN/OUT processing belong to Oracle.
 
 ## Architecture
 
-```text
-Terminal browser
-   |
-   | /api/v1/terminal/*
-   v
-FastAPI API -------- PostgreSQL
-   |                     |
-   |                     +-- time events
-   |                     +-- transmission attempts
-   |
-Worker
-   |
-   | HTTPS / REST / JSON
-   v
-Oracle HCM Time and Labor
+```mermaid
+flowchart LR
+    Browser[Terminal / administration browser] --> Web[Nginx + React]
+    Web --> API[FastAPI]
+    API --> DB[(PostgreSQL)]
+    Worker[Delivery worker] --> DB
+    Worker -. delivery disabled in CORP .-> Oracle[Oracle HCM Time and Labor]
 ```
 
-The web container is the only public entry point by default. It serves the React UI and proxies `/api` to FastAPI.
+| Service | Responsibility |
+| --- | --- |
+| `web` | Serves the React interface and proxies `/api` to the API |
+| `api` | Validates configuration and terminal sessions; persists captures |
+| `db` | Stores terminals, actions, policies, pairing, events and transmission attempts |
+| `worker` | Independently delivers pending events when Oracle is enabled |
 
-## Quick start
+Only `web` exposes a host port by default. Events are committed before capture
+success is returned. Oracle unavailability does not prevent capture while local
+persistence is available. PostgreSQL advisory locks serialize capture per badge
+across terminals, preventing duplicate concurrent entry or exit records.
 
-```bash
+## Application URLs
+
+Replace `CORP_HOST` with the deployment hostname or address.
+
+| Page | URL |
+| --- | --- |
+| Terminal / browser pairing | `http://CORP_HOST:8080/terminal` |
+| Administration | `http://CORP_HOST:8080/admin` |
+| Badge status | `http://CORP_HOST:8080/admin/cards` |
+| Event logs | `http://CORP_HOST:8080/admin/events` |
+| Transmission logs | `http://CORP_HOST:8080/admin/attempts` |
+| Terminals | `http://CORP_HOST:8080/admin/terminals` |
+| Actions / Sub-actions | `http://CORP_HOST:8080/admin/actions` |
+| Global exit policy | `http://CORP_HOST:8080/admin/policies` |
+| Database diagnostics | `http://CORP_HOST:8080/admin/database` |
+| Readiness | `http://CORP_HOST:8080/api/v1/health/ready` |
+
+Terminal identity is resolved from the browser session, rather than a terminal
+code in the URL. The operational terminal URL is `/terminal`.
+
+## Terminal provisioning and capture
+
+Create or edit a terminal in Administration, assign its actions, and provision
+its intended browser using either:
+
+1. **Activation link:** generate a one-time link and open it in the terminal
+   browser. Its token is carried in a URL fragment, consumed once, and removed
+   from the address bar after activation.
+2. **Pairing code:** open `/terminal` in an unprovisioned browser, then approve
+   its temporary code for the intended terminal in Administration.
+
+The API sets a `bss_terminal_session` cookie with `HttpOnly` and
+`SameSite=Strict`. PostgreSQL stores only its `session_token_hash`. Reprovisioning
+revokes the previous session. Normal rebuilds and container recreation preserve
+provisioning when the browser cookie and existing database volumes are retained.
+For HTTPS deployments, set `TERMINAL_COOKIE_SECURE=true`; local HTTP uses `false`.
+
+When the latest local event is EXIT, or there is no event, scanning records the
+configured entry action. When the latest event is ENTER, scanning offers exit
+reasons. **Factory exit** opens a second-level menu; only the final sub-action
+records an event. Legacy direct MEDICAL assignments remain supported.
+
+An active terminal requires exactly one active ENTER action and at least one
+usable EXIT action. Parent exit menus require an active assigned sub-action.
+Incomplete configurations can be saved as inactive drafts.
+
+**Clone** copies configuration and action assignments, with new unique identifiers;
+it does not copy sessions, tokens or history. Provision the clone separately.
+**Remove** performs a logical deletion and revokes access while retaining event
+history and reserving terminal codes/device IDs.
+
+## Actions, policies and monitoring
+
+Actions and sub-actions are database configuration. Their stable codes, supplier
+event codes, labels, order, availability, hierarchy and optional visual keys are
+editable in Administration. Changes affect future events; historical snapshots
+remain intact. The seven PNG illustrations live in
+`frontend/public/action-visuals/` and require no external image service.
+
+`migration/actions-prod.json` is a versioned action configuration package. It is
+not automatically imported at startup; publishing or checking out the repository
+does not replace the current CORP actions.
+
+Exit policies are capture restrictions, independent of Oracle attendance rules:
+
+| Mode | Behavior |
+| --- | --- |
+| `DISABLED` | Any active terminal can capture an exit; default global fallback |
+| `SAME_TERMINAL` | The exit must use the terminal of the latest entry |
+| `SAME_WORK_CELL` | Both terminals must have the same valid current `work_cell` |
+| `INHERIT` | Terminal uses the global mode; available as a terminal override choice |
+
+Global settings belong to **Policies**. Individual overrides and work cells belong
+to **Terminals → Edit → Exit policy**. Work cells are trimmed, case-sensitive
+strings up to 64 characters. Scan and final exit capture both revalidate policy;
+rejection returns HTTP 409 and creates no event or Oracle transmission attempt.
+
+Monitoring provides server-side filters, pagination, manual refresh and automatic
+refresh every 15 seconds. Badge state is computed across all terminals before
+filtering. Dates display in the browser's timezone; identifiers preserve leading
+zeros. The event inspector distinguishes the current Oracle payload preview from
+actual persisted transmission payloads.
+
+## Oracle delivery
+
+Oracle is disabled in CORP. Enable it only after the tenant URL, authentication,
+source ID and supplier mappings have been validated with the Oracle team.
+The adapter sends one local event per `timeEventRequests` request.
+
+| Status | Meaning |
+| --- | --- |
+| `PENDING` | Captured locally; waiting for delivery |
+| `SENDING` | Claimed by the worker |
+| `RETRY` | Eligible for retry after a transient failure |
+| `SENT` | HTTP transport accepted by Oracle; not downstream functional validation |
+| `REJECTED` | Non-retryable response; requires deliberate correction |
+| `UNKNOWN` | Ambiguous delivery outcome; requires reconciliation before replay |
+
+Ambiguous read/write timeouts are retained as `UNKNOWN` instead of blindly
+replayed. Transmission attempts retain their timing, result, HTTP status and
+request/response JSON separately from the captured event.
+See the [Oracle contract](docs/oracle-contract.md) for payload details.
+
+## Install a separate instance
+
+Prerequisites: Git, Docker Engine with Compose v2, repository access, and access
+to the required images and dependency registries through the approved build proxy.
+The following preparation is for a **new instance**, not the running CORP checkout:
+
+```sh
+git clone --branch corp git@git.hut.chem.corp.local:A0H84018/bss_timecollection_corp.git
+cd bss_timecollection_corp
 cp .env.example .env
-docker compose up -d --build
 ```
 
-Open:
+Edit the local `.env`: supply database credentials and a matching `DATABASE_URL`,
+set `APP_SEED_DEFAULTS=false` for controlled operation, keep `ORACLE_ENABLED=false`,
+and choose `WEB_PORT`. Do not overwrite the existing CORP `.env` or commit secrets.
+On an isolated development instance, demo seeding can be enabled deliberately.
 
-- Terminal: `http://localhost:8080/terminal/DEMO-01`
-- Admin: `http://localhost:8080/admin`
-- Health: `http://localhost:8080/api/v1/health/ready`
+API startup runs Alembic migrations and then optional demo bootstrap. With
+seeding disabled, create terminals and actions through Administration.
+The current schema head is `0008_exit_policies`.
 
-The default compose configuration seeds a demo terminal and actions. Disable this before controlled production rollout with `APP_SEED_DEFAULTS=false`.
+## Build and operate in CORP
 
-## Oracle integration
+The host login shell supplies `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` and their
+lowercase counterparts. Compose passes them only as build arguments, and
+Dockerfiles declare `ARG` variables. Preserve corporate/private exclusions and
+append service names for the build command:
 
-Oracle delivery is disabled by default. Configure `.env` and set `ORACLE_ENABLED=true` only after the tenant endpoint, authentication method and supplier event mappings are validated with the Oracle team.
+```sh
+bash -lc 'cd /opt/BSSTimeCollection &&
+  export NO_PROXY="${NO_PROXY:+$NO_PROXY,}api,worker,web,db" &&
+  export no_proxy="${no_proxy:+$no_proxy,}api,worker,web,db" &&
+  docker compose build'
+```
 
-The adapter sends one local event per Oracle `timeEventRequests` request. This favors traceability and reconciliation over batching in the initial release.
+Do not store proxies in `.env`, persist them with Dockerfile `ENV`, or inject
+them into API/worker/web runtime containers. Do not change the global Docker
+proxy configuration or restart Docker globally.
 
-See `docs/oracle-contract.md` for the payload contract and `docs/architecture.md` for design boundaries.
+Before deploying a code change, back up the database and local configuration,
+review migrations, and verify the existing volume layout. Deploy only this
+project from its established directory so its Compose project identity remains
+unchanged:
 
-## Administration monitoring
+```sh
+cd /opt/BSSTimeCollection
+docker compose config --quiet
+docker compose up -d
+docker compose ps
+curl --noproxy '*' -fsS http://127.0.0.1:8080/api/v1/health/ready
+curl --noproxy '*' -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
+```
 
-Open `/admin` for the administration workspace. Sidebar navigation separates operations from configuration; each section has its own URL. Monitoring pages:
+Database, API and web have health checks; the worker is a long-running process
+without its own Compose health check. After deployment, also verify empty
+runtime proxy variables and compare terminal provisioning/configuration against
+a read-only baseline. Avoid printing resolved Compose environments or tokens.
 
-- **Badge status**: latest local ENTER/EXIT state per badge, defaulting to INSIDE. Filter first by clock, then badge and local state. The clock is the terminal of the latest event; state is computed across all terminals before filtering, so an exit on another clock supersedes an earlier entry. Only badges with captured relevant events appear. This is a local interaction state, not Oracle-validated attendance.
-- **Event logs**: persisted events filtered by clock, badge substring, delivery status and event timestamp range. Each event opens a complete detail view.
-- **Transmission logs**: individual recorded delivery attempts filtered by clock, badge substring and attempt result. Details show endpoint, timing, HTTP status, error and the exact persisted request/response JSON for each attempt.
+### Preserve the live PostgreSQL volumes
 
-Views use server-side filters and pagination (50 rows), manual refresh and automatic refresh every 15 seconds. Date filters/display use the browser's local timezone. Badge identifiers remain strings, including leading zeros. Card history opens `/admin/events` with badge and clock filters in the URL and uses the same badge substring search.
+The validated PostgreSQL 16 deployment mounts the named
+`bsstimecollection_postgres_data` volume at `/var/lib/postgresql`, and an existing
+**anonymous volume** at the actual `PGDATA=/var/lib/postgresql/data`.
+The named parent volume alone does not contain the live database.
 
-The event inspector distinguishes the current Oracle payload preview from actual historical transmissions. The preview omits `requestTimestamp`, which is generated only at send time, and uses the current `sourceId`. Actual attempt payloads are read from the database. No attempts means no recorded Oracle transmission; `PENDING` must not be displayed as sent. `SENT` indicates transport acceptance, not downstream business validation. Monitoring endpoints are read-only and do not replay or modify events.
+Normal build and `up -d` recreation retain existing volumes. Never use
+`docker compose down -v`, `docker volume rm`, `--renew-anon-volumes` or destructive
+database commands. Avoid `docker compose down`: a later `up` does not automatically
+reattach the removed container's anonymous data volume. Preserve both mounts;
+a layout change requires a separate backed-up migration.
 
-API endpoints: `/api/v1/admin/monitoring/cards`, `/events`, `/attempts` and `/events/{event_id}`. List responses include `items` and filtered `total`; `offset`/`limit` provide pagination.
+See [CORP deployment](docs/corp-deployment.md) for the durable operational rules.
 
-The current UI, API messages and event records use English. Multilingual menus may be considered later; event records remain in English.
+## Development and validation
 
+Run backend tests in a separate development environment:
 
-## Terminal and action configuration
+```sh
+cd backend
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+pytest -q
+```
 
-The administration sidebar separates five pages: `/admin/cards`, `/admin/events`, `/admin/attempts`, `/admin/terminals` and `/admin/actions`. Lists provide search/filter controls; configuration changes use dedicated dialogs with explicit Save/Cancel, visible errors and success feedback. All product text and event labels use English.
+Build the frontend with Node.js 22:
 
-Terminal creation and editing include name, unique Oracle device ID, identification method, availability and action assignments in one transaction. Terminal codes are stable. An active terminal requires exactly one active ENTER action and at least one active EXIT action; incomplete configurations can be saved as inactive drafts. Duplicate codes/device IDs return readable HTTP 409 errors.
+```sh
+cd frontend
+npm install
+npm run build
+```
 
-Terminals also have **Remove** with a confirmation prompt. Removal revokes browser access and pending activation or approved pairing, and hides the terminal from configuration. Captured events, transmission attempts and their terminal/device snapshots remain available in monitoring; clocks with historical events remain in monitoring filters. Codes and Oracle device IDs remain reserved to keep historical identity unambiguous. API: `DELETE /api/v1/admin/terminals/{terminal_code}`.
+PostgreSQL migration/concurrency tests require `POLICY_TEST_DATABASE_URL`
+pointing to an isolated database named `bss_policy_test`. Activation concurrency
+tests require `IDENTITY_TEST_BASE_URL` pointing to an isolated test API.
+Those optional checks are skipped without their test configuration. Never point
+capture tests, migration tests or `docs/validate-exit-policies.py` at the running
+CORP application during routine repository validation.
 
-Actions can be created and edited through the UI: English label, supplier event code, ENTER/EXIT effect, reporter ID type, display order, availability and optional Oracle attributes as a JSON object. Action codes are stable. Supplier event codes must be unique. Changes that would remove the required entry/exit actions of an active terminal are rejected. Reassign or deactivate the affected terminal first. Configuration changes apply to future captures; existing events retain their recorded snapshots.
+The existing `.github/workflows/ci.yml` defines GitHub Actions checks. GitLab does
+not execute that workflow; a GitLab CI pipeline is not configured in this repository.
 
-API: `POST /api/v1/admin/terminals`, `PUT /api/v1/admin/terminals/{terminal_code}`, `POST /api/v1/admin/actions` and `PUT /api/v1/admin/actions/{action_code}`. Terminal payloads include `action_codes` and `active`; action payloads include `active`. PUT accepts the complete settings (stable code is determined by the URL). Demo seeding assigns defaults only when initially creating the demo terminal and no longer replaces saved assignments on startup.
+## Security and configuration
 
-### Clone a terminal
+Terminal browser binding is implemented. Administration user authentication is
+not yet implemented; access currently relies on the trusted deployment boundary.
+A future gateway or authentication layer remains a product decision.
 
-In Terminals, select **Clone** to duplicate a clock's configuration and immediately open the new terminal in the editor. The server assigns the first available numeric suffix (`-1`, `-2`, …) to both the terminal code and Oracle device ID, skipping conflicts on either identifier and preserving field length limits. A new database ID is generated automatically.
+Database diagnostics display the connection endpoint without its password.
+External connection testing is disabled by default through
+`DATABASE_ADMIN_TEST_ENABLED=false`; it does not switch the live primary database.
 
-The clone copies the display name (with a copy suffix), identification method, reporter ID type, availability, Oracle terminal attributes (including workshop context), and action assignments. It starts unprovisioned: browser sessions, activation tokens, last-seen diagnostics and event/transmission history are not copied. Provision the clone independently after reviewing its settings. Closing the editor keeps the already-created clone. API: `POST /api/v1/admin/terminals/{terminal_code}/clone`.
+Keep `.env`, credentials, activation/session/pairing tokens, deployment backups,
+logs and database files outside Git. `.env.example` contains configuration
+placeholders only. Retention, reconciliation, additional reader protocols and Oracle
+production mappings remain explicit pending decisions.
+
+## Repository and documentation
+
+```text
+backend/       FastAPI, SQLAlchemy models, Alembic migrations and tests
+frontend/      React/TypeScript interface, Nginx configuration and local assets
+migration/     Versioned action configuration package
+docs/          Architecture, operational guides and validation evidence
+```
+
+- [Architecture](docs/architecture.md)
+- [Terminal identity and Oracle context](docs/terminal-identity-and-context.md)
+- [Exit policies](docs/exit-policies.md)
+- [Oracle payload contract](docs/oracle-contract.md)
+- [External PostgreSQL](docs/external-database.md)
+- [CORP deployment](docs/corp-deployment.md)
+- [Current decisions](CURRENT_STATE.md) and [product facts](FACTS.md)
+- [Historical journal](MEMORY.md)
+
+The README and CORP operational guide are in English. Historical decision and
+validation documents retain their original language and deployment context;
+use the current CORP guide for this server's operating procedure.

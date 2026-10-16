@@ -5,10 +5,12 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, object_session
 
+from app.core.config import settings
 from app.db.session import get_db
 from app.domain.enums import DeliveryStatus
 from app.models.action import Action
 from app.models.terminal import Terminal
+from app.models.structure import ProjectLine
 from app.models.terminal_pairing_request import TerminalPairingRequest
 from app.models.time_event import TimeEvent
 from app.schemas.admin import (
@@ -34,10 +36,27 @@ from app.services.configuration_service import (
 )
 from app.services.exit_policy import get_mode, save_mode, policies
 from app.services.terminal_cloning_service import clone_terminal
+from app.services.terminal_code_service import allocate_terminal_code
 from app.services.terminal_identity_service import issue_activation_token
 from app.services.terminal_pairing_service import approve_pairing_request
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
+
+
+
+def _resolve_structure(db: Session, leaf_id: int | None, workshop_id: int | None, subworkshop_id: int | None, *, required: bool) -> ProjectLine | None:
+    if leaf_id is None:
+        if required or workshop_id is not None or subworkshop_id is not None:
+            raise HTTPException(422, "Select a complete Workshop / Subworkshop / Project / Line path")
+        return None
+    leaf = db.get(ProjectLine, leaf_id)
+    if leaf is None or not leaf.active or not leaf.subworkshop.active or not leaf.subworkshop.workshop.active:
+        raise HTTPException(422, "Project / Line path does not exist or is inactive")
+    if subworkshop_id is not None and subworkshop_id != leaf.subworkshop_id:
+        raise HTTPException(422, "Subworkshop does not match Project / Line")
+    if workshop_id is not None and workshop_id != leaf.subworkshop.workshop_id:
+        raise HTTPException(422, "Workshop does not match Project / Line")
+    return leaf
 
 
 def _commit_terminal_settings(db: Session, terminal: Terminal, mode: str | None) -> None:
@@ -59,13 +78,17 @@ def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> T
         name=terminal.name,
         external_device_id=terminal.external_device_id,
         identification_mode=terminal.identification_mode,
-        reporter_id_type=terminal.reporter_id_type,
+        reporter_id_type=settings.oracle_reporter_id_type,
         oracle_attributes=terminal.oracle_attributes or {},
         active=terminal.active,
         action_codes=sorted(action.code for action in terminal.actions),
         provisioned=bool(terminal.session_token_hash),
         activation_pending=bool(terminal.activation_token_hash),
         activation_token=activation_token,
+        project_line_id=terminal.project_line_id,
+        subworkshop_id=terminal.project_line.subworkshop_id if terminal.project_line else None,
+        workshop_id=terminal.project_line.subworkshop.workshop_id if terminal.project_line else None,
+        structure_path=" / ".join([terminal.project_line.subworkshop.workshop.code, terminal.project_line.subworkshop.code, terminal.project_line.code]) if terminal.project_line else None,
         exit_policy_mode=override or "INHERIT",
         effective_exit_policy_mode=get_mode(db, terminal.id),
         global_exit_policy_mode=get_mode(db, None),
@@ -88,6 +111,15 @@ def _action_read(action: Action) -> ActionRead:
     )
 
 
+@router.get("/integration-settings")
+def integration_settings():
+    return {
+        "oracle_enabled": settings.oracle_enabled,
+        "oracle_source_id": settings.oracle_source_id,
+        "reporter_id_type": settings.oracle_reporter_id_type,
+    }
+
+
 @router.get("/terminals", response_model=list[TerminalRead])
 def list_terminals(db: Session = Depends(get_db)):
     terminals = db.scalars(select(Terminal).where(Terminal.deleted_at.is_(None)).order_by(Terminal.code)).unique().all()
@@ -96,18 +128,21 @@ def list_terminals(db: Session = Depends(get_db)):
 
 @router.post("/terminals", response_model=TerminalRead, status_code=status.HTTP_201_CREATED)
 def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
-    if db.scalar(select(Terminal).where(Terminal.code == payload.code)):
+    terminal_code = payload.code or allocate_terminal_code(db)
+    if db.scalar(select(Terminal).where(Terminal.code == terminal_code)):
         raise HTTPException(status_code=409, detail="Terminal code already exists")
     check_device_id(db, payload.external_device_id)
     actions = resolve_actions(db, payload.action_codes)
     if payload.active:
-        validate_actions(actions, payload.code)
+        validate_actions(actions, terminal_code)
+    leaf = _resolve_structure(db, payload.project_line_id, payload.workshop_id, payload.subworkshop_id, required=True)
     terminal = Terminal(
-        code=payload.code,
+        project_line_id=leaf.id if leaf else None,
+        code=terminal_code,
         name=payload.name,
         external_device_id=payload.external_device_id,
         identification_mode=payload.identification_mode.value,
-        reporter_id_type=payload.reporter_id_type,
+        reporter_id_type=settings.oracle_reporter_id_type,
         oracle_attributes=payload.oracle_attributes,
         active=payload.active,
         actions=actions,
@@ -133,10 +168,12 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
     actions = resolve_actions(db, payload.action_codes)
     if payload.active:
         validate_actions(actions, terminal.code)
+    leaf = _resolve_structure(db, payload.project_line_id, payload.workshop_id, payload.subworkshop_id, required=False)
+    terminal.project_line_id = leaf.id if leaf else terminal.project_line_id
     terminal.name = payload.name
     terminal.external_device_id = payload.external_device_id
     terminal.identification_mode = payload.identification_mode.value
-    terminal.reporter_id_type = payload.reporter_id_type
+    terminal.reporter_id_type = settings.oracle_reporter_id_type
     terminal.oracle_attributes = payload.oracle_attributes
     terminal.active = payload.active
     terminal.actions = actions
