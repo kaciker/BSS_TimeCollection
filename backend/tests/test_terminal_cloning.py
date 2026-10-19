@@ -50,12 +50,13 @@ def test_clone_uses_managed_codes_and_skips_device_id_conflicts(monitor):
 def test_clone_reserves_suffix_space_at_maximum_device_length(monitor):
     client, db = monitor
     _, payload = configured_terminal(client)
-    code, device = "C" * 64, "D" * 128
+    code, device = "C" * 64, "D" * 40
     assert client.post("/api/v1/admin/terminals",json={**payload,"code":code,"external_device_id":device,"name":"N"*160}).status_code == 201
     for index in [1,2]:
         response = client.post(f"/api/v1/admin/terminals/{code}/clone")
         assert response.status_code == 201
         clone = response.json()
         assert clone["code"] == f"T{index:04d}"
-        assert clone["external_device_id"] == "D" * 126 + f"-{index}"
+        assert clone["external_device_id"] == "D" * 38 + f"-{index}"
+        assert len(clone["external_device_id"]) == 40
         assert len(clone["name"]) == 160
