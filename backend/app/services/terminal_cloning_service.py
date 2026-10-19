@@ -10,11 +10,14 @@ from app.services.configuration_service import commit_configuration, validate_ac
 from app.services.terminal_code_service import allocate_terminal_code
 
 
+ORACLE_DEVICE_ID_MAX_LENGTH = 40
+
+
 def _allocate_cloned_device_id(db: Session, source: Terminal) -> tuple[str, int]:
     index = 1
     while True:
         suffix = f"-{index}"
-        device_id = source.external_device_id[:128 - len(suffix)] + suffix
+        device_id = source.external_device_id[:ORACLE_DEVICE_ID_MAX_LENGTH - len(suffix)] + suffix
         occupied = db.scalar(select(Terminal.id).where(Terminal.external_device_id == device_id).limit(1))
         if occupied is None:
             return device_id, index
