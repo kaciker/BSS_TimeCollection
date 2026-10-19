@@ -9,7 +9,7 @@ from app.domain.enums import IdentificationMode, StateEffect
 class TerminalSettings(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     name: str = Field(min_length=1, max_length=160)
-    external_device_id: str = Field(min_length=1, max_length=128)
+    external_device_id: str = Field(min_length=1, max_length=40)
     identification_mode: IdentificationMode = IdentificationMode.BOTH
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     active: bool = True
@@ -73,7 +73,7 @@ class TerminalPairingApproval(BaseModel):
 class ActionSettings(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     label: str = Field(min_length=1, max_length=120)
-    supplier_device_event: str = Field(min_length=1, max_length=128)
+    supplier_device_event: str = Field(min_length=1, max_length=40)
     state_effect: StateEffect
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     display_order: int = Field(default=100, ge=0, le=100000)
