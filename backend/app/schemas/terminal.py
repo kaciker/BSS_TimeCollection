@@ -40,7 +40,7 @@ class PairingPollRead(BaseModel):
 
 
 class ScanRequest(BaseModel):
-    reporter_id: str = Field(min_length=1, max_length=160)
+    reporter_id: str = Field(min_length=1, max_length=80)
     identification_method: IdentificationMethod
 
 
