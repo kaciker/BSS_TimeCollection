@@ -18,13 +18,18 @@ logger = logging.getLogger("delivery-worker")
 def recover_stale_events() -> None:
     cutoff = datetime.now(timezone.utc) - timedelta(seconds=settings.worker_stale_sending_seconds)
     with SessionLocal() as db:
-        db.execute(
+        result = db.execute(
             update(TimeEvent)
             .where(TimeEvent.delivery_status == DeliveryStatus.SENDING.value)
             .where(TimeEvent.last_attempt_at < cutoff)
-            .values(delivery_status=DeliveryStatus.RETRY.value, next_attempt_at=datetime.now(timezone.utc))
+            .values(delivery_status=DeliveryStatus.UNKNOWN.value, next_attempt_at=None)
         )
         db.commit()
+        if result.rowcount:
+            logger.warning(
+                "Marked %s stale SENDING event(s) as UNKNOWN; reconciliation is required before replay",
+                result.rowcount,
+            )
 
 
 def claim_next_event() -> str | None:
