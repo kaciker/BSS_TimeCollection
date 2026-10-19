@@ -33,6 +33,18 @@ One local event is sent per request in the initial implementation:
 
 Optional action-level `timeEventAttributes` can be configured as JSON and are included only when present.
 
+## Oracle field limits
+
+The application validates Oracle-bound identifiers before configuration or capture so invalid events are not persisted for delivery:
+
+| Field | Maximum length |
+| --- | ---: |
+| `deviceId` / terminal `external_device_id` | 40 characters |
+| `supplierDeviceEvent` | 40 characters |
+| `reporterId` | 80 characters |
+
+Database snapshot columns retain their existing wider capacity for historical compatibility; the API boundary enforces the Oracle limits for new configuration and captures.
+
 ## Local-only fields
 
 The following fields are retained locally and are not sent unless a later Oracle requirement explicitly asks for them:
@@ -51,6 +63,8 @@ The following fields are retained locally and are not sent unless a later Oracle
 - `RETRY`: a non-ambiguous transient failure occurred.
 - `SENT`: Oracle accepted the HTTP request.
 - `REJECTED`: Oracle returned a non-retryable response.
-- `UNKNOWN`: delivery outcome is ambiguous, typically after a read/write timeout. Manual reconciliation is required before replay.
+- `UNKNOWN`: delivery outcome is ambiguous. This includes read/write timeouts, stale `SENDING` records after worker recovery, and unhandled failures while an event is in `SENDING`. Manual reconciliation is required before replay.
+
+A stale or interrupted `SENDING` event is never automatically replayed because Oracle may already have accepted it even when the local worker did not persist the acknowledgement.
 
 A successful HTTP response is a delivery acknowledgement. Oracle remains responsible for downstream functional validation and business processing.
