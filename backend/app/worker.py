@@ -111,9 +111,13 @@ def main() -> None:
             with SessionLocal() as db:
                 event = db.get(TimeEvent, event_id)
                 if event and event.delivery_status == DeliveryStatus.SENDING.value:
-                    event.delivery_status = DeliveryStatus.RETRY.value
-                    event.next_attempt_at = datetime.now(timezone.utc) + timedelta(seconds=30)
+                    event.delivery_status = DeliveryStatus.UNKNOWN.value
+                    event.next_attempt_at = None
                     db.commit()
+                    logger.warning(
+                        "Marked event=%s as UNKNOWN after unhandled delivery failure; reconciliation is required before replay",
+                        event.id,
+                    )
 
 
 if __name__ == "__main__":
