@@ -7,3 +7,5 @@ from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
 
 __all__ = ["Action", "Terminal", "terminal_actions", "TerminalPairingRequest", "TimeEvent", "TransmissionAttempt"]
+
+from app.models.perimeter import FactoryPerimeterSettings, FactoryPerimeterEvent, TerminalBadgeRead
