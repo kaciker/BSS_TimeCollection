@@ -36,7 +36,7 @@ export function PerimeterPanel({ terminals }: {terminals: AdminTerminal[]}) {
   const saveRole = async (code: string) => {
     setBusy(true); setError("");
     try {
-      await api.put(`/api/v1/admin/perimeter/terminals/${encodeURIComponent(code)}/role`, {role: roles[code] ?? "CELL", factory_code: factory});
+      await api.put(`/api/v1/admin/perimeter/terminals/${encodeURIComponent(code)}/role`, {role: roles[code] ?? terminals.find(t => t.code === code)?.terminal_role ?? "CELL", factory_code: factory});
       setNotice(`Terminal ${code} updated.`);
     } catch(e) { setError((e as Error).message); }
     finally { setBusy(false); }
@@ -58,7 +58,7 @@ export function PerimeterPanel({ terminals }: {terminals: AdminTerminal[]}) {
     <h3>Terminal roles</h3>
     <p>Assign perimeter readers to a factory. All existing terminals remain CELL unless changed.</p>
     {terminals.map(t => <div key={t.code} className="policy-settings"><strong>{t.name} ({t.code})</strong>
-      <select aria-label={`Role for ${t.code}`} value={roles[t.code] ?? "CELL"} onChange={e => setRoles({...roles, [t.code]:e.target.value as Role})}>
+      <select aria-label={`Role for ${t.code}`} value={roles[t.code] ?? t.terminal_role ?? "CELL"} onChange={e => setRoles({...roles, [t.code]:e.target.value as Role})}>
         <option value="CELL">Cell</option><option value="PERIMETER_ENTER">Factory entrance</option>
         <option value="PERIMETER_EXIT">Factory exit</option><option value="PERIMETER_BOTH">Factory entrance / exit</option>
       </select>
