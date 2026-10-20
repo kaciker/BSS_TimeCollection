@@ -113,10 +113,10 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
     config = settings_for(db, terminal.factory_code)
     now = datetime.now(timezone.utc)
     current_state = derive_worker_state(db, reporter_id, terminal.factory_code)
-    if is_duplicate(db, config, terminal, reporter_id, now):
-        return ScanResponse(flow='DUPLICATE_IGNORED', worker_state=current_state.value)
     if current_state == WorkerState.OUTSIDE and config.enabled and not is_inside(db, terminal.factory_code, reporter_id):
         raise HTTPException(409, 'Badge has not entered the factory perimeter')
+    if is_duplicate(db, config, terminal, reporter_id, now):
+        return ScanResponse(flow='DUPLICATE_IGNORED', worker_state=current_state.value)
 
     if current_state == WorkerState.OUTSIDE:
         entry_actions = _active_actions(terminal, StateEffect.ENTER)
