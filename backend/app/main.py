@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import admin, database_admin, health, monitoring, terminal, policies, structure
+from app.routers import admin, database_admin, health, monitoring, terminal, policies, structure, perimeter
 
 
 app = FastAPI(
@@ -14,6 +14,7 @@ app.include_router(terminal.router)
 app.include_router(admin.router)
 app.include_router(structure.router)
 app.include_router(policies.router)
+app.include_router(perimeter.router)
 app.include_router(database_admin.router)
 app.include_router(monitoring.router)
 
