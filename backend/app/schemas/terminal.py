@@ -13,6 +13,7 @@ class TerminalAction(BaseModel):
 
 
 class TerminalConfig(BaseModel):
+    terminal_role: str = 'CELL'
     code: str
     name: str
     identification_mode: str

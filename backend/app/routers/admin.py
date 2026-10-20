@@ -74,6 +74,8 @@ def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> T
     db = object_session(terminal)
     override = db.execute(select(policies.c.mode).where(policies.c.terminal_id == terminal.id)).scalar_one_or_none()
     return TerminalRead(
+        factory_code=terminal.factory_code,
+        terminal_role=terminal.terminal_role,
         code=terminal.code,
         name=terminal.name,
         external_device_id=terminal.external_device_id,

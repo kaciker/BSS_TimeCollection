@@ -49,9 +49,9 @@ def _terminal_action(action: Action) -> TerminalAction:
     return TerminalAction(code=action.code, label=action.label, has_subactions=action.requires_subaction, visual_key=action.visual_key)
 
 
-def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod) -> TimeEvent:
+def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod, *, commit: bool = True, event_time: datetime | None = None, correlation_id: str | None = None) -> TimeEvent:
     event_id = str(uuid4())
-    event_time = datetime.now(ZoneInfo(settings.event_timezone))
+    event_time = event_time or datetime.now(ZoneInfo(settings.event_timezone))
     # work_cell is a local exit-policy attribute, not part of the Oracle TCD context.
     oracle_attributes = {key: value for key, value in (terminal.oracle_attributes or {}).items() if key != "work_cell"}
     oracle_attributes.update({key: value for key, value in (action.oracle_attributes or {}).items() if key != "work_cell"})
@@ -68,6 +68,7 @@ def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: 
         project_line_code=structure.code if structure else None,
         project_line_description=structure.description if structure else None,
         id=event_id,
+        correlation_id=correlation_id,
         request_number=f"BSS-{terminal.code}-{event_id}",
         terminal_id=terminal.id,
         action_id=action.id,
@@ -86,8 +87,9 @@ def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: 
         delivery_status="PENDING",
     )
     db.add(event)
-    db.commit()
-    db.refresh(event)
+    if commit:
+        db.commit()
+        db.refresh(event)
     return event
 
 
@@ -105,7 +107,17 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
     _lock_badge(db, reporter_id)
     terminal = _get_terminal(db, terminal_code)
     _validate_method(terminal, method)
-    current_state = derive_worker_state(db, reporter_id)
+    from datetime import timezone
+    from app.services.perimeter_service import settings_for, is_inside, is_duplicate, remember_read, perimeter_scan
+    if terminal.terminal_role != 'CELL':
+        return ScanResponse(**perimeter_scan(db, terminal, reporter_id, method))
+    config = settings_for(db, terminal.factory_code)
+    now = datetime.now(timezone.utc)
+    current_state = derive_worker_state(db, reporter_id, terminal.factory_code)
+    if current_state == WorkerState.OUTSIDE and config.enabled and not is_inside(db, terminal.factory_code, reporter_id):
+        raise HTTPException(409, 'Badge has not entered the factory perimeter')
+    if is_duplicate(db, config, terminal, reporter_id, now):
+        return ScanResponse(flow='DUPLICATE_IGNORED', worker_state=current_state.value)
 
     if current_state == WorkerState.OUTSIDE:
         entry_actions = _active_actions(terminal, StateEffect.ENTER)
@@ -114,6 +126,7 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Terminal must have exactly one active ENTER action for automatic entry",
             )
+        remember_read(db, terminal, reporter_id, now)
         event = _create_event(db, terminal, entry_actions[0], reporter_id, method)
         return ScanResponse(flow="ENTRY_RECORDED", worker_state=WorkerState.INSIDE.value, event=_event_response(event))
 
@@ -134,7 +147,9 @@ def record_exit(db: Session, terminal_code: str, reporter_id: str, method: Ident
     _lock_badge(db, reporter_id)
     terminal = _get_terminal(db, terminal_code)
     _validate_method(terminal, method)
-    if derive_worker_state(db, reporter_id) != WorkerState.INSIDE:
+    if terminal.terminal_role != 'CELL':
+        raise HTTPException(409, 'Perimeter terminals do not accept cell exit actions')
+    if derive_worker_state(db, reporter_id, terminal.factory_code) != WorkerState.INSIDE:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Worker is not currently inside according to local TCD events")
 
     check_exit_policy(db, terminal, reporter_id)
@@ -161,5 +176,8 @@ def record_exit(db: Session, terminal_code: str, reporter_id: str, method: Ident
         if parent is not None and not parent.requires_subaction:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Sub-action parent is not enabled on this terminal")
 
+    from datetime import timezone
+    from app.services.perimeter_service import remember_read
+    remember_read(db, terminal, reporter_id, datetime.now(timezone.utc))
     event = _create_event(db, terminal, action, reporter_id, method)
     return ScanResponse(flow="EXIT_RECORDED", worker_state=WorkerState.OUTSIDE.value, event=_event_response(event))
