@@ -9,6 +9,7 @@ export interface TerminalAction {
 }
 
 export interface TerminalConfig {
+  terminal_role?: string;
   code: string;
   name: string;
   identification_mode: IdentificationMode;
@@ -36,13 +37,15 @@ export interface CapturedEvent {
 }
 
 export interface ScanResponse {
-  flow: "ENTRY_RECORDED" | "EXIT_REQUIRED" | "SUBACTION_REQUIRED" | "EXIT_RECORDED";
+  flow: "ENTRY_RECORDED" | "EXIT_REQUIRED" | "SUBACTION_REQUIRED" | "EXIT_RECORDED" | "DUPLICATE_IGNORED" | "FACTORY_ENTRY_RECORDED" | "FACTORY_EXIT_RECORDED" | "ALREADY_INSIDE" | "ALREADY_OUTSIDE";
   worker_state: "INSIDE" | "OUTSIDE";
   event?: CapturedEvent;
   actions: TerminalAction[];
 }
 
 export interface AdminTerminal {
+  factory_code?: string;
+  terminal_role?: string;
   code: string;
   name: string;
   external_device_id: string;
