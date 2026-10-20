@@ -44,6 +44,7 @@ def upgrade():
         sa.Column("reporter_id", sa.String(160), primary_key=True),
         sa.Column("last_recorded_at", sa.DateTime(timezone=True), nullable=False),
     )
+    op.add_column("time_events", sa.Column("correlation_id", sa.String(36), nullable=True))
     op.add_column("terminals", sa.Column("factory_code", sa.String(64), nullable=False, server_default="DEFAULT"))
     op.add_column("terminals", sa.Column("terminal_role", sa.String(16), nullable=False, server_default="CELL"))
 
@@ -52,6 +53,7 @@ def downgrade():
     op.drop_constraint("ck_terminal_role", "terminals", type_="check")
     op.drop_column("terminals", "terminal_role")
     op.drop_column("terminals", "factory_code")
+    op.drop_column("time_events", "correlation_id")
     op.drop_table("terminal_badge_reads")
     op.drop_index("ix_perimeter_presence", table_name="factory_perimeter_events")
     op.drop_table("factory_perimeter_events")
