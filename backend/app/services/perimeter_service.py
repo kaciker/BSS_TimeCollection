@@ -14,7 +14,7 @@ from app.services.state_service import derive_worker_state
 
 
 def settings_for(db: Session, factory_code: str) -> FactoryPerimeterSettings:
-    return db.get(FactoryPerimeterSettings, factory_code) or FactoryPerimeterSettings(factory_code=factory_code, dedup_enabled=False)
+    return db.get(FactoryPerimeterSettings, factory_code) or FactoryPerimeterSettings(factory_code=factory_code, enabled=False, badge_source='OPEN', dedup_enabled=False, dedup_seconds=5, auto_exit_action_code=None)
 
 
 def is_inside(db: Session, factory_code: str, badge: str) -> bool:
