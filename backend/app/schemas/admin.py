@@ -82,6 +82,7 @@ class ActionSettings(BaseModel):
     visual_key: str | None = Field(default=None, max_length=64, pattern=r"^[a-z0-9-]+$")
     requires_subaction: bool = False
     parent_action_code: str | None = Field(default=None, max_length=64)
+    show_on_terminal: bool = True
     active: bool = True
 
 
@@ -100,6 +101,7 @@ class ActionRead(BaseModel):
     parent_action_code: str | None
     subaction_codes: list[str]
     visual_key: str | None = None
+    show_on_terminal: bool = True
     active: bool
 
 

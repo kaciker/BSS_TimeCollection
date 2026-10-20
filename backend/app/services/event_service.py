@@ -40,7 +40,7 @@ def _validate_method(terminal: Terminal, method: IdentificationMethod) -> None:
 
 def _active_actions(terminal: Terminal, effect: StateEffect) -> list[Action]:
     return sorted(
-        [action for action in terminal.actions if action.active and action.state_effect == effect.value],
+        [action for action in terminal.actions if action.active and action.show_on_terminal and action.state_effect == effect.value],
         key=lambda action: (action.display_order, action.id),
     )
 

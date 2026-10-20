@@ -41,7 +41,7 @@ def validate_action_hierarchy(action: Action, parent: Action | None) -> None:
 
 
 def validate_actions(actions: list[Action], terminal_code: str) -> None:
-    enabled = [action for action in actions if action.active]
+    enabled = [action for action in actions if action.active and action.show_on_terminal]
     if sum(action.state_effect == "ENTER" for action in enabled) != 1:
         raise HTTPException(409, f"Terminal {terminal_code} requires exactly one active entry action")
 

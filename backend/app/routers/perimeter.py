@@ -41,7 +41,7 @@ def get_config(factory_code: str, db: Session = Depends(get_db)):
 def set_config(factory_code: str, payload: FactoryConfigUpdate, db: Session = Depends(get_db)):
     if payload.enabled and not payload.auto_exit_action_code:
         raise HTTPException(422, 'Configure the automatic cell EXIT action before enabling perimeter control')
-    if payload.enabled:
+    if payload.auto_exit_action_code:
         action = db.scalar(select(Action).where(Action.code == payload.auto_exit_action_code, Action.active.is_(True), Action.state_effect == 'EXIT', Action.requires_subaction.is_(False)))
         if action is None:
             raise HTTPException(422, 'Automatic cell EXIT action must exist, be active and not require subactions')
