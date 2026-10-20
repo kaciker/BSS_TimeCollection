@@ -1,57 +1,87 @@
-# Estado actual
+# Estado actual de BSS Time Collection
 
-Actualizado: 20 de octubre de 2026.
+Actualizado: 20 de octubre de 2026. Baseline funcional: `98ea1f118166592be9376545cba292289b28acf7`, sincronizado entre CORP y GitHub `main`. Checkpoints históricos: [MEMORY.md](MEMORY.md) y [docs/deployment/](docs/deployment/).
 
-## Objetivo y despliegue
-Captura RFID/manual local y transmisión asíncrona auditable a Oracle; CORP Oracle false. Historial y configuración preservados. Alembic 0011_action_visibility, PostgreSQL y volúmenes originales; Compose requiere docker-compose.yml, docker-compose.issue2.yml y docker-compose.perimeter-corp.yml.
+## Objetivo y arquitectura
 
-## Administración, terminales e identidad
+Captura RFID/teclado local con transmisión asíncrona auditable a Oracle HCM Time and Labor. Oracle interpreta asistencia; BSS no calcula nómina/asistencia.
 
- Admin ofrece estado por tarjeta, logs paginados/filtrables, JSON histórico y refresh 15 s, sin interpretación de asistencia Oracle. Edición de terminal/actions atómica, duplicados claros, ENTER único y al menos una salida por terminal activo; clone copia configuración pero no identidad/tokens/eventos; remove es baja lógica y conserva históricos/códigos reservados.
+API FastAPI, web React/TypeScript, worker y PostgreSQL. Configuración, sesiones y eventos con snapshots se guardan en PostgreSQL. Perímetro por UID, sin conciliación de identidad personal ni accionamiento de barreras.
 
-Identidad mediante cookie HttpOnly/SameSite=Strict, activation link de un uso y pairing temporal; reprovisión revoca sesión anterior. En HTTP local: . Configuración de terminal/action se mezcla en el fichaje; UNKNOWN/REJECTED bloquean reintento ciego. Salida de fábrica abre subacciones; solo la razón final crea evento. MEDICAL directo legado es compatible. Idiomas de interfaz en/es/fr/pl; API/eventos en inglés. Database presenta PostgreSQL sin contraseña; test externo apagado por defecto;  intacta.
+## Oracle
 
-## Ilustraciones y RFID
+CORP mantiene `ORACLE_ENABLED=false` y `APP_SEED_DEFAULTS=false`. Sin transmisión a Oracle. Solo los eventos de célula pertenecen a la cola de transmisión; los movimientos perimetrales son `LOCAL_ONLY`, sin payload ni intentos Oracle.
 
-Siete PNG originales (720×720 RGBA) publicados en main , 12/10; claves estables end-work, break, factory, medical, personal, legal, no-work;  opcional. FACTORY_EXIT usa factory, otras asignaciones preservadas. Backup/evidencia: , . Build y 320–1920 px validados; eventos históricos preservados y 5 fichajes de operación añadidos.
+Mappings explícitos; identidades de dispositivo limitadas a 40 caracteres, también en clones. `UNKNOWN` requiere conciliación; `REJECTED`, corregir la causa. Sin reenvío ciego.
 
-RFID conserva ; lectores USB HID funcionan en RFID/BOTH con ventana activa. Captura/validación: . Terminal ocupa 90% del viewport; teclado adaptable hasta 620 px y controles táctiles; 320×568 requiere scroll vertical. Admin sidebar con scroll propio en desktop y navegación horizontal móvil.
+## PostgreSQL y Alembic
 
-## Políticas de salida
+PostgreSQL 16 conserva la base de datos y los volúmenes originales. Alembic vigente: `0011_action_visibility`, con políticas, estructura y perímetro incluidos. Importar la API no ejecuta DDL.
 
-Base GitHub main ; Alembic , sin DDL al importar API; upserts atómicos y advisory locks serializan fichajes por tarjeta. Global Disabled sigue predeterminado, sin overrides residuales. Policies conserva el ajuste global; override y  se editan por terminal, también al crearlo. Modos Disabled/Same Terminal/Same Work Cell e INHERIT. Célula recortada, sensible a mayúsculas, máx. 64 caracteres; blanco elimina. Se rechaza Same Work Cell si falta o difiere la célula. Scan y salida final revalidan; HTTP 409 no crea evento/intento/cola Oracle. Snapshots históricos intactos.
+Conservar PGDATA anónimo `/var/lib/postgresql/data` y volumen `bsstimecollection_postgres_data`. Cambiar configuración no reescribe históricos/snapshots.
 
-Override Compose ; backup previo a migración: ; validación/cómo operar: , . Ajustes por terminal y global desplegados 13/10 sin cambiar políticas existentes: 47 tests pasados, build y réplica/producción 320–1280 px correctos; DB/datos preservados.
+## Terminales e identidad
 
-## Reloj de terminal
+Estado conocido en ARGANDA: cinco terminales `CELL` (`ID001-1`, `T0001`–`T0004`) y `T0005`, «Main Entry», con rol `PERIMETER_BOTH`. Baja lógica, con históricos/códigos reservados.
 
-Desde 13/10 se muestra reloj HH:MM:SS de 24 h, centrado y del ancho del teclado (máx. 620 px) en identificación, selección de salida y confirmación; hora local viva, confirmación congela 2,2 s el  real de API. Sin cambios de backend, Oracle ni DB. Verificado en 21 escenarios 320–3200 px y sin fichajes reales. Evidencia: ; backups  y .
+CELL activo: una entrada y al menos una salida activas/visibles. **Perimeter only** elimina configuración de célula, acciones, estructura y atributos Oracle; desactiva su política. Roles: `PERIMETER_ENTER`, `PERIMETER_EXIT`, `PERIMETER_BOTH`. Convertir a CELL exige configuración válida; las puertas no crean directamente eventos de célula.
 
-## Despliegue CORP
+Cookie HttpOnly/SameSite=Strict, activación de un uso y pairing temporal. Reprovisión revoca sesión previa. Clones conservan configuración/fábrica/rol, sin identidad, tokens ni eventos.
 
-Rama , base main , GitLab A0H84018/bss_timecollection_corp; README operativo en inglés. Imágenes/proxy solo build validados, puerto 8080, Oracle/seed desactivados. Conservar volumen anónimo PostgreSQL 16 (PGDATA). Guía: .
+## Factory Perimeter
 
-## Factory Perimeter CORP (20/10/2026)
+La activación es **por fábrica**: ARGANDA está activada; DEFAULT sigue desactivada. Estado por fábrica. Selección persistida por URL/localStorage (URL prioritaria); asignaciones guardadas explícitas y protección contra respuestas antiguas/avisos contradictorios.
 
-Desplegado commit local `0d7d3e55fc2453be31c5a969f6971b912069cc10`, merge de GitHub `a414089` con CORP `6635652`; sin push. Conserva límites Oracle 40 caracteres y conciliación UNKNOWN. Alembic `0010_factory_perimeter`; correcciones de FK/flush atómico, snapshots de entrada, downgrade/constraint, dedup BOTH, clones y feedback traducido. Factory Perimeter disponible en Admin pero DESACTIVADO; sin ajustes persistidos. Terminales existentes CELL/DEFAULT y asignaciones/sesiones intactas; 30 eventos y 0 intentos conservados. Oracle/seed false. API/web/db saludables, worker operativo sin envío. PostgreSQL y ambos volúmenes originales intactos.
+Con el perímetro activado, una entrada de célula requiere que el UID haya entrado antes en esa misma fábrica. La presencia solo usa UID. `OPEN` es el origen disponible; `EXTERNAL` permanece sin implementar y se rechaza.
 
-Compose requiere `-f docker-compose.yml -f docker-compose.issue2.yml -f docker-compose.perimeter-corp.yml`; imágenes `perimeter-corp-20261020` construidas offline con dependencias existentes. Backend 65 passed/1 skipped opcional; frontend 27 passed/build; migración reversible y HTTP E2E solo réplica con UID ficticio. Backup completo restaurado/verificado: `/opt/BSSTimeCollection-backups/perimeter-20261020T072051Z`. Detalles: `docs/deployment/factory-perimeter-corp-20261020.md`. Lectores físicos/barreras requieren prueba manual antes de activar; BOTH aplica cooldown, salida dedicada lo omite estando dentro.
+Salida perimetral estando dentro de célula: EXIT automático de célula seguido de EXIT perimetral, transacción/timestamp/correlation ID compartidos. Conserva contexto de la entrada original. Acción automática EXIT activa sin subacciones obligatorias; puede estar oculta.
 
-Factory Perimeter UI uniformada con estilos admin existentes el 20/10: tarjetas, fuentes, formularios, switches, botones y tabla responsive. Frontend 27 passed/build; solo web recreada, resto intacto. Backup `perimeter-style-20261020T073729Z`; desactivado/Oracle false.
+Acción interna automática de ARGANDA conservada. Deduplicación UID/terminal según fábrica: BOTH evita alternancias por repetición; EXIT dedicada omite cooldown estando dentro. Advisory locks serializan fichajes por tarjeta.
 
-## Action visibility CORP (20/10/2026)
-Desplegado `ff32d3fca5ca3724c45ac4e231917624947ae061`, merge GitHub `7d280f6` con correcciones CORP preservadas. Alembic `0011_action_visibility`; acciones anteriores show_on_terminal=true. Selector EXIT activa/leaf incluye ocultas; ocultas no accesibles al operario pero sirven en cascada interna; protege última entrada/salida visible. Avisos excluyentes y estilos uniformes mantenidos. Backend 70 passed/1 optional skipped; frontend 29 passed/build; migración reversible en réplica restaurada y HTTP E2E con UID ficticio. Datos/config/sesiones y 30 eventos/0 intentos intactos; DB/volúmenes originales. Perímetro disabled, Oracle false. Backup y detalles `docs/deployment/action-visibility-corp-20261020.md`; sin push.
+## Actions y Sub-actions
 
-Corrección 20/10 `a575a5c`: selección factory persiste por URL y evita respuestas antiguas; 31 frontend tests/build, solo web. Usuario activó ARGANDA con END_WORK; DEFAULT sigue disabled con código previo no elegible. Configuración observada conservada; no asumir perímetro globalmente disabled. Oracle false.
+16 motivos EXIT directos activos: nombres españoles, supplier events BSS ingleses y `visual_key` correspondiente. Asignados a cinco CELL; entrada `START_WORK` conservada, Main Entry excluido. Salidas antiguas ocultas/inactivas salvo la interna perimetral activa/oculta. Configuración PostgreSQL, sin importación automática desde Git.
 
-Selección de fábrica: además del query, navegador recuerda última fábrica (localStorage); enlaces explícitos tienen prioridad. HTML no-cache. 33 frontend tests/build; solo web, datos intactos.
+`active`/`show_on_terminal` independientes; ocultas activas disponibles internamente, no al operario. Última entrada/salida protegida. Subacciones compatibles: el menú no registra, solo la razón final. Los 16 motivos actuales no exigen subacciones.
 
-Terminales perimetrales `fdd56e4` (20/10): flag Perimeter only en New/Edit desactiva estructura/acciones/políticas/Oracle; alta sin célula, rol PERIMETER_BOTH existente (sin migración), asignar factory/dirección después. Clones compatibles, conversión CELL validada. 72 backend/1 optional skip; 34 frontend/build; réplica PG sin eventos de célula. Datos/config existentes intactos.
+## Exit policies
 
-Registro unificado `427923e`: monitoring/events incluye perímetro LOCAL_ONLY/Solo local, filtros/detalle sin Oracle. Backend 74/1 skip; frontend 35/build. Células y T0005 en ARGANDA.
+Modos `DISABLED`, `SAME_TERMINAL`, `SAME_WORK_CELL` y override `INHERIT`. El ajuste global está en Policies; el override y `work_cell` se editan con cada terminal, también al crearlo. El estado global conocido es `DISABLED`; las puertas mantienen su política desactivada.
 
-UI asignaciones: Saved factory/role explícitos, botón Assign to destino o Assignment saved; fila y lista se actualizan tras guardar. 36 frontend tests/build; solo web, sin cambiar asignaciones.
+`work_cell`: recortado, sensible a mayúsculas, 64 caracteres; vacío elimina. SAME_WORK_CELL rechaza ausentes/diferentes. Scan/salida final revalidan; HTTP 409 sin evento/intento/cola. Guardado atómico. Detalle: [docs/exit-policies.md](docs/exit-policies.md).
 
-Motivos 20/10: CORP `38fb224`, main `a1b4de7`; 16 PNG + 7 legacy, tests/build/HTTP/browser OK. Salidas sustituidas por 16 EXIT directas: nombres españoles, BSS events ingleses; asignadas a 5 CELL, START_WORK conservada, T0005 excluido. Antiguas ocultas/inactivas salvo salida interna perimetral activa. Solo actions/terminal_actions cambiaron. Backup `reason-actions-20261020T102808Z`.
+## Monitoring
 
-Cards `37a8e4f`: estados independientes célula (TimeEvent) y fábrica (perímetro por factory, solo enabled). Columna/filtro fábrica condicional; sin lecturas = fuera, disabled = no activado. Último reloj sigue combinado, filtro inicial Todos. Backend 79/1 skip, frontend 40/build; HTTP/browser 1440/390 confirma 6 fuera célula/dentro fábrica. Solo API/web, DB/env intactos, Oracle false; sincronizado en main.
+`/admin/cards` muestra estados independientes de célula y fábrica. El estado de célula procede del último TimeEvent; sin fichajes de célula es OUTSIDE. El estado de fábrica procede de la última dirección perimetral por UID/fábrica: sin entrada es OUTSIDE, y con perímetro desactivado es «No activado».
+
+Columna/filtro de fábrica visibles si hay alguna activada. Filtros combinables, inicialmente Todos. Puede estar fuera de célula/dentro de fábrica. Último reloj/detalle y filtro de reloj corresponden a la última lectura combinada.
+
+Eventos célula/perímetro con filtros, paginación y JSON histórico; perímetro «Solo local», sin preview Oracle. Registro propio de intentos. Refresh 15 s, sin asistencia validada por Oracle.
+
+## RFID e interfaz de terminal
+
+USB HID keyboard-wedge en `RFID`/`BOTH`, ventana activa; `KEYPAD` manual. UID cadena, conserva ceros iniciales. UID/método conservados en salida/subacción, debounce y bloqueo; sin captura en segundo plano. Detalle: [docs/rfid.md](docs/rfid.md).
+
+Interfaz en/es/fr/pl, etiquetas del catálogo. Reloj HH:MM:SS local; confirmación congela `event_datetime` 2,2 s. Teclado hasta 620 px y administración responsive.
+
+## Ilustraciones
+
+**23 PNG locales** en `frontend/public/action-visuals/`: 16 motivos nuevos y 7 legacy. Catálogo compartido Admin/terminal, transparencia sobre cards claras. Compatibilidad anterior conservada; no eliminar visuales referenciables.
+
+Claves nuevas: `bocadillo`, `comida`, `medico-empresa`, `formacion`, `no-productivo`, `comite-empresa`, `trabajo-fuera-fabrica`, `medico`, `viaje-empresa`, `examenes`, `mutua-accidente`, `comite-seguridad-salud`, `formacion-fuera-jornada`, `salida-sindical`, `huelga`, `acompanamiento-medico`.
+
+Claves legacy: `end-work`, `break`, `factory`, `medical`, `personal`, `legal`, `no-work`. `visual_key` es opcional. Sin imágenes remotas.
+
+## Despliegue CORP y guardrails
+
+CORP `/opt/BSSTimeCollection`, web `http://10.33.137.103:8080`; baseline publicado en `main`, sin correcciones pendientes. Compose: `docker-compose.yml`, `docker-compose.issue2.yml` y `docker-compose.perimeter-corp.yml`, con Dockerfiles offline y dependencias existentes.
+
+Validación del baseline: backend 79/1 opcional omitido, frontend 40/build; JS/CSS y 23 PNG coinciden con CORP. Evidencia: [docs/deployment/corp-github-sync-20261020.md](docs/deployment/corp-github-sync-20261020.md).
+
+Preservar `.env`, configuración, terminales, sesiones, acciones, históricos y volúmenes. Backup verificable antes de cambios o migraciones. No usar `reset --hard`, borrar/recrear la base, renovar volúmenes anónimos ni ejecutar `down -v`. Validaciones con UIDs simulados en réplicas o APIs mockeadas; no generar fichajes reales ni transmitir a Oracle. No reasignar terminales ni activar fábricas implícitamente. Administración limitada a la red/gateway corporativo; no tiene autenticación propia.
+
+## Siguiente riesgo / backlog
+
+**Monitoring multi-factory hardening:** actualmente `cell_state` se calcula por `reporter_id` en monitoring. Si una misma tarjeta puede operar en varias fábricas dentro de la misma instancia, deberá calcularse por `(reporter_id, factory_code)`. No es un bug operativo urgente para ARGANDA actual. El estado perimetral ya se calcula por UID/fábrica.
+
+Pendientes: pruebas físicas, autenticación/gateway definitivo e identidad externa. Antes de habilitar Oracle: validar credenciales, mappings, conciliación/idempotencia y retención; CORP sin transmisión.
