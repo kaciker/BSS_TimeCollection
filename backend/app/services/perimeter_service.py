@@ -1,6 +1,8 @@
 """Perimeter presence, factory-local policy, and future external adapters."""
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+from zoneinfo import ZoneInfo
+from app.core.config import settings
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -62,6 +64,7 @@ def perimeter_scan(db: Session, terminal: Terminal, badge: str, method) -> dict:
         raise HTTPException(409, "Factory perimeter control is disabled")
     check_badge_source(config, badge)
     now = datetime.now(timezone.utc)
+    event_time = now.astimezone(ZoneInfo(settings.event_timezone))
     inside = is_inside(db, terminal.factory_code, badge)
     role = terminal.terminal_role
     if role == "PERIMETER_ENTER":
@@ -94,10 +97,10 @@ def perimeter_scan(db: Session, terminal: Terminal, badge: str, method) -> dict:
         cell_terminal = db.get(Terminal, last_cell.terminal_id)
         if cell_terminal is None or cell_terminal.factory_code != terminal.factory_code:
             raise HTTPException(409, "Cannot safely determine the cell for automatic exit")
-        auto_event = _create_event(db, cell_terminal, action, badge, method, commit=False, event_time=now, correlation_id=correlation_id)
+        auto_event = _create_event(db, cell_terminal, action, badge, method, commit=False, event_time=event_time, correlation_id=correlation_id)
     db.add(FactoryPerimeterEvent(
         id=str(uuid4()), factory_code=terminal.factory_code, reporter_id=badge,
-        terminal_id=terminal.id, direction=direction, event_datetime=now,
+        terminal_id=terminal.id, direction=direction, event_datetime=event_time,
         correlation_id=correlation_id, auto_cell_exit_event_id=auto_event.id if auto_event else None,
     ))
     remember_read(db, terminal, badge, now)
