@@ -37,6 +37,8 @@ class TerminalCreate(TerminalSettings):
 
 
 class TerminalRead(BaseModel):
+    factory_code: str = 'DEFAULT'
+    terminal_role: str = 'CELL'
     code: str
     name: str
     external_device_id: str
