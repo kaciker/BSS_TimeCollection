@@ -79,7 +79,7 @@ def perimeter_scan(db: Session, terminal: Terminal, badge: str, method) -> dict:
         return {"flow": "ALREADY_OUTSIDE", "worker_state": WorkerState.OUTSIDE.value}
     correlation_id = str(uuid4())
     auto_event = None
-    if direction == "EXIT" and derive_worker_state(db, badge) == WorkerState.INSIDE:
+    if direction == "EXIT" and derive_worker_state(db, badge, terminal.factory_code) == WorkerState.INSIDE:
         if not config.auto_exit_action_code:
             raise HTTPException(409, "Configure an automatic cell exit action before using the perimeter")
         action = db.scalar(select(Action).where(
@@ -87,7 +87,7 @@ def perimeter_scan(db: Session, terminal: Terminal, badge: str, method) -> dict:
             Action.active.is_(True), Action.state_effect == "EXIT",
             Action.requires_subaction.is_(False),
         ))
-        last_cell = db.scalar(select(TimeEvent).where(TimeEvent.reporter_id == badge).order_by(
+        last_cell = db.scalar(select(TimeEvent).join(Terminal, TimeEvent.terminal_id == Terminal.id).where(TimeEvent.reporter_id == badge, Terminal.factory_code == terminal.factory_code).order_by(
             TimeEvent.event_datetime.desc(), TimeEvent.created_at.desc(), TimeEvent.id.desc()).limit(1))
         if action is None or last_cell is None:
             raise HTTPException(409, "Automatic exit action or original cell event unavailable")
