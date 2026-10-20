@@ -38,6 +38,8 @@ def get_config(factory_code: str, db: Session = Depends(get_db)):
 
 @router.put("/{factory_code}")
 def set_config(factory_code: str, payload: FactoryConfigUpdate, db: Session = Depends(get_db)):
+    if payload.enabled and not payload.auto_exit_action_code:
+        raise HTTPException(422, 'Configure the automatic cell EXIT action before enabling perimeter control')
     if payload.badge_source == "EXTERNAL":
         raise HTTPException(422, "External badge source is not yet implemented")
     c = db.get(FactoryPerimeterSettings, factory_code)
