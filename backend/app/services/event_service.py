@@ -112,7 +112,7 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
         return ScanResponse(**perimeter_scan(db, terminal, reporter_id, method))
     config = settings_for(db, terminal.factory_code)
     now = datetime.now(timezone.utc)
-    current_state = derive_worker_state(db, reporter_id)
+    current_state = derive_worker_state(db, reporter_id, terminal.factory_code)
     if is_duplicate(db, config, terminal, reporter_id, now):
         return ScanResponse(flow='DUPLICATE_IGNORED', worker_state=current_state.value)
     if current_state == WorkerState.OUTSIDE and config.enabled and not is_inside(db, terminal.factory_code, reporter_id):
@@ -148,7 +148,7 @@ def record_exit(db: Session, terminal_code: str, reporter_id: str, method: Ident
     _validate_method(terminal, method)
     if terminal.terminal_role != 'CELL':
         raise HTTPException(409, 'Perimeter terminals do not accept cell exit actions')
-    if derive_worker_state(db, reporter_id) != WorkerState.INSIDE:
+    if derive_worker_state(db, reporter_id, terminal.factory_code) != WorkerState.INSIDE:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Worker is not currently inside according to local TCD events")
 
     check_exit_policy(db, terminal, reporter_id)
