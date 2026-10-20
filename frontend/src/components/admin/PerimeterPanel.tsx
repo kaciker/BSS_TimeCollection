@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
-import type { AdminTerminal } from "../../types";
+import type { AdminAction, AdminTerminal } from "../../types";
 
 type Config = {
   factory_code: string; enabled: boolean; badge_source: "OPEN" | "EXTERNAL";
@@ -8,7 +8,8 @@ type Config = {
 };
 type Presence = { factory_code: string; inside: string[]; recent_events: Array<{id: string; badge: string; direction: string; at: string; auto_cell_exit_event_id: string | null}> };
 type Role = "CELL" | "PERIMETER_ENTER" | "PERIMETER_EXIT" | "PERIMETER_BOTH";
-export function PerimeterPanel({ terminals }: {terminals: AdminTerminal[]}) {
+export function PerimeterPanel({ terminals, actions }: {terminals: AdminTerminal[]; actions: AdminAction[]}) {
+  const exitActions = actions.filter(a => a.active && a.state_effect === "EXIT" && !a.requires_subaction);
   const [factory, setFactory] = useState("DEFAULT");
   const [config, setConfig] = useState<Config | null>(null);
   const [presence, setPresence] = useState<Presence | null>(null);
@@ -23,13 +24,14 @@ export function PerimeterPanel({ terminals }: {terminals: AdminTerminal[]}) {
     ]);
     setConfig(settings); setPresence(state);
   };
-  useEffect(() => { void load().catch(e => setError((e as Error).message)); }, [factory]);
+  useEffect(() => { setNotice(""); setError(""); void load().catch(e => setError((e as Error).message)); }, [factory]);
   const save = async () => {
     if (!config) return;
-    setBusy(true); setError("");
+    setBusy(true); setError(""); setNotice(""); setNotice("");
     try {
+      if (config.enabled && !exitActions.some(a => a.code === config.auto_exit_action_code)) { setError("Select an existing active EXIT action without subactions."); return; }
       await api.put(`/api/v1/admin/perimeter/${encodeURIComponent(factory)}`, config);
-      await load(); setNotice("Factory perimeter configuration saved.");
+      await load(); setError(""); setNotice("Factory perimeter configuration saved.");
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   };
@@ -37,7 +39,7 @@ export function PerimeterPanel({ terminals }: {terminals: AdminTerminal[]}) {
     setBusy(true); setError("");
     try {
       await api.put(`/api/v1/admin/perimeter/terminals/${encodeURIComponent(code)}/role`, {role: roles[code] ?? terminals.find(t => t.code === code)?.terminal_role ?? "CELL", factory_code: factory});
-      setNotice(`Terminal ${code} updated.`);
+      setError(""); setNotice(`Terminal ${code} updated.`);
     } catch(e) { setError((e as Error).message); }
     finally { setBusy(false); }
   };
@@ -52,7 +54,7 @@ export function PerimeterPanel({ terminals }: {terminals: AdminTerminal[]}) {
       <label>Badge validation <select value={config.badge_source} onChange={e => setConfig({...config, badge_source:e.target.value as Config["badge_source"]})}><option value="OPEN">OPEN (any scanned UID)</option><option value="EXTERNAL" disabled>EXTERNAL (future integration)</option></select></label>
       <label><input type="checkbox" checked={config.dedup_enabled} onChange={e => setConfig({...config, dedup_enabled:e.target.checked})} /> Ignore repeated scans</label>
       <label>Scan cooldown (seconds) <input type="number" min="0" max="300" value={config.dedup_seconds} onChange={e => setConfig({...config, dedup_seconds:Number(e.target.value)})} /></label>
-      <label>Automatic cell EXIT action code <input value={config.auto_exit_action_code ?? ""} onChange={e => setConfig({...config, auto_exit_action_code:e.target.value || null})} placeholder="Configure existing EXIT action" /></label>
+      <label>Automatic cell EXIT action <select value={config.auto_exit_action_code ?? ""} onChange={e => { setConfig({...config, auto_exit_action_code:e.target.value || null}); setNotice(""); setError(""); }}><option value="">Select an existing EXIT action</option>{exitActions.map(action => <option key={action.code} value={action.code}>{action.label} · {action.code}{!action.show_on_terminal ? " (hidden)" : ""}</option>)}</select>{exitActions.length === 0 && <small>No eligible EXIT actions. Create an active EXIT action without subactions in Actions first.</small>}{config.auto_exit_action_code && !exitActions.some(action => action.code === config.auto_exit_action_code) && <small>Previously selected action is no longer eligible; select another.</small>}</label>
       <button className="primary" disabled={busy || !factory} onClick={() => void save()}>Save factory settings</button>
     </div>}
     <h3>Terminal roles</h3>
