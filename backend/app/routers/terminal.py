@@ -27,6 +27,7 @@ router = APIRouter(prefix="/api/v1/terminal", tags=["terminal"])
 def _config(terminal: Terminal) -> TerminalConfig:
     actions = sorted([item for item in terminal.actions if item.active], key=lambda item: (item.display_order, item.id))
     return TerminalConfig(
+        terminal_role=terminal.terminal_role,
         code=terminal.code,
         name=terminal.name,
         identification_mode=terminal.identification_mode,
