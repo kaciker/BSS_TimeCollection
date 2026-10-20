@@ -79,6 +79,7 @@ export interface AdminAction {
   parent_action_code?: string | null;
   subaction_codes: string[];
   visual_key?: string | null;
+  show_on_terminal: boolean;
   active: boolean;
 }
 
