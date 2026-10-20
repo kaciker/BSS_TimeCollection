@@ -51,6 +51,7 @@ def test_perimeter_required_and_cascade_queues_only_cell_exit(monitor):
 def test_duplicate_and_open_uid(monitor):
     client, db = monitor
     cell, gate = setup_factory(client)
+    client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "DEFAULT", "role": "PERIMETER_ENTER"})
     activate_created_terminal(client, gate)
     assert scan(client, "0000").json()["flow"] == "FACTORY_ENTRY_RECORDED"
     assert scan(client, "0000").json()["flow"] == "DUPLICATE_IGNORED"
