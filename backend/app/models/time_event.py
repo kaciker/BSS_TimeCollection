@@ -14,6 +14,7 @@ class TimeEvent(Base):
     terminal_id: Mapped[int] = mapped_column(ForeignKey("terminals.id"))
     action_id: Mapped[int] = mapped_column(ForeignKey("actions.id"))
 
+    correlation_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     terminal_code: Mapped[str] = mapped_column(String(64))
     device_id: Mapped[str] = mapped_column(String(128))
     action_code: Mapped[str] = mapped_column(String(64))
