@@ -94,7 +94,7 @@ def perimeter_scan(db: Session, terminal: Terminal, badge: str, method) -> dict:
         cell_terminal = db.get(Terminal, last_cell.terminal_id)
         if cell_terminal is None or cell_terminal.factory_code != terminal.factory_code:
             raise HTTPException(409, "Cannot safely determine the cell for automatic exit")
-        auto_event = _create_event(db, cell_terminal, action, badge, method, commit=False)
+        auto_event = _create_event(db, cell_terminal, action, badge, method, commit=False, event_time=now, correlation_id=correlation_id)
     db.add(FactoryPerimeterEvent(
         id=str(uuid4()), factory_code=terminal.factory_code, reporter_id=badge,
         terminal_id=terminal.id, direction=direction, event_datetime=now,
