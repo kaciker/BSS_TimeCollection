@@ -1,0 +1,5 @@
+# Reuse the deployed, unchanged Python dependencies for the offline CORP build.
+FROM bsstimecollection-api:pre-perimeter-20261020
+WORKDIR /app
+COPY . .
+LABEL org.opencontainers.image.revision="a414089787f68f0d72394557efebd33195fa20cb+corp-corrections"

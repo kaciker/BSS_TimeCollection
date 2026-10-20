@@ -104,3 +104,20 @@ describe("terminal RFID flow", () => {
     expect(api.post).toHaveBeenCalledTimes(1); expect(api.post).toHaveBeenCalledWith("/api/v1/terminal/pairing", {});
   });
 });
+
+describe("perimeter terminal feedback", () => {
+  it.each([
+    ["DUPLICATE_IGNORED", "Scan already recorded"],
+    ["ALREADY_INSIDE", "Badge already inside factory"],
+    ["ALREADY_OUTSIDE", "Badge already outside factory"],
+    ["FACTORY_ENTRY_RECORDED", "Entry registered"],
+    ["FACTORY_EXIT_RECORDED", "Exit registered"],
+  ])("%s returns readable feedback and retains the RFID UID", async (flow, feedback) => {
+    vi.mocked(api.post).mockResolvedValue({ flow, worker_state: "OUTSIDE", actions: [], event: null });
+    await terminal("RFID"); await scan();
+    expect(screen.getByText(feedback)).toBeTruthy();
+    expect(api.post).toHaveBeenCalledExactlyOnceWith("/api/v1/terminal/scan", { reporter_id: card, identification_method: "RFID" });
+    await act(async () => { vi.advanceTimersByTime(2200); });
+    expect(screen.queryByText(feedback)).toBeNull();
+  });
+});

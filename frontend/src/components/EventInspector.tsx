@@ -19,6 +19,12 @@ export function EventInspector({ detail, onClose }: { detail: EventDetail; onClo
     ["Accepted by Oracle", dateLabel(event.sent_at)], ["timeEventRequestId", event.oracle_request_id],
     ["timeEventId", event.oracle_event_id],
   ];
+  if (event.event_kind === "PERIMETER") return <section className="admin-card event-inspector" aria-label="Event details">
+    <div className="monitor-heading"><div><div className="eyebrow">FACTORY PERIMETER</div><h2>Badge {event.reporter_id}</h2></div><button className="secondary" onClick={onClose}>Close details</button></div>
+    <p><Status value="LOCAL_ONLY" /> · Movimiento perimetral; no se transmite a Oracle.</p>
+    <dl className="event-fields">{[["Factory",event.factory_code],["Clock",event.terminal_code],["Direction",event.state_effect],["Time",dateLabel(event.event_datetime)],["Correlation ID",event.correlation_id],["Automatic cell EXIT",event.auto_cell_exit_event_id]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value ?? "—"}</dd></div>)}</dl>
+    <details><summary>Complete record stored in BSS</summary><Json value={event} /></details>
+  </section>;
   return <section className="admin-card event-inspector" aria-label="Event details">
     <div className="monitor-heading"><div><div className="eyebrow">EVENT DETAILS</div><h2>Badge {event.reporter_id}</h2></div><button className="secondary" onClick={onClose}>Close details</button></div>
     <p><Status value={event.delivery_status} /> · Oracle {detail.oracle_enabled ? "enabled" : "disabled"}</p>

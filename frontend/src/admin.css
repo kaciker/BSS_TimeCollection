@@ -40,3 +40,24 @@
 .admin-layout .list-toolbar>input,.admin-layout .list-toolbar>select{max-width:100%;min-width:0}
 .admin-layout .page-actions .table-controls{display:flex;flex-wrap:wrap;gap:8px}
 @media(max-width:600px){.admin-layout .list-toolbar>input,.admin-layout .list-toolbar>select{width:100%}.admin-layout .page-actions .table-controls>button{flex:1 1 100%}}
+
+/* Factory Perimeter uses the shared administration typography and controls. */
+.admin-layout .perimeter-switches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px;margin:24px 0}
+.admin-layout .perimeter-panel .switch-control{display:flex;align-items:center;gap:10px;position:relative;min-height:24px;font-size:12px;font-weight:500;color:#5c6f88;cursor:pointer}
+.admin-layout .perimeter-panel .switch-control input{left:0;top:50%;transform:translateY(-50%)}
+.admin-layout .perimeter-terminal-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end;gap:18px;padding:18px 0;border-bottom:1px solid var(--admin-line)}
+.admin-layout .perimeter-terminal-row:first-child{padding-top:0}
+.admin-layout .perimeter-terminal-row:last-child{padding-bottom:0;border-bottom:0}
+.admin-layout .perimeter-terminal-name{min-width:0;align-self:center;overflow-wrap:anywhere}
+.admin-layout .perimeter-terminal-name strong{font-size:13px;font-weight:600;color:#243650}
+.admin-layout .perimeter-role-control{min-width:0}
+.admin-layout .perimeter-role-control .field-label{margin:0 0 8px}
+.admin-layout .perimeter-role-control select{width:100%;min-width:0;height:42px;border:1px solid #d9e2ec;border-radius:7px;background:#fff;color:#2a3d57;padding:10px 12px;font-size:13px;font-weight:400}
+.admin-layout .perimeter-panel .resource-status{white-space:nowrap}
+.admin-layout .perimeter-panel .empty-state{margin:18px 0 0;font-size:12px}
+.admin-layout .perimeter-panel .resource-list .empty-state{margin:18px 24px}
+.admin-layout .perimeter-presence{margin-top:18px;max-width:none}
+.admin-layout .perimeter-presence span{overflow-wrap:anywhere;white-space:normal}
+.admin-layout .perimeter-audit-heading .section-heading{margin-bottom:0}
+@media(max-width:900px){.admin-layout .perimeter-terminal-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.admin-layout .perimeter-terminal-row .secondary{grid-column:2}}
+@media(max-width:760px){.admin-layout .perimeter-switches,.admin-layout .perimeter-terminal-row{grid-template-columns:1fr}.admin-layout .perimeter-terminal-row .secondary{grid-column:auto;width:100%}.admin-layout .perimeter-panel .resource-list .empty-state{margin:16px}}

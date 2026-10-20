@@ -14,6 +14,7 @@ export const languageOptions: { value: Language; label: string }[] = [
 
 const strings: Record<Language, Record<string, string>> = {
   en: {
+    duplicateRecorded: "Scan already recorded", alreadyInsideFactory: "Badge already inside factory", alreadyOutsideFactory: "Badge already outside factory",
     administration: "Administration", operations: "OPERATIONS", configuration: "CONFIGURATION",
     badgeStatus: "Badge status", eventLogs: "Event logs", transmissionLogs: "Transmission logs", terminals: "Terminals", actions: "Actions", database: "Database", settings: "Settings",
     badgeStatusDesc: "Current local state of each badge, derived from its latest captured event.", eventLogsDesc: "Inspect captured events, stored facts and Oracle delivery status.", transmissionLogsDesc: "Review every Oracle transmission attempt and its recorded response.", terminalsDesc: "Manage factory clocks, identification methods and assigned worker actions.", actionsDesc: "Configure worker actions, hierarchical exit reasons and Oracle supplier event mappings.", databaseDesc: "Inspect the primary database and validate a managed external PostgreSQL target.", settingsDesc: "Configure user-interface preferences for this browser.",
@@ -22,6 +23,7 @@ const strings: Record<Language, Record<string, string>> = {
     entryRegistered: "Entry registered", exitRegistered: "Exit registered", eventStored: "Your event has been stored.", exit: "EXIT", selectExit: "Select the reason for leaving", selectSubaction: "Select the specific reason", cancel: "Cancel", identification: "IDENTIFICATION", presentBadge: "Present your badge", keypadNote: "Enter your badge manually or present your card.", presentCard: "Present your card", readingCard: "Reading card…", enterBadge: "Enter badge number", continue: "Continue",
   },
   fr: {
+    duplicateRecorded: "Lecture déjà enregistrée", alreadyInsideFactory: "Carte déjà dans la fabrique", alreadyOutsideFactory: "Carte déjà hors de la fabrique",
     administration: "Administration", operations: "OPÉRATIONS", configuration: "CONFIGURATION",
     badgeStatus: "État des badges", eventLogs: "Journal des événements", transmissionLogs: "Journal des transmissions", terminals: "Terminaux", actions: "Actions", database: "Base de données", settings: "Paramètres",
     badgeStatusDesc: "État local actuel de chaque badge selon le dernier événement enregistré.", eventLogsDesc: "Consulter les événements enregistrés et leur état d'envoi vers Oracle.", transmissionLogsDesc: "Consulter chaque tentative de transmission Oracle et sa réponse.", terminalsDesc: "Gérer les pointeuses, les méthodes d'identification et les actions disponibles.", actionsDesc: "Configurer les actions, les motifs de sortie hiérarchiques et les correspondances Oracle.", databaseDesc: "Consulter la base principale et valider une base PostgreSQL externe.", settingsDesc: "Configurer les préférences d'interface de ce navigateur.",
@@ -30,6 +32,7 @@ const strings: Record<Language, Record<string, string>> = {
     entryRegistered: "Entrée enregistrée", exitRegistered: "Sortie enregistrée", eventStored: "Votre événement a été enregistré.", exit: "SORTIE", selectExit: "Sélectionnez le motif de sortie", selectSubaction: "Sélectionnez le motif précis", cancel: "Annuler", identification: "IDENTIFICATION", presentBadge: "Présentez votre badge", keypadNote: "Saisissez votre badge ou présentez votre carte.", presentCard: "Présentez votre carte", readingCard: "Lecture de la carte…", enterBadge: "Saisissez le numéro de badge", continue: "Continuer",
   },
   es: {
+    duplicateRecorded: "Fichaje ya registrado", alreadyInsideFactory: "Tarjeta ya dentro de fábrica", alreadyOutsideFactory: "Tarjeta ya fuera de fábrica",
     administration: "Administración", operations: "OPERACIONES", configuration: "CONFIGURACIÓN",
     badgeStatus: "Estado de tarjetas", eventLogs: "Registro de eventos", transmissionLogs: "Registro de transmisiones", terminals: "Terminales", actions: "Acciones", database: "Base de datos", settings: "Configuración",
     badgeStatusDesc: "Estado local actual de cada tarjeta según su último evento registrado.", eventLogsDesc: "Consulta los eventos capturados y su estado de envío a Oracle.", transmissionLogsDesc: "Revisa cada intento de transmisión a Oracle y su respuesta.", terminalsDesc: "Gestiona terminales, métodos de identificación y acciones disponibles.", actionsDesc: "Configura acciones, motivos de salida jerárquicos y mapeos de eventos Oracle.", databaseDesc: "Consulta la base principal y valida una PostgreSQL externa gestionada.", settingsDesc: "Configura las preferencias de interfaz de este navegador.",
@@ -38,6 +41,7 @@ const strings: Record<Language, Record<string, string>> = {
     entryRegistered: "Entrada registrada", exitRegistered: "Salida registrada", eventStored: "El evento se ha guardado.", exit: "SALIDA", selectExit: "Selecciona el motivo de salida", selectSubaction: "Selecciona el motivo específico", cancel: "Cancelar", identification: "IDENTIFICACIÓN", presentBadge: "Presenta tu tarjeta", keypadNote: "Introduce tu tarjeta manualmente o acércala al lector.", presentCard: "Presenta tu tarjeta", readingCard: "Leyendo tarjeta…", enterBadge: "Introduce el número de tarjeta", continue: "Continuar",
   },
   pl: {
+    duplicateRecorded: "Odczyt już zapisany", alreadyInsideFactory: "Karta już wewnątrz fabryki", alreadyOutsideFactory: "Karta już poza fabryką",
     administration: "Administracja", operations: "OPERACJE", configuration: "KONFIGURACJA",
     badgeStatus: "Status kart", eventLogs: "Dziennik zdarzeń", transmissionLogs: "Dziennik transmisji", terminals: "Terminale", actions: "Akcje", database: "Baza danych", settings: "Ustawienia",
     badgeStatusDesc: "Aktualny lokalny status każdej karty na podstawie ostatniego zdarzenia.", eventLogsDesc: "Przeglądaj zapisane zdarzenia i status wysyłki do Oracle.", transmissionLogsDesc: "Przeglądaj próby transmisji do Oracle i ich odpowiedzi.", terminalsDesc: "Zarządzaj terminalami, metodami identyfikacji i dostępnymi akcjami.", actionsDesc: "Konfiguruj akcje, hierarchiczne powody wyjścia i mapowanie Oracle.", databaseDesc: "Sprawdź główną bazę i zweryfikuj zewnętrzną bazę PostgreSQL.", settingsDesc: "Skonfiguruj preferencje interfejsu dla tej przeglądarki.",

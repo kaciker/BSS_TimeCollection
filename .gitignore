@@ -30,3 +30,11 @@ coverage/
 .cptr/
 
 *.tsbuildinfo
+
+# CORP offline dependency bundle and supplied source pack (local only)
+/frontend/node_modules.tar.gz
+/BSS_TimeCollection_motivos_definitivos.zip
+
+# Environment-managed workspace briefing (local only)
+/AGENTS.md
+/MYCODEX_CONTEXT_CATALOG.md

@@ -1,0 +1,9 @@
+# Perimeter-only terminals, 2026-10-20
+
+Deployed local fdd56e4. Terminal editor provides Perimeter only switch: disables Oracle device field, structure, work cell/exit policy and worker actions. Active perimeter terminals require only display name/input mode. Backend assigns internal device identity automatically within 40 characters, uses existing PERIMETER_BOTH role, empty actions/context/structure and DISABLED exit policy. Factory/direction assignment uses Factory Perimeter. Existing configured gate roles are preserved on edit. Cell conversion requires valid cell configuration; role-route conversion cannot bypass requirements. Clone supports action-free gates and disables their time exit policy. _create_event rejects non-cell origins; automatic cascade still uses the original CELL terminal. No schema migration.
+
+Tests: backend 72 passed, 1 optional skipped, including real PostgreSQL concurrency; frontend 34 passed/build. Restored production dump into isolated bss_gate_test, exercised API creation without time config, assignment to test factory, activation, RFID entry/exit and clone; original cell event count unchanged, no transmission attempts. No production test terminals or scans created.
+
+Backup recorded by /opt/BSSTimeCollection-backups/latest-perimeter-terminal; full application and pg_dump. Existing data fingerprints and .env/Compose identical before deployment. API/worker/web rebuilt/recreated only; original database and volumes retained. Oracle disabled; user ARGANDA settings preserved. No remote push.
+
+Operation: Admin → Terminals → New terminal → Perimeter only; set name/input method and save. Admin → Factory Perimeter → select factory → apply entrance/exit/both role to that terminal. Existing terminals are not reassigned automatically. Changing an existing cell terminal explicitly to perimeter clears its cell config; historical events and browser identity remain.

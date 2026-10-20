@@ -9,7 +9,8 @@ from app.domain.enums import IdentificationMode, StateEffect
 class TerminalSettings(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     name: str = Field(min_length=1, max_length=160)
-    external_device_id: str = Field(min_length=1, max_length=40)
+    perimeter_only: bool | None = None
+    external_device_id: str | None = Field(default=None, min_length=1, max_length=40)
     identification_mode: IdentificationMode = IdentificationMode.BOTH
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     active: bool = True

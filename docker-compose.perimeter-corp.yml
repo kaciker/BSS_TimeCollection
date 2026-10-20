@@ -1,0 +1,13 @@
+services:
+  api:
+    image: bsstimecollection-api:perimeter-corp-20261020
+    build:
+      dockerfile: Dockerfile.corp-offline
+  worker:
+    image: bsstimecollection-api:perimeter-corp-20261020
+    build:
+      dockerfile: Dockerfile.corp-offline
+  web:
+    image: bsstimecollection-web:perimeter-corp-20261020
+    build:
+      dockerfile: Dockerfile.corp-offline

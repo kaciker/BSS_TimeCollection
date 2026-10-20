@@ -80,7 +80,7 @@ export function TerminalPage() {
       return;
     }
     setRecordedAt(response.event?.event_datetime ?? null);
-    setMessage(response.flow === "DUPLICATE_IGNORED" ? "Fichaje ya registrado" : response.flow === "ALREADY_INSIDE" ? "Tarjeta ya dentro de fábrica" : response.flow === "ALREADY_OUTSIDE" ? "Tarjeta ya fuera de fábrica" : ["ENTRY_RECORDED", "FACTORY_ENTRY_RECORDED"].includes(response.flow) ? t("entryRegistered") : t("exitRegistered"));
+    setMessage(response.flow === "DUPLICATE_IGNORED" ? t("duplicateRecorded") : response.flow === "ALREADY_INSIDE" ? t("alreadyInsideFactory") : response.flow === "ALREADY_OUTSIDE" ? t("alreadyOutsideFactory") : ["ENTRY_RECORDED", "FACTORY_ENTRY_RECORDED"].includes(response.flow) ? t("entryRegistered") : t("exitRegistered"));
     confirmationTimer.current = setTimeout(() => { setMessage(""); setRecordedAt(null); reset(); }, 2200);
   };
 

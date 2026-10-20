@@ -40,7 +40,9 @@ def validate_action_hierarchy(action: Action, parent: Action | None) -> None:
         raise HTTPException(409, "Remove or reassign child actions before disabling sub-actions")
 
 
-def validate_actions(actions: list[Action], terminal_code: str) -> None:
+def validate_actions(actions: list[Action], terminal_code: str, terminal_role: str = "CELL") -> None:
+    if terminal_role != "CELL":
+        return
     enabled = [action for action in actions if action.active and action.show_on_terminal]
     if sum(action.state_effect == "ENTER" for action in enabled) != 1:
         raise HTTPException(409, f"Terminal {terminal_code} requires exactly one active entry action")

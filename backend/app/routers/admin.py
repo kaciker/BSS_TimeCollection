@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -134,25 +135,31 @@ def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
     terminal_code = payload.code or allocate_terminal_code(db)
     if db.scalar(select(Terminal).where(Terminal.code == terminal_code)):
         raise HTTPException(status_code=409, detail="Terminal code already exists")
-    check_device_id(db, payload.external_device_id)
-    actions = resolve_actions(db, payload.action_codes)
+    device_id = payload.external_device_id
+    if payload.perimeter_only:
+        device_id = device_id or (terminal_code if len(terminal_code) <= 40 else "GATE-" + uuid4().hex)
+    if not device_id:
+        raise HTTPException(422, "Oracle device ID is required for a cell terminal")
+    check_device_id(db, device_id)
+    actions = [] if payload.perimeter_only else resolve_actions(db, payload.action_codes)
     if payload.active:
-        validate_actions(actions, terminal_code)
-    leaf = _resolve_structure(db, payload.project_line_id, payload.workshop_id, payload.subworkshop_id, required=True)
+        validate_actions(actions, terminal_code, "PERIMETER_BOTH" if payload.perimeter_only else "CELL")
+    leaf = None if payload.perimeter_only else _resolve_structure(db, payload.project_line_id, payload.workshop_id, payload.subworkshop_id, required=True)
     terminal = Terminal(
         project_line_id=leaf.id if leaf else None,
         code=terminal_code,
         name=payload.name,
-        external_device_id=payload.external_device_id,
+        external_device_id=device_id,
+        terminal_role="PERIMETER_BOTH" if payload.perimeter_only else "CELL",
         identification_mode=payload.identification_mode.value,
         reporter_id_type=settings.oracle_reporter_id_type,
-        oracle_attributes=payload.oracle_attributes,
+        oracle_attributes={} if payload.perimeter_only else payload.oracle_attributes,
         active=payload.active,
         actions=actions,
     )
     activation_token = issue_activation_token(terminal)
     db.add(terminal)
-    _commit_terminal_settings(db, terminal, payload.exit_policy_mode)
+    _commit_terminal_settings(db, terminal, "DISABLED" if terminal.terminal_role != "CELL" else payload.exit_policy_mode)
     db.refresh(terminal)
     return _terminal_read(terminal, activation_token)
 
@@ -167,20 +174,26 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
     terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)).with_for_update())
     if terminal is None:
         raise HTTPException(404, "Terminal not found")
-    check_device_id(db, payload.external_device_id, terminal)
-    actions = resolve_actions(db, payload.action_codes)
+    perimeter = payload.perimeter_only if payload.perimeter_only is not None else terminal.terminal_role != "CELL"
+    role = (terminal.terminal_role if terminal.terminal_role != "CELL" else "PERIMETER_BOTH") if perimeter else "CELL"
+    device_id = payload.external_device_id or (terminal.external_device_id if perimeter else None)
+    if not device_id:
+        raise HTTPException(422, "Oracle device ID is required for a cell terminal")
+    check_device_id(db, device_id, terminal)
+    actions = [] if perimeter else resolve_actions(db, payload.action_codes)
     if payload.active:
-        validate_actions(actions, terminal.code)
-    leaf = _resolve_structure(db, payload.project_line_id, payload.workshop_id, payload.subworkshop_id, required=False)
-    terminal.project_line_id = leaf.id if leaf else terminal.project_line_id
+        validate_actions(actions, terminal.code, role)
+    leaf = None if perimeter else _resolve_structure(db, payload.project_line_id, payload.workshop_id, payload.subworkshop_id, required=terminal.terminal_role != "CELL")
+    terminal.project_line_id = None if perimeter else (leaf.id if leaf else terminal.project_line_id)
+    terminal.terminal_role = role
     terminal.name = payload.name
-    terminal.external_device_id = payload.external_device_id
+    terminal.external_device_id = device_id
     terminal.identification_mode = payload.identification_mode.value
     terminal.reporter_id_type = settings.oracle_reporter_id_type
-    terminal.oracle_attributes = payload.oracle_attributes
+    terminal.oracle_attributes = {} if perimeter else payload.oracle_attributes
     terminal.active = payload.active
     terminal.actions = actions
-    _commit_terminal_settings(db, terminal, payload.exit_policy_mode)
+    _commit_terminal_settings(db, terminal, "DISABLED" if terminal.terminal_role != "CELL" else payload.exit_policy_mode)
     db.refresh(terminal)
     return _terminal_read(terminal)
 
@@ -231,7 +244,7 @@ def update_terminal_actions(terminal_code: str, payload: TerminalActionsUpdate, 
         raise HTTPException(status_code=404, detail="Terminal not found")
     actions = resolve_actions(db, payload.action_codes)
     if terminal.active:
-        validate_actions(actions, terminal.code)
+        validate_actions(actions, terminal.code, terminal.terminal_role)
     terminal.actions = list(actions)
     commit_configuration(db)
     db.refresh(terminal)
@@ -297,7 +310,7 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
             affected.update({terminal.id: terminal for terminal in child.terminals})
         for terminal in affected.values():
             if terminal.active:
-                validate_actions(terminal.actions, terminal.code)
+                validate_actions(terminal.actions, terminal.code, terminal.terminal_role)
     except HTTPException:
         db.rollback()
         raise

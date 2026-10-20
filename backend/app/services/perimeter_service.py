@@ -73,8 +73,9 @@ def perimeter_scan(db: Session, terminal: Terminal, badge: str, method) -> dict:
         direction = "EXIT"
     else:
         direction = "EXIT" if inside else "ENTER"
-    # A physical exit must never be blocked by a scan cooldown.
-    if direction == "ENTER" and is_duplicate(db, config, terminal, badge, now):
+    # Dedicated exit readers bypass cooldown while inside. Bidirectional
+    # readers cannot distinguish a repeated read from a physical exit.
+    if is_duplicate(db, config, terminal, badge, now) and not (role == "PERIMETER_EXIT" and inside):
         return {"flow": "DUPLICATE_IGNORED", "worker_state": WorkerState.INSIDE.value if inside else WorkerState.OUTSIDE.value}
     if direction == "ENTER" and inside:
         return {"flow": "ALREADY_INSIDE", "worker_state": WorkerState.INSIDE.value}
@@ -90,14 +91,16 @@ def perimeter_scan(db: Session, terminal: Terminal, badge: str, method) -> dict:
             Action.active.is_(True), Action.state_effect == "EXIT",
             Action.requires_subaction.is_(False),
         ))
-        last_cell = db.scalar(select(TimeEvent).join(Terminal, TimeEvent.terminal_id == Terminal.id).where(TimeEvent.reporter_id == badge, Terminal.factory_code == terminal.factory_code).order_by(
+        last_cell = db.scalar(select(TimeEvent).join(Terminal, TimeEvent.terminal_id == Terminal.id).where(TimeEvent.reporter_id == badge, Terminal.factory_code == terminal.factory_code, TimeEvent.state_effect == "ENTER").order_by(
             TimeEvent.event_datetime.desc(), TimeEvent.created_at.desc(), TimeEvent.id.desc()).limit(1))
         if action is None or last_cell is None:
             raise HTTPException(409, "Automatic exit action or original cell event unavailable")
         cell_terminal = db.get(Terminal, last_cell.terminal_id)
         if cell_terminal is None or cell_terminal.factory_code != terminal.factory_code:
             raise HTTPException(409, "Cannot safely determine the cell for automatic exit")
-        auto_event = _create_event(db, cell_terminal, action, badge, method, commit=False, event_time=event_time, correlation_id=correlation_id)
+        auto_event = _create_event(db, cell_terminal, action, badge, method, commit=False, event_time=event_time, correlation_id=correlation_id, snapshot=last_cell)
+        # Flush the cell EXIT first: the local movement has an FK to it.
+        db.flush()
     db.add(FactoryPerimeterEvent(
         id=str(uuid4()), factory_code=terminal.factory_code, reporter_id=badge,
         terminal_id=terminal.id, direction=direction, event_datetime=event_time,

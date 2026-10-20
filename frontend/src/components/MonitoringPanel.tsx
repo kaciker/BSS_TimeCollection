@@ -8,7 +8,7 @@ import type { AttemptSummary, CardState, EventDetail, EventSnapshot, Page } from
 
 type View = "cards" | "events" | "attempts";
 const statuses = ["PENDING", "SENDING", "RETRY", "SENT", "REJECTED", "UNKNOWN"];
-const initialFilters = { clock: "", badge: "", state: "INSIDE", status: "", start: "", end: "" };
+const initialFilters = { clock: "", badge: "", state: "", factoryState: "", status: "", start: "", end: "" };
 const pageSize = 50;
 
 export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }: { terminals: AdminTerminal[]; initialView?: View; onNavigate?: (view: View, query?: string) => void }) {
@@ -21,6 +21,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
   const [offset, setOffset] = useState(0);
   const [revision, setRevision] = useState(0);
   const [data, setData] = useState<Page<EventSnapshot | CardState | AttemptSummary>>({ items: [], total: 0 });
+  const [factoryEnabled, setFactoryEnabled] = useState(false);
   const [dataView, setDataView] = useState<View>(initialView);
   const items = dataView === view ? data.items : [];
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
     if (filters.clock) query.set("terminal_code", filters.clock);
     if (filters.badge) query.set("reporter_id", filters.badge);
     if (view === "cards" && filters.state) query.set("worker_state", filters.state);
+    if (view === "cards" && filters.factoryState) query.set("factory_state", filters.factoryState);
     if (view !== "cards" && filters.status) query.set(view === "events" ? "delivery_status" : "result", filters.status);
     if (view === "events") {
       if (filters.start) query.set("start", new Date(filters.start).toISOString());
@@ -56,7 +58,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
       pending = true;
       try {
         const result = await api.get<Page<EventSnapshot | CardState | AttemptSummary>>(`/api/v1/admin/monitoring/${view}?${query}`);
-        if (active) { setData(result); setDataView(view); setError(""); setUpdated(new Date().toISOString()); }
+        if (active) { setData(result); if (view === "cards") setFactoryEnabled(!!result.factory_perimeter_enabled); setDataView(view); setError(""); setUpdated(new Date().toISOString()); }
       } catch (err) { if (active) setError((err as Error).message); }
       finally { pending = false; if (active) setLoading(false); }
     };
@@ -91,17 +93,18 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
       <form className="monitor-filters" onSubmit={apply}>
         <label>Clock<select value={draft.clock} onChange={e => setDraft({ ...draft, clock: e.target.value })}><option value="">All clocks</option>{terminals.map(terminal => <option key={terminal.code} value={terminal.code}>{terminal.code} · {terminal.name}</option>)}{removedCodes.map(code => <option key={code} value={code}>{code} · removed</option>)}</select></label>
         <label>Badge number<input value={draft.badge} placeholder="Search badge" onChange={e => setDraft({ ...draft, badge: e.target.value })} /></label>
-        {view === "cards" ? <label>Local state<select value={draft.state} onChange={e => setDraft({ ...draft, state: e.target.value })}><option value="">All</option><option value="INSIDE">Inside</option><option value="OUTSIDE">Outside</option></select></label> : <label>{view === "events" ? "Delivery" : "Attempt result"}<select value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value })}><option value="">All</option>{statuses.map(status => <option key={status}>{status}</option>)}</select></label>}
+        {view === "cards" ? <label>Estado de célula<select value={draft.state} onChange={e => setDraft({ ...draft, state: e.target.value })}><option value="">All</option><option value="INSIDE">Inside</option><option value="OUTSIDE">Outside</option></select></label> : <label>{view === "events" ? "Delivery" : "Attempt result"}<select value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value })}><option value="">All</option>{(view === "events" ? [...statuses,"LOCAL_ONLY"] : statuses).map(status => <option key={status}>{status}</option>)}</select></label>}
+        {view === "cards" && factoryEnabled && <label>Estado de fábrica<select value={draft.factoryState} onChange={e => setDraft({ ...draft, factoryState: e.target.value })}><option value="">Todos</option><option value="INSIDE">Dentro</option><option value="OUTSIDE">Fuera</option></select></label>}
         {view === "events" && <><label>From<input type="datetime-local" value={draft.start} onChange={e => setDraft({ ...draft, start: e.target.value })} /></label><label>To<input type="datetime-local" value={draft.end} onChange={e => setDraft({ ...draft, end: e.target.value })} /></label></>}
         <button className="primary" type="submit">Apply filters</button>
         <button className="secondary" type="button" onClick={() => { setDraft(initialFilters); setFilters({ ...initialFilters }); setOffset(0); }}>Reset</button>
       </form>
-      <p className="muted">{view === "cards" ? "State derived from each badge's latest event across all clocks. The clock filter refers to the latest event; this is not Oracle-validated attendance." : view === "events" ? "Events stored in BSS. Open the details to view all recorded data and delivery history." : "Each Oracle transmission attempt, with its request, response and technical result in the details."}</p>
+      <p className="muted">{view === "cards" ? "El estado de célula se calcula con los fichajes de célula. El estado de fábrica usa las entradas y salidas perimetrales y solo se muestra si el perímetro está activado. El filtro de reloj corresponde a la última lectura." : view === "events" ? "Events stored in BSS. Open the details to view all recorded data and delivery history." : "Each Oracle transmission attempt, with its request, response and technical result in the details."}</p>
       <p className="monitor-count" aria-live="polite">{loading ? "Loading…" : `${data.total} ${view === "cards" ? "badges" : view === "events" ? "events" : "attempts"}`}<span className="muted">Auto-refresh every 15 s · {dateLabel(updated)}</span></p>
       {error && <div className="inline-error" role="alert">{error}</div>}
       <div className="table-wrap">
-        {view === "cards" && <table><thead><tr><th>Badge</th><th>Local state</th><th>Latest clock</th><th>Latest event</th><th>Action</th><th>Delivery</th><th>Inspect</th></tr></thead><tbody>{(items as CardState[]).map(card => <tr key={card.reporter_id}><td><strong>{card.reporter_id}</strong></td><td>{badgeStatus(card.worker_state)}</td><td>{card.event.terminal_code}</td><td>{dateLabel(card.event.event_datetime)}</td><td>{card.event.action_label}</td><td><Status value={card.event.delivery_status} /></td><td className="row-actions"><button onClick={() => void inspect(card.event.id)}>Details</button><button onClick={() => history(card.reporter_id)}>History</button></td></tr>)}</tbody></table>}
-        {view === "events" && <table><thead><tr><th>Event time</th><th>Clock</th><th>Badge</th><th>Action</th><th>Effect</th><th>Delivery</th><th>Attempts</th><th>Inspect</th></tr></thead><tbody>{(items as EventSnapshot[]).map(event => <tr key={event.id}><td>{dateLabel(event.event_datetime)}</td><td>{event.terminal_code}</td><td><strong>{event.reporter_id}</strong></td><td>{event.action_label}</td><td>{event.state_effect}</td><td><Status value={event.delivery_status} /></td><td>{event.attempt_count}</td><td className="row-actions"><button onClick={() => void inspect(event.id)}>Details</button></td></tr>)}</tbody></table>}
+        {view === "cards" && <table><thead><tr><th>Badge</th><th>Estado de célula</th>{factoryEnabled && <th>Estado de fábrica</th>}<th>Latest clock</th><th>Latest event</th><th>Action</th><th>Delivery</th><th>Inspect</th></tr></thead><tbody>{(items as CardState[]).map(card => <tr key={card.reporter_id}><td><strong>{card.reporter_id}</strong></td><td>{badgeStatus(card.worker_state)}</td>{factoryEnabled && <td>{card.factory_state ? <>{badgeStatus(card.factory_state)}<div className="cell-secondary">{card.factory_code}</div></> : <span className="muted">No activado</span>}</td>}<td>{card.event.terminal_code}</td><td>{dateLabel(card.event.event_datetime)}</td><td>{card.event.action_label}</td><td><Status value={card.event.delivery_status} /></td><td className="row-actions"><button onClick={() => void inspect(card.event.id)}>Details</button><button onClick={() => history(card.reporter_id)}>History</button></td></tr>)}</tbody></table>}
+        {view === "events" && <table><thead><tr><th>Event time</th><th>Clock</th><th>Badge</th><th>Action</th><th>Effect</th><th>Delivery</th><th>Attempts</th><th>Inspect</th></tr></thead><tbody>{(items as EventSnapshot[]).map(event => <tr key={event.id}><td>{dateLabel(event.event_datetime)}</td><td>{event.terminal_code}</td><td><strong>{event.reporter_id}</strong></td><td>{event.action_label}<div className="cell-secondary">{event.event_kind === "PERIMETER" ? `Perímetro · ${event.factory_code}` : "Célula"}</div></td><td>{event.state_effect}</td><td><Status value={event.delivery_status} /></td><td>{event.attempt_count}</td><td className="row-actions"><button onClick={() => void inspect(event.id)}>Details</button></td></tr>)}</tbody></table>}
         {view === "attempts" && <table><thead><tr><th>Attempt time</th><th>Clock</th><th>Badge</th><th>Attempt</th><th>Result</th><th>HTTP</th><th>Duration</th><th>Inspect</th></tr></thead><tbody>{(items as AttemptSummary[]).map(attempt => <tr key={attempt.id}><td>{dateLabel(attempt.started_at)}</td><td>{attempt.terminal_code}</td><td>{attempt.reporter_id}</td><td>{attempt.attempt_number}</td><td><Status value={attempt.result} /></td><td>{attempt.http_status ?? "—"}</td><td>{attempt.duration_ms} ms</td><td className="row-actions"><button onClick={() => void inspect(attempt.event_id)}>Details</button></td></tr>)}</tbody></table>}
       </div>
       {!loading && !items.length && <p className="empty-state">{view === "attempts" ? "No recorded attempts match these filters. Pending events may not have been sent yet." : "No results match these filters."}</p>}

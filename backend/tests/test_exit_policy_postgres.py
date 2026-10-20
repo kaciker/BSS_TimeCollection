@@ -55,7 +55,7 @@ def test_postgres_fresh_migration_and_legacy_adoption(pg_schema):
     migrate(url)
     migrate(url)
     with engine.connect() as c:
-        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one()=='0008_exit_policies'
+        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one()=='0011_action_visibility'
         assert c.execute(text('SELECT mode FROM exit_policies')).scalar_one()=='DISABLED'
     with pytest.raises(Exception):
         with engine.begin() as c:c.execute(text("INSERT INTO exit_policies (terminal_id,mode) VALUES (NULL,'SAME_TERMINAL')"))

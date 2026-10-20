@@ -48,6 +48,7 @@ def upgrade():
     op.add_column("terminals", sa.Column("factory_code", sa.String(64), nullable=False, server_default="DEFAULT"))
     op.add_column("terminals", sa.Column("terminal_role", sa.String(16), nullable=False, server_default="CELL"))
 
+    op.create_check_constraint("ck_terminal_role", "terminals", "terminal_role IN ('CELL', 'PERIMETER_ENTER', 'PERIMETER_EXIT', 'PERIMETER_BOTH')")
 
 def downgrade():
     op.drop_constraint("ck_terminal_role", "terminals", type_="check")

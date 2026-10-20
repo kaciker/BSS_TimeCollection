@@ -30,7 +30,7 @@ def clone_terminal(db: Session, terminal_code: str) -> Terminal:
     if source is None:
         raise HTTPException(404, "Terminal not found")
     if source.active:
-        validate_actions(source.actions, source.code)
+        validate_actions(source.actions, source.code, source.terminal_role)
 
     code = allocate_terminal_code(db)
     device_id, copy_index = _allocate_cloned_device_id(db, source)
@@ -43,11 +43,17 @@ def clone_terminal(db: Session, terminal_code: str) -> Terminal:
         reporter_id_type=settings.oracle_reporter_id_type,
         oracle_attributes=deepcopy(source.oracle_attributes or {}),
         project_line_id=source.project_line_id,
+        factory_code=source.factory_code,
+        terminal_role=source.terminal_role,
         active=source.active,
         actions=list(source.actions),
     )
     # Browser identity, tokens, diagnostics and event history are never copied.
     db.add(clone)
+    if clone.terminal_role != "CELL":
+        from app.services.exit_policy import save_mode
+        db.flush()
+        save_mode(db, clone.id, "DISABLED", commit=False)
     commit_configuration(db)
     db.refresh(clone)
     return clone

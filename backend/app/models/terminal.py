@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, JSON, String, Table
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Integer, JSON, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -15,6 +15,7 @@ terminal_actions = Table(
 
 class Terminal(Base):
     __tablename__ = "terminals"
+    __table_args__ = (CheckConstraint("terminal_role IN ('CELL', 'PERIMETER_ENTER', 'PERIMETER_EXIT', 'PERIMETER_BOTH')", name="ck_terminal_role"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     factory_code: Mapped[str] = mapped_column(String(64), default='DEFAULT')

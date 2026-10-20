@@ -15,7 +15,7 @@ Optional factory-local UID presence tracking. Existing installations remain disa
 - `enabled`: factory presence required for cell entry; default false.
 - `badge_source`: `OPEN` accepts any UID presented at the gate. `EXTERNAL` is reserved and cannot be enabled until a validator is implemented.
 - `dedup_enabled` and `dedup_seconds`: per-factory repeat scan policy; defaults true and 5 seconds once a factory is explicitly configured. Existing installations without a configuration retain legacy capture behavior.
-- Physical gate EXIT is never blocked by the duplicate-scan policy. Use dedicated entrance and exit readers where physical direction is known.
+- Dedicated PERIMETER_EXIT readers bypass cooldown while presence is inside. PERIMETER_BOTH readers apply cooldown to prevent repeated reads from toggling presence; an exit at the same reader requires waiting for cooldown. Use dedicated exit readers for a physical barrier; this software does not actuate a barrier.
 - `auto_exit_action_code`: existing active EXIT action used to label automatic cell exits. Use a distinct catalog action for reporting/Oracle mapping if desired; do not use an action requiring subactions.
 
 ## Integration boundaries

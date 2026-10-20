@@ -62,6 +62,12 @@ def set_terminal_role(terminal_code: str, payload: TerminalRoleUpdate, db: Sessi
     terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)).with_for_update())
     if terminal is None:
         raise HTTPException(404, "Terminal not found")
+    if payload.role == "CELL" and terminal.terminal_role != "CELL":
+        from app.services.configuration_service import validate_actions
+        validate_actions(terminal.actions, terminal.code)
+        leaf = terminal.project_line
+        if leaf is None or not leaf.active or not leaf.subworkshop.active or not leaf.subworkshop.workshop.active:
+            raise HTTPException(422, "Configure cell structure and actions in Terminals before selecting the Cell role")
     terminal.factory_code = payload.factory_code
     terminal.terminal_role = payload.role
     db.commit()

@@ -49,7 +49,9 @@ def _terminal_action(action: Action) -> TerminalAction:
     return TerminalAction(code=action.code, label=action.label, has_subactions=action.requires_subaction, visual_key=action.visual_key)
 
 
-def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod, *, commit: bool = True, event_time: datetime | None = None, correlation_id: str | None = None) -> TimeEvent:
+def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod, *, commit: bool = True, event_time: datetime | None = None, correlation_id: str | None = None, snapshot: TimeEvent | None = None) -> TimeEvent:
+    if terminal.terminal_role != "CELL":
+        raise HTTPException(409, "Perimeter terminals cannot create cell time events")
     event_id = str(uuid4())
     event_time = event_time or datetime.now(ZoneInfo(settings.event_timezone))
     # work_cell is a local exit-policy attribute, not part of the Oracle TCD context.
@@ -58,7 +60,7 @@ def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: 
     structure = terminal.project_line
     branch = structure.subworkshop if structure else None
     workshop = branch.workshop if branch else None
-    if structure and (not structure.active or not branch.active or not workshop.active):
+    if snapshot is None and structure and (not structure.active or not branch.active or not workshop.active):
         raise HTTPException(status_code=409, detail="Assigned operational structure is inactive")
     event = TimeEvent(
         workshop_code=workshop.code if workshop else None,
@@ -86,6 +88,10 @@ def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: 
         oracle_attributes=oracle_attributes,
         delivery_status="PENDING",
     )
+    if snapshot is not None:
+        for field in ("terminal_code", "device_id", "workshop_code", "workshop_description", "subworkshop_code", "subworkshop_description", "project_line_code", "project_line_description"):
+            setattr(event, field, getattr(snapshot, field))
+        event.oracle_attributes = {**(snapshot.oracle_attributes or {}), **{k: v for k, v in (action.oracle_attributes or {}).items() if k != "work_cell"}}
     db.add(event)
     if commit:
         db.commit()
@@ -108,14 +114,16 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
     terminal = _get_terminal(db, terminal_code)
     _validate_method(terminal, method)
     from datetime import timezone
-    from app.services.perimeter_service import settings_for, is_inside, is_duplicate, remember_read, perimeter_scan
+    from app.services.perimeter_service import settings_for, is_inside, is_duplicate, remember_read, perimeter_scan, check_badge_source
     if terminal.terminal_role != 'CELL':
         return ScanResponse(**perimeter_scan(db, terminal, reporter_id, method))
     config = settings_for(db, terminal.factory_code)
     now = datetime.now(timezone.utc)
     current_state = derive_worker_state(db, reporter_id, terminal.factory_code)
-    if current_state == WorkerState.OUTSIDE and config.enabled and not is_inside(db, terminal.factory_code, reporter_id):
-        raise HTTPException(409, 'Badge has not entered the factory perimeter')
+    if current_state == WorkerState.OUTSIDE and config.enabled:
+        check_badge_source(config, reporter_id)
+        if not is_inside(db, terminal.factory_code, reporter_id):
+            raise HTTPException(409, 'Badge has not entered the factory perimeter')
     if is_duplicate(db, config, terminal, reporter_id, now):
         return ScanResponse(flow='DUPLICATE_IGNORED', worker_state=current_state.value)
 
@@ -149,7 +157,12 @@ def record_exit(db: Session, terminal_code: str, reporter_id: str, method: Ident
     _validate_method(terminal, method)
     if terminal.terminal_role != 'CELL':
         raise HTTPException(409, 'Perimeter terminals do not accept cell exit actions')
-    if derive_worker_state(db, reporter_id, terminal.factory_code) != WorkerState.INSIDE:
+    from datetime import timezone
+    from app.services.perimeter_service import settings_for, is_duplicate
+    current_state = derive_worker_state(db, reporter_id, terminal.factory_code)
+    if current_state != WorkerState.INSIDE and is_duplicate(db, settings_for(db, terminal.factory_code), terminal, reporter_id, datetime.now(timezone.utc)):
+        return ScanResponse(flow="DUPLICATE_IGNORED", worker_state=current_state.value)
+    if current_state != WorkerState.INSIDE:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Worker is not currently inside according to local TCD events")
 
     check_exit_policy(db, terminal, reporter_id)
