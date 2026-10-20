@@ -25,15 +25,18 @@ def setup_factory(client):
 def test_perimeter_required_and_cascade_queues_only_cell_exit(monitor):
     client, db = monitor
     cell, gate = setup_factory(client)
-    activate_created_terminal(client, cell)
+    token = client.post('/api/v1/admin/terminals/CLOCK-A/provision').json()['activation_token']
+    assert client.post('/api/v1/terminal/activate', json={'token': token}).status_code == 200
     assert scan(client).status_code == 409
     assert db.scalars(select(TimeEvent)).all() == []
     activate_created_terminal(client, gate)
     assert scan(client).json()["flow"] == "FACTORY_ENTRY_RECORDED"
     assert db.scalars(select(TimeEvent)).all() == []
-    activate_created_terminal(client, cell)
+    token = client.post('/api/v1/admin/terminals/CLOCK-A/provision').json()['activation_token']
+    assert client.post('/api/v1/terminal/activate', json={'token': token}).status_code == 200
     assert scan(client).json()["flow"] == "ENTRY_RECORDED"
-    activate_created_terminal(client, gate)
+    token = client.post('/api/v1/admin/terminals/GATE/provision').json()['activation_token']
+    assert client.post('/api/v1/terminal/activate', json={'token': token}).status_code == 200
     result = scan(client)
     assert result.status_code == 200, result.text
     assert result.json()["flow"] == "FACTORY_EXIT_RECORDED"
