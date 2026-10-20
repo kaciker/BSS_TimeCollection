@@ -49,9 +49,9 @@ def _terminal_action(action: Action) -> TerminalAction:
     return TerminalAction(code=action.code, label=action.label, has_subactions=action.requires_subaction, visual_key=action.visual_key)
 
 
-def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod, *, commit: bool = True) -> TimeEvent:
+def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod, *, commit: bool = True, event_time: datetime | None = None, correlation_id: str | None = None) -> TimeEvent:
     event_id = str(uuid4())
-    event_time = datetime.now(ZoneInfo(settings.event_timezone))
+    event_time = event_time or datetime.now(ZoneInfo(settings.event_timezone))
     # work_cell is a local exit-policy attribute, not part of the Oracle TCD context.
     oracle_attributes = {key: value for key, value in (terminal.oracle_attributes or {}).items() if key != "work_cell"}
     oracle_attributes.update({key: value for key, value in (action.oracle_attributes or {}).items() if key != "work_cell"})
@@ -68,6 +68,7 @@ def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: 
         project_line_code=structure.code if structure else None,
         project_line_description=structure.description if structure else None,
         id=event_id,
+        correlation_id=correlation_id,
         request_number=f"BSS-{terminal.code}-{event_id}",
         terminal_id=terminal.id,
         action_id=action.id,
