@@ -1,19 +1,11 @@
 import { useState } from "react";
+import { actionVisuals } from "../../actionVisuals";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import type { AdminAction, AdminTerminal } from "../../types";
 import { EditorDialog } from "./EditorDialog";
 
-const actionVisuals = [
-  { key: "", name: "No illustration" },
-  { key: "end-work", name: "End work" },
-  { key: "break", name: "Break" },
-  { key: "factory", name: "Factory exit" },
-  { key: "no-work", name: "No work" },
-  { key: "medical", name: "Medical" },
-  { key: "personal", name: "Personal matters" },
-  { key: "legal", name: "Legal matters" },
-];
+
 
 export function ActionEditor({ action, actions, terminals, onClose, onSaved }: {
   action: AdminAction | null; actions: AdminAction[]; terminals: AdminTerminal[]; onClose: () => void; onSaved: (value: AdminAction) => void;

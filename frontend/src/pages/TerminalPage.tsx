@@ -1,3 +1,4 @@
+import { actionVisualKeys } from "../actionVisuals";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardWedge } from "../keyboardWedge";
 import { api } from "../api";
@@ -6,7 +7,7 @@ import { TerminalClock } from "../components/TerminalClock";
 import { useLanguage } from "../i18n";
 import type { IdentificationMethod, ScanResponse, TerminalAction, TerminalConfig, TerminalPairingStart, TerminalPairingStatus } from "../types";
 
-const actionVisualKeys = new Set(["factory", "break", "medical", "personal", "legal", "end-work", "no-work"]);
+
 
 function activationTokenFromLocation(): string {
   if (window.location.pathname !== "/terminal/activate") return "";
