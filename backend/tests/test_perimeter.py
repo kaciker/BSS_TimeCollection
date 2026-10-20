@@ -47,7 +47,8 @@ def test_perimeter_required_and_cascade_queues_only_cell_exit(monitor):
     movements = db.scalars(select(FactoryPerimeterEvent).order_by(FactoryPerimeterEvent.event_datetime)).all()
     assert len(movements) == 2
     assert movements[-1].auto_cell_exit_event_id == events[-1].id
-    activate_created_terminal(client, cell)
+    token = client.post("/api/v1/admin/terminals/CLOCK-A/provision").json()["activation_token"]
+    assert client.post("/api/v1/terminal/activate", json={"token": token}).status_code == 200
     assert scan(client).status_code == 409
 
 
