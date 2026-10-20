@@ -107,6 +107,7 @@ def _action_read(action: Action) -> ActionRead:
         display_order=action.display_order,
         requires_subaction=action.requires_subaction,
         visual_key=action.visual_key,
+        show_on_terminal=action.show_on_terminal,
         parent_action_code=action.parent_action.code if action.parent_action else None,
         subaction_codes=sorted(child.code for child in action.subactions),
         active=action.active,
@@ -259,6 +260,7 @@ def create_action(payload: ActionCreate, db: Session = Depends(get_db)):
         display_order=payload.display_order,
         requires_subaction=payload.requires_subaction,
         visual_key=payload.visual_key,
+        show_on_terminal=payload.show_on_terminal,
         parent_action=parent,
         active=payload.active,
     )
@@ -283,6 +285,7 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
     action.display_order = payload.display_order
     action.requires_subaction = payload.requires_subaction
     action.visual_key = payload.visual_key
+    action.show_on_terminal = payload.show_on_terminal
     action.parent_action = parent
     action.active = payload.active
     try:
