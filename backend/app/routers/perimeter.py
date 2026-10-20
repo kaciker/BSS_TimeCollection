@@ -73,7 +73,8 @@ def presence(factory_code: str, limit: int = Query(200, ge=1, le=1000), db: Sess
     rows = db.scalars(select(FactoryPerimeterEvent).where(
         FactoryPerimeterEvent.factory_code == factory_code,
     ).order_by(FactoryPerimeterEvent.event_datetime.desc()).limit(limit)).all()
-    badges = list(dict.fromkeys(row.reporter_id for row in rows))
+    badges = db.scalars(select(FactoryPerimeterEvent.reporter_id).where(
+        FactoryPerimeterEvent.factory_code == factory_code).distinct()).all()
     return {"factory_code": factory_code, "inside": [badge for badge in badges if is_inside(db, factory_code, badge)],
             "recent_events": [{"id": row.id, "badge": row.reporter_id, "direction": row.direction,
                                "at": row.event_datetime, "correlation_id": row.correlation_id,
