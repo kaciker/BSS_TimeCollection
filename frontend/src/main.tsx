@@ -8,5 +8,7 @@ import "./admin.css";
 const isAdmin = window.location.pathname.startsWith("/admin");
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>{isAdmin ? <AdminPage /> : <TerminalPage />}</React.StrictMode>,
+  <React.StrictMode>
+    {isAdmin ? <AdminPage /> : <TerminalPage />}
+  </React.StrictMode>,
 );
