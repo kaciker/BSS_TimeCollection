@@ -39,7 +39,7 @@ export interface Attempt {
 }
 export interface AttemptSummary extends Attempt { reporter_id: string; terminal_code: string }
 export interface CardState { reporter_id: string; worker_state: "INSIDE" | "OUTSIDE"; factory_code?: string | null; factory_state?: "INSIDE" | "OUTSIDE" | null; event: EventSnapshot }
-export interface Page<T> { items: T[]; total: number; factory_perimeter_enabled?: boolean; external_factory_presence?: boolean }
+export interface Page<T> { items: T[]; total: number; factory_perimeter_enabled?: boolean }
 export interface EventDetail { event: EventSnapshot; attempts: Attempt[]; oracle_enabled: boolean; oracle_payload_preview: Record<string, unknown> | null }
 export const dateLabel = (value: string | null, language = "en") => value ? new Date(value).toLocaleString(language) : "—";
 export function Status({ value, t }: { value: string; t?: (key: string) => string }) {
