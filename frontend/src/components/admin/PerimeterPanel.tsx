@@ -115,17 +115,20 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
       </div>)}</div>
       {!terminalRows.length && <div className="empty-state">No terminals configured.</div>}
     </section>
-    <section className="admin-card">
+    {config?.badge_source === "EXTERNAL" ? <section className="admin-card">
+      <div className="section-heading"><div><h3>Factory presence</h3><p>Presence is authoritative in Arganda SECURITY_DB. This local BSS view shows historical local gate movements only.</p></div></div>
+      <div className="empty-state">External presence is not available in this local movement list.</div>
+    </section> : <section className="admin-card">
       <div className="section-heading"><div><h3>Factory presence</h3><p>Cards currently inside the selected factory.</p></div>
         <button className="secondary" disabled={busy} onClick={() => void load().catch(e => setError((e as Error).message))}>Refresh presence</button>
       </div>
       <div className="list-stats"><strong>{presence?.inside.length ?? 0}</strong><span>cards inside factory</span></div>
       {presence?.inside.length ? <div className="action-tags perimeter-presence">{presence.inside.map(badge => <span key={badge}>{badge}</span>)}</div> : <div className="empty-state">No cards currently inside this factory.</div>}
-    </section>
-    <section className="admin-card resource-list">
+    </section>}
+    {config?.badge_source !== "EXTERNAL" && <section className="admin-card resource-list">
       <div className="list-toolbar perimeter-audit-heading"><div className="section-heading"><div><h3>Recent perimeter movements</h3><p>Factory entry, exit and automatic cell exit history.</p></div></div></div>
       {presence?.recent_events.length ? <div className="table-wrap"><table><thead><tr><th>UID</th><th>Direction</th><th>Time</th><th>Auto cell exit</th></tr></thead>
         <tbody>{presence.recent_events.map(e => <tr key={e.id}><td><strong>{e.badge}</strong></td><td><span className="status">{e.direction}</span></td><td>{new Date(e.at).toLocaleString()}</td><td><code>{e.auto_cell_exit_event_id ?? "—"}</code></td></tr>)}</tbody></table></div> : <div className="empty-state">No perimeter movements recorded.</div>}
-    </section>
+    </section>}
   </div>;
 }

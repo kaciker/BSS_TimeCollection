@@ -65,7 +65,6 @@ def check_external_presence(badge: str, *, now: datetime | None = None, query=No
             connection = pyodbc.connect(_connection_string(), timeout=3, autocommit=True)
             try:
                 cursor = connection.cursor()
-                cursor.timeout = 3
                 cursor.execute(SQL, converted)
                 row = cursor.fetchone()
             finally:
@@ -79,7 +78,13 @@ def check_external_presence(badge: str, *, now: datetime | None = None, query=No
             return {"status": "ERROR", "event_time": None}
     if row is None:
         return {"status": "UNKNOWN", "event_time": None}
-    event_time, zone_code = row[0], row[1]
+    event_time, raw_zone_code = row[0], row[1]
+    # SECURITY_DB stores acc_zone_code as nvarchar; ODBC therefore returns
+    # "1"/"2" rather than integers. Reject malformed values as UNKNOWN.
+    try:
+        zone_code = int(raw_zone_code)
+    except (TypeError, ValueError):
+        return {"status": "UNKNOWN", "event_time": None}
     if event_time is None or zone_code not in (1, 2):
         return {"status": "UNKNOWN", "event_time": None}
     if event_time.tzinfo is None:
