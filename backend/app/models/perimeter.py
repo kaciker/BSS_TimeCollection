@@ -20,10 +20,6 @@ class FactoryPerimeterSettings(Base):
 
 class FactoryPerimeterEvent(Base):
     __tablename__ = "factory_perimeter_events"
-    __table_args__ = (
-        CheckConstraint("direction IN ('ENTER', 'EXIT')", name="ck_perimeter_direction"),
-        Index("ix_perimeter_presence", "factory_code", "reporter_id", "event_datetime"),
-    )
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     factory_code: Mapped[str] = mapped_column(String(64))
     reporter_id: Mapped[str] = mapped_column(String(160))
@@ -32,6 +28,12 @@ class FactoryPerimeterEvent(Base):
     event_datetime: Mapped[object] = mapped_column(DateTime(timezone=True))
     correlation_id: Mapped[str] = mapped_column(String(36))
     auto_cell_exit_event_id: Mapped[str | None] = mapped_column(ForeignKey("time_events.id"), nullable=True)
+    __table_args__ = (
+        CheckConstraint("direction IN ('ENTER', 'EXIT')", name="ck_perimeter_direction"),
+        Index("ix_perimeter_presence", "factory_code", "reporter_id", "event_datetime"),
+    )
+
+
 class TerminalBadgeRead(Base):
     __tablename__ = "terminal_badge_reads"
     factory_code: Mapped[str] = mapped_column(String(64), primary_key=True)

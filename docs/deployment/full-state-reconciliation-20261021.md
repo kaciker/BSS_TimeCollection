@@ -23,3 +23,10 @@ The separate `phase2c/release-candidate` branch has checkpoint `7a33fc4` for `00
 ## Integration branch and Admin access gate
 
 The functional consolidation branch is based on current GitHub `main` and includes PR #6 connector/UI changes and PR #8 operational metrics. Temporary Admin authentication implementation is excluded and remains on `feature/admin-temporary-auth`. The corporate API runtime still uses the temporary Admin middleware. Do not integrate the functional branch until the gateway protection for `/api/v1/admin` is confirmed or an equivalent SSO/gateway mechanism is included; removing the middleware without that assurance would expose administration endpoints.
+
+
+## Admin provider contract and safe consolidation
+
+Functional consolidation includes a provider-independent `AdminAuthenticationProvider` contract and middleware covering every `/api/v1/admin` endpoint. Missing provider fails closed with HTTP 503; invalid/absent principal is HTTP 401. Providers must declare only their explicit authentication bootstrap route; logout and all other Admin paths stay protected. The temporary password/session provider remains exclusively on its dedicated branch and must have username, password hash and session secret configured. Its adapter uses the same contract and rejects requests when configuration is incomplete. No anonymous, disabled-auth or hardcoded bypass exists.
+
+Alembic model metadata now matches the named indexes and uniqueness represented by migrations through `0012`; `alembic check` is clean after a full sequential upgrade in an isolated PostgreSQL database. No persistent or production database was migrated.

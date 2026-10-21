@@ -1,26 +1,23 @@
 import pytest
-from fastapi import Request
 
 from app.main import app
 
 
-class TestAdminAuthProvider:
+class LocalTestAuthenticationProvider:
     @property
-    def configured(self) -> bool:
+    def configured(self):
         return True
 
-    def authenticate(self, request: Request) -> str | None:
+    def authenticate(self, request):
         return "test-admin"
+
+    def is_authentication_endpoint(self, request):
+        return False
 
 
 @pytest.fixture(autouse=True)
-def configured_test_admin_provider():
-    previous = getattr(app.state, "admin_auth_provider", None)
-    app.state.admin_auth_provider = TestAdminAuthProvider()
-    try:
-        yield
-    finally:
-        if previous is None:
-            delattr(app.state, "admin_auth_provider")
-        else:
-            app.state.admin_auth_provider = previous
+def provide_admin_authentication_for_application_tests():
+    previous = getattr(app.state, "admin_authentication_provider", None)
+    app.state.admin_authentication_provider = LocalTestAuthenticationProvider()
+    yield
+    app.state.admin_authentication_provider = previous

@@ -26,7 +26,7 @@ Estado conocido en ARGANDA: cinco terminales `CELL` (`ID001-1`, `T0001`–`T0004
 
 CELL activo: una entrada y al menos una salida activas/visibles. **Perimeter only** elimina configuración de célula, acciones, estructura y atributos Oracle; desactiva su política. Roles: `PERIMETER_ENTER`, `PERIMETER_EXIT`, `PERIMETER_BOTH`. Convertir a CELL exige configuración válida; las puertas no crean directamente eventos de célula.
 
-Cookie HttpOnly/SameSite=Strict, activación de un uso y pairing temporal. Reprovisión revoca sesión previa. Clones conservan configuración/fábrica/rol, sin identidad, tokens ni eventos. Contrato Admin provider-independent: todas las rutas `/api/v1/admin` requieren proveedor autenticador; sin proveedor configurado devuelve 503, sin credencial válida 401. Implementación temporal está solo en `feature/admin-temporary-auth`.
+Cookie HttpOnly/SameSite=Strict, activación de un uso y pairing temporal. Reprovisión revoca sesión previa. Clones conservan configuración/fábrica/rol, sin identidad, tokens ni eventos. Autenticación temporal de Administración activa en CORP; pendiente gateway/autenticación definitiva.
 
 ## Factory Perimeter
 
@@ -74,7 +74,7 @@ Claves legacy: `end-work`, `break`, `factory`, `medical`, `personal`, `legal`, `
 
 ## Despliegue CORP y guardrails
 
-CORP `/opt/BSSTimeCollection`, web `http://10.33.137.103:8080`; esta rama de integración funcional parte del `main` verificado e incorpora el conector, métricas, UI localizada y el contrato de autenticación provider-independent. La implementación temporal Admin permanece solo en `feature/admin-temporary-auth`. GitHub main no incluye todavía todo el estado. PR #6 y #8 permanecen abiertos/draft. API source label `22ce771`, web `988a926+i18n` (digest `a1643cce…`), worker `a414089+corp-corrections`; componentes en revisiones distintas. Compose: `docker-compose.yml`, `docker-compose.issue2.yml`, `docker-compose.perimeter-corp.yml` y overlays temporales. Validación local: backend 83 passed/7 skipped, frontend 41 passed/build correcto; PostgreSQL efímero actualizado a `0012_operational_metrics`, `alembic check` limpio.
+CORP `/opt/BSSTimeCollection`, web `http://10.33.137.103:8080`; esta rama de integración funcional parte del `main` verificado e incorpora el conector, métricas y UI localizada; la implementación temporal de autenticación Admin se conserva en la rama dedicada `feature/admin-temporary-auth`. No integrar esta rama hasta confirmar el control de acceso del gateway para `/api/v1/admin` o sustituirlo por SSO; el middleware temporal protege esos endpoints en CORP. GitHub main no incluye todavía todo el estado. PR #6 sigue abierto/draft y consolida con checkpoint `988a926`, descendiente de `96ddb8b`, hardening, ODBC offline, autenticación temporal y etiquetado de imágenes. PR #8, draft sobre PR #6, contiene el checkpoint independiente de métricas `0012`. API source label `22ce771`, web `988a926+i18n` (digest `a1643cce…`), worker `a414089+corp-corrections`; componentes en revisiones distintas. El bundle servido contiene las traducciones recientes, incluido polaco; no coincide con el dist local observado, por lo que no se afirma reproducibilidad binaria. Compose: `docker-compose.yml`, `docker-compose.issue2.yml`, `docker-compose.perimeter-corp.yml` y overlays temporales.
 
 Backend actual 77/7 omitidos; frontend 41/build. API/web saludables, worker activo, PostgreSQL/volumen conservados. Evidencia histórica baseline: [docs/deployment/corp-github-sync-20261020.md](docs/deployment/corp-github-sync-20261020.md).
 
@@ -89,3 +89,10 @@ Métricas operativas: checkpoint `7a33fc4`, republicado como PR #8 sobre la rele
 **Monitoring multi-factory hardening:** actualmente `cell_state` se calcula por `reporter_id` en monitoring. Si una misma tarjeta puede operar en varias fábricas dentro de la misma instancia, deberá calcularse por `(reporter_id, factory_code)`. No es un bug operativo urgente para ARGANDA actual. El estado perimetral ya se calcula por UID/fábrica.
 
 Pendientes: pruebas físicas, gateway/autenticación definitivos e identidad externa. Antes de habilitar Oracle: validar credenciales, mappings, conciliación/idempotencia y retención; CORP sin transmisión.
+
+
+## 2026-10-21 Admin authentication contract and consolidation
+
+Functional consolidation adds a provider-independent Admin authentication contract. Every `/api/v1/admin` route fails closed: missing provider returns HTTP 503, rejected/invalid authentication returns HTTP 401; only a provider-declared authentication bootstrap route may be public. The temporary username/password provider remains on `feature/admin-temporary-auth` and implements the contract, including 503 when its configuration is missing. Do not merge or deploy without configured authentication.
+
+The functional consolidation branch starts at commit `657c0a0` over GitHub `main` `6cb48bd`; it includes the functional changes from PR #6 and #8 and excludes temporary authentication implementation. Alembic metadata was aligned with migrations through `0012`; the intended schema check reports no operations. The sequential migration chain was applied to an isolated PostgreSQL validation database; production schema was not changed.
