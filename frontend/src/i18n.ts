@@ -53,8 +53,6 @@ const strings: Record<Language, Record<string, string>> = {
 
 const extra: Record<Language, Record<string, string>> = {
   en: {
-    externalFactoryPresenceHelp: "Arganda factory presence is authoritative in SECURITY_DB and is not shown in this local event view.",
-    externalPresenceLocalListUnavailable: "External presence is not available in this local movement list.",
     contactlessCard: "Contactless card",
     new: "New",
     structure: "Structure",
@@ -432,8 +430,6 @@ const extra: Record<Language, Record<string, string>> = {
     sslDisable: "Disable", localPostgres: "Local Docker PostgreSQL", adminNavigation: "Administration navigation", recordedTime: "Recorded event time", currentTime: "Current time",
   },
   es: {
-    externalFactoryPresenceHelp: "La presencia de fábrica de Arganda tiene como fuente autoritativa SECURITY_DB y no se muestra en esta vista de eventos locales.",
-    externalPresenceLocalListUnavailable: "La presencia externa no está disponible en esta lista de movimientos locales.",
     contactlessCard: "Tarjeta sin contacto",
     new: "Nuevo",
     structure: "Estructura",
@@ -811,8 +807,6 @@ const extra: Record<Language, Record<string, string>> = {
     sslDisable: "Desactivar", localPostgres: "PostgreSQL local de Docker", adminNavigation: "Navegación de Administración", recordedTime: "Hora del evento registrado", currentTime: "Hora actual",
   },
   fr: {
-    externalFactoryPresenceHelp: "La présence dans l’usine d’Arganda fait autorité depuis SECURITY_DB et n’apparaît pas dans cette vue des événements locaux.",
-    externalPresenceLocalListUnavailable: "La présence externe n’est pas disponible dans cette liste locale de mouvements.",
     contactlessCard: "Carte sans contact",
     new: "Nouveau",
     structure: "Structure",
@@ -1190,8 +1184,6 @@ const extra: Record<Language, Record<string, string>> = {
     sslDisable: "Désactiver", localPostgres: "PostgreSQL Docker local", adminNavigation: "Navigation de l’administration", recordedTime: "Heure de l’événement enregistré", currentTime: "Heure actuelle",
   },
   pl: {
-    externalFactoryPresenceHelp: "Obecność w fabryce Arganda jest ustalana w SECURITY_DB i nie jest pokazywana w tym lokalnym widoku zdarzeń.",
-    externalPresenceLocalListUnavailable: "Obecność zewnętrzna nie jest dostępna na tej lokalnej liście ruchów.",
     contactlessCard: "Karta zbliżeniowa",
     new: "Nowy",
     structure: "Struktura",

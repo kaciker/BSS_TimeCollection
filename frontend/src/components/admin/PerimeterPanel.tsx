@@ -117,20 +117,17 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
       </div>)}</div>
       {!terminalRows.length && <div className="empty-state">{tr("noTerminalsConfigured")}</div>}
     </section>
-    {config?.badge_source === "EXTERNAL" ? <section className="admin-card">
-      <div className="section-heading"><div><h3>{tr("factoryPresence")}</h3><p>{tr("externalFactoryPresenceHelp")}</p></div></div>
-      <div className="empty-state">{tr("externalPresenceLocalListUnavailable")}</div>
-    </section> : <section className="admin-card">
+    <section className="admin-card">
       <div className="section-heading"><div><h3>{tr("factoryPresence")}</h3><p>{tr("cardsInsideSelected")}</p></div>
         <button className="secondary" disabled={busy} onClick={() => void load().catch(e => setError((e as Error).message))}>{tr("refreshPresence")}</button>
       </div>
       <div className="list-stats"><strong>{presence?.inside.length ?? 0}</strong><span>{tr("cardsInsideFactory")}</span></div>
       {presence?.inside.length ? <div className="action-tags perimeter-presence">{presence.inside.map(badge => <span key={badge}>{badge}</span>)}</div> : <div className="empty-state">{tr("noCardsInside")}</div>}
-    </section>}
-    {config?.badge_source !== "EXTERNAL" && <section className="admin-card resource-list">
+    </section>
+    <section className="admin-card resource-list">
       <div className="list-toolbar perimeter-audit-heading"><div className="section-heading"><div><h3>{tr("recentMovements")}</h3><p>{tr("perimeterHistoryHelp")}</p></div></div></div>
       {presence?.recent_events.length ? <div className="table-wrap"><table><thead><tr><th>{tr("uid")}</th><th>{tr("direction")}</th><th>{tr("time")}</th><th>{tr("autoCellExit")}</th></tr></thead>
         <tbody>{presence.recent_events.map(e => <tr key={e.id}><td><strong>{e.badge}</strong></td><td><span className="status">{e.direction}</span></td><td>{new Date(e.at).toLocaleString(language)}</td><td><code>{e.auto_cell_exit_event_id ?? "—"}</code></td></tr>)}</tbody></table></div> : <div className="empty-state">{tr("noMovements")}</div>}
-    </section>}
+    </section>
   </div>;
 }

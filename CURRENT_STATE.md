@@ -1,6 +1,6 @@
 # Estado actual de BSS Time Collection
 
-Actualizado: 21 de octubre de 2026. Consolidación desde `988a9261fdff87dc70505691bf875e42aadc69a9`, descendiente de `96ddb8b`; incluye UI localizada actual. CORP ejecuta componentes en revisiones distintas. Inventario: [full-state-reconciliation-20261021.md](docs/deployment/full-state-reconciliation-20261021.md).
+Actualizado: 21 de octubre de 2026. Consolidación desde `988a9261fdff87dc70505691bf875e42aadc69a9`, descendiente de `96ddb8b`; incluye las últimas traducciones desplegadas en la web CORP (`988a926+i18n`). CORP ejecuta componentes en revisiones distintas. Inventario: [full-state-reconciliation-20261021.md](docs/deployment/full-state-reconciliation-20261021.md).
 
 ## Objetivo y arquitectura
 
@@ -30,9 +30,9 @@ Cookie HttpOnly/SameSite=Strict, activación de un uso y pairing temporal. Repro
 
 ## Factory Perimeter
 
-La activación es **por fábrica**: ARGANDA y DEFAULT están desactivadas; ARGANDA conserva `OPEN` como origen operativo. Estado por fábrica. Selección persistida por URL/localStorage (URL prioritaria); asignaciones guardadas explícitas y protección contra respuestas antiguas/avisos contradictorios.
+La activación es **por fábrica**: en el estado leído de CORP, ARGANDA está activada con origen `EXTERNAL`; DEFAULT está desactivada y conserva `OPEN`. Estado por fábrica. Selección persistida por URL/localStorage (URL prioritaria); asignaciones guardadas explícitas y protección contra respuestas antiguas/avisos contradictorios.
 
-Con el perímetro activado, una entrada de célula requiere que el UID haya entrado antes en esa misma fábrica. La presencia solo usa UID. `OPEN` es el origen operativo; el conector SECURITY_DB `EXTERNAL` está desplegado en la imagen API, pero requiere credenciales read-only verificadas antes de activar la fábrica. La interfaz no presenta presencia local como autoritativa en modo EXTERNAL.
+Con el perímetro activado, una entrada de célula requiere que el UID haya entrado antes en esa misma fábrica. La presencia solo usa UID. ARGANDA usa origen `EXTERNAL`; DEFAULT conserva `OPEN`. La imagen web desplegada muestra estado/filtro de fábrica y listas locales de presencia/movimientos también en modo EXTERNAL, sin advertir que el estado local no es autoritativo. El bundle del API no tiene montado/legible `/run/secrets/perimeter_sqlserver.json`; el login SECURITY_DB validado tiene permisos DML y no es adecuado para solo lectura. Resolver esta discrepancia antes de depender del conector.
 
 Salida perimetral estando dentro de célula: EXIT automático de célula seguido de EXIT perimetral, transacción/timestamp/correlation ID compartidos. Conserva contexto de la entrada original. Acción automática EXIT activa sin subacciones obligatorias; puede estar oculta.
 
@@ -62,7 +62,7 @@ Eventos célula/perímetro con filtros, paginación y JSON histórico; perímetr
 
 USB HID keyboard-wedge en `RFID`/`BOTH`, ventana activa; `KEYPAD` manual. UID cadena, conserva ceros iniciales; separadores espacio/Tab del lector se omiten. UID/método conservados en salida/subacción, debounce y bloqueo; sin captura en segundo plano. Detalle: [docs/rfid.md](docs/rfid.md). Fix de separadores desplegado en CORP 2026-10-21 solo en web; prueba RFID 26 pasada, API/worker/DB y volúmenes intactos, Oracle desactivado.
 
-Interfaz en/es/fr/pl, con traducciones ampliadas de Administración y terminal incluidas en esta consolidación. Reloj HH:MM:SS local; confirmación congela `event_datetime` 2,2 s. Teclado hasta 620 px y administración responsive.
+Interfaz en/es/fr/pl; la versión desplegada incluye traducciones ampliadas de Administración y terminal. Imagen `988a926+i18n`, bundle `index-Dm-8CgbM.js` (SHA-256 prefijo `0fe92eb4`). Reloj HH:MM:SS local; confirmación congela `event_datetime` 2,2 s. Teclado hasta 620 px y administración responsive.
 
 ## Ilustraciones
 
@@ -74,13 +74,13 @@ Claves legacy: `end-work`, `break`, `factory`, `medical`, `personal`, `legal`, `
 
 ## Despliegue CORP y guardrails
 
-CORP `/opt/BSSTimeCollection`, web `http://10.33.137.103:8080`; GitHub main no incluye todavía todo el estado. PR #6 sigue abierto/draft y consolida con checkpoint `988a926`, descendiente de `96ddb8b`, hardening, ODBC offline, autenticación temporal y etiquetado de imágenes. PR #8, draft sobre PR #6, contiene el checkpoint independiente de métricas `0012`. API source label `22ce771`, web `10df7ce`, worker `a414089+corp-corrections`; la web no incluye las traducciones actuales. Compose: `docker-compose.yml`, `docker-compose.issue2.yml`, `docker-compose.perimeter-corp.yml` y overlays temporales.
+CORP `/opt/BSSTimeCollection`, web `http://10.33.137.103:8080`; GitHub main no incluye todavía todo el estado. PR #6 sigue abierto/draft y consolida con checkpoint `988a926`, descendiente de `96ddb8b`, hardening, ODBC offline, autenticación temporal y etiquetado de imágenes. PR #8, draft sobre PR #6, contiene el checkpoint independiente de métricas `0012`. API source label `22ce771`, web `988a926+i18n` (digest `a1643cce…`), worker `a414089+corp-corrections`; componentes en revisiones distintas. El bundle servido contiene las traducciones recientes, incluido polaco; no coincide con el dist local observado, por lo que no se afirma reproducibilidad binaria. Compose: `docker-compose.yml`, `docker-compose.issue2.yml`, `docker-compose.perimeter-corp.yml` y overlays temporales.
 
 Backend actual 77/7 omitidos; frontend 41/build. API/web saludables, worker activo, PostgreSQL/volumen conservados. Evidencia histórica baseline: [docs/deployment/corp-github-sync-20261020.md](docs/deployment/corp-github-sync-20261020.md).
 
 Preservar `.env`, configuración, terminales, sesiones, acciones, históricos y volúmenes. Backup verificable antes de cambios o migraciones. No usar `reset --hard`, borrar/recrear la base, renovar volúmenes anónimos ni ejecutar `down -v`. Validaciones con UIDs simulados en réplicas o APIs mockeadas; no generar fichajes reales ni transmitir a Oracle. No reasignar terminales ni activar fábricas implícitamente. Mantener fuera de GitHub credenciales, CSV personales, dumps y archivos locales de configuración.
 
-Conector Arganda: servicio y ODBC Driver 18/pyodbc en la imagen API. Producción continúa en `OPEN` y desactivada; Oracle desactivado. El login SECURITY_DB probado tiene permisos DML y no sirve para montaje read-only. Obtener credenciales verificadas antes de activar `EXTERNAL`. `acc_zone_code` es `nvarchar`; timestamps naive en `Europe/Madrid`. EXIT físico requiere reconciliación aprobada para crear EXIT de célula. Véase [arganda-external-sqlserver.md](docs/arganda-external-sqlserver.md).
+Conector Arganda: servicio y ODBC Driver 18/pyodbc en la imagen API. Estado leído: ARGANDA activada con `EXTERNAL`; DEFAULT desactivada con `OPEN`; Oracle desactivado. El archivo de secreto SQL Server no está montado/legible en API. El login SECURITY_DB probado tiene permisos DML y no sirve para montaje read-only. Resolver credenciales y montaje antes de depender de presencia externa. `acc_zone_code` es `nvarchar`; timestamps naive en `Europe/Madrid`. EXIT físico requiere reconciliación aprobada para crear EXIT de célula. Véase [arganda-external-sqlserver.md](docs/arganda-external-sqlserver.md).
 
 Métricas operativas: checkpoint `7a33fc4`, republicado como PR #8 sobre la release consolidada. Incluye migración `0012_operational_metrics`, telemetría singleton y endpoint agregado; no está en imagen ni base desplegadas. Requiere revisión independiente; no migrar en CORP como parte de esta consolidación.
 
