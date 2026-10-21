@@ -10,7 +10,7 @@ class Action(Base):
     __tablename__ = "actions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    code: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    code: Mapped[str] = mapped_column(String(64), unique=True)
     label: Mapped[str] = mapped_column(String(120))
     supplier_device_event: Mapped[str] = mapped_column(String(128), unique=True)
     state_effect: Mapped[str] = mapped_column(String(16))

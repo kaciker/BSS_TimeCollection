@@ -20,7 +20,7 @@ class Terminal(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     factory_code: Mapped[str] = mapped_column(String(64), default='DEFAULT')
     terminal_role: Mapped[str] = mapped_column(String(16), default='CELL')
-    code: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    code: Mapped[str] = mapped_column(String(64), unique=True)
     name: Mapped[str] = mapped_column(String(160))
     external_device_id: Mapped[str] = mapped_column(String(128), unique=True)
     identification_mode: Mapped[str] = mapped_column(String(16), default="BOTH")

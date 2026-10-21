@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -8,9 +8,10 @@ from app.db.base import Base
 
 class TransmissionAttempt(Base):
     __tablename__ = "transmission_attempts"
+    __table_args__ = (Index("ix_transmission_attempts_event", "event_id", "attempt_number"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    event_id: Mapped[str] = mapped_column(ForeignKey("time_events.id", ondelete="CASCADE"), index=True)
+    event_id: Mapped[str] = mapped_column(ForeignKey("time_events.id", ondelete="CASCADE"))
     attempt_number: Mapped[int] = mapped_column(Integer)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

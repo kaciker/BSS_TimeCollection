@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -8,9 +8,13 @@ from app.db.base import Base
 
 class TimeEvent(Base):
     __tablename__ = "time_events"
+    __table_args__ = (
+        Index("ix_time_events_reporter_datetime_created", "reporter_id", "event_datetime", "created_at"),
+        Index("ix_time_events_delivery", "delivery_status", "next_attempt_at"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    request_number: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    request_number: Mapped[str] = mapped_column(String(128), unique=True)
     terminal_id: Mapped[int] = mapped_column(ForeignKey("terminals.id"))
     action_id: Mapped[int] = mapped_column(ForeignKey("actions.id"))
 
@@ -22,11 +26,11 @@ class TimeEvent(Base):
     supplier_device_event: Mapped[str] = mapped_column(String(128))
     state_effect: Mapped[str] = mapped_column(String(16))
 
-    reporter_id: Mapped[str] = mapped_column(String(160), index=True)
+    reporter_id: Mapped[str] = mapped_column(String(160))
     reporter_id_type: Mapped[str] = mapped_column(String(16))
     identification_method: Mapped[str] = mapped_column(String(16))
 
-    event_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    event_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     event_timezone: Mapped[str] = mapped_column(String(64))
     oracle_attributes: Mapped[dict] = mapped_column(JSON, default=dict)
     workshop_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -36,7 +40,7 @@ class TimeEvent(Base):
     project_line_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     project_line_description: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
-    delivery_status: Mapped[str] = mapped_column(String(16), default="PENDING", index=True)
+    delivery_status: Mapped[str] = mapped_column(String(16), default="PENDING")
     attempt_count: Mapped[int] = mapped_column(Integer, default=0)
     next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
