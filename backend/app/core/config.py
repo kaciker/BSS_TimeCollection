@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     worker_poll_seconds: float = 3.0
     worker_stale_sending_seconds: int = 300
 
+    operational_metrics_token: str = ""
+    operational_statement_timeout_ms: int = 750
+    worker_heartbeat_seconds: int = 10
+    worker_heartbeat_stale_seconds: int = 45
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
