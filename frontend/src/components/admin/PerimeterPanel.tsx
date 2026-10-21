@@ -89,7 +89,7 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
       </div>
       <div className="form-grid">
         <label>Factory code<input disabled={busy} value={factory} maxLength={64} onChange={e => changeFactory(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""))} /></label>
-        {config && <label>Badge validation<select value={config.badge_source} onChange={e => setConfig({...config, badge_source:e.target.value as Config["badge_source"]})}><option value="OPEN">OPEN (any scanned UID)</option><option value="EXTERNAL" disabled>EXTERNAL (future integration)</option></select></label>}
+        {config && <label>Badge validation<select value={config.badge_source} onChange={e => setConfig({...config, badge_source:e.target.value as Config["badge_source"]})}><option value="OPEN">OPEN (any scanned UID)</option><option value="EXTERNAL" disabled={factory !== "ARGANDA"}>EXTERNAL (Arganda SECURITY_DB, 12h)</option></select></label>}
       </div>
       {config && <>
         <div className="perimeter-switches">
