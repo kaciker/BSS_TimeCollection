@@ -24,7 +24,6 @@ class Settings(BaseSettings):
     terminal_session_days: int = 365
     terminal_pairing_minutes: int = 10
 
-    admin_auth_enabled: bool = True
     admin_username: str = "admin"
     admin_password_hash: str = ""
     admin_session_secret: str = ""

@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel
 
 from app.core.config import settings
+from app.core.admin_security import AdminAuthenticationProvider
 
 COOKIE_NAME = "bss_admin_session"
 _HASH_SCHEME = "pbkdf2_sha256"
@@ -102,12 +103,33 @@ def _clear_failed_logins(key: str) -> None:
 
 
 def ensure_auth_configured() -> None:
-    if not settings.admin_auth_enabled:
-        return
     if not settings.admin_username or not settings.admin_password_hash or not settings.admin_session_secret:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Temporary admin authentication is not configured.")
 
 
+class TemporaryAdminAuthenticationProvider:
+    """Temporary username/password provider implementing the shared Admin contract."""
+
+    @property
+    def configured(self) -> bool:
+        return bool(
+            settings.admin_username
+            and settings.admin_password_hash
+            and settings.admin_session_secret
+        )
+
+    def authenticate(self, request: Request) -> str | None:
+        ensure_auth_configured()
+        return authenticated_admin(request)
+
+    def is_authentication_endpoint(self, request: Request) -> bool:
+        return (
+            request.method == "POST"
+            and request.url.path == "/api/v1/admin/auth/login"
+        )
+
+
+provider = TemporaryAdminAuthenticationProvider()
 router = APIRouter(prefix="/api/v1/admin/auth", tags=["admin-auth"])
 
 
