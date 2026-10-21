@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette import status
-from app.core.admin_auth import AdminAuthProvider
+from app.core.admin_auth import AdminAuthProvider, TemporaryAdminAuthProvider, router as admin_auth_router
+from app.core.config import settings
 from app.routers import admin, database_admin, health, monitoring, terminal, policies, structure, perimeter
 
 
@@ -37,8 +38,15 @@ async def require_admin_authentication(request: Request, call_next):
     return await call_next(request)
 
 
+@app.on_event("startup")
+async def configure_admin_auth_provider():
+    if not hasattr(app.state, "admin_auth_provider") and not getattr(app.state, "test_mode", False):
+        app.state.admin_auth_provider = TemporaryAdminAuthProvider()
+
+
 app.include_router(health.router)
 app.include_router(terminal.router)
+app.include_router(admin_auth_router)
 app.include_router(admin.router)
 app.include_router(structure.router)
 app.include_router(policies.router)
@@ -52,6 +60,6 @@ def meta():
     return {
         "name": "BSS Time Collection",
         "version": "0.1.0",
-        "authentication": "terminal-http-only-session; admin-authentication-provider-required",
+        "authentication": "temporary-admin-session; fail-closed-provider-contract",
         "scope": "external-time-collection-device",
     }
