@@ -6,8 +6,8 @@ ARG http_proxy
 ARG https_proxy
 ARG no_proxy
 WORKDIR /app
-COPY package.json tsconfig.json vite.config.ts ./
-RUN npm install
+COPY package.json package-lock.json tsconfig.json vite.config.ts ./
+RUN npm ci
 COPY index.html ./
 COPY img ./public/img
 COPY public/action-visuals ./public/action-visuals

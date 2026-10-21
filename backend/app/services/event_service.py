@@ -114,7 +114,7 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
     terminal = _get_terminal(db, terminal_code)
     _validate_method(terminal, method)
     from datetime import timezone
-    from app.services.perimeter_service import settings_for, is_inside, is_duplicate, remember_read, perimeter_scan, check_badge_source
+    from app.services.perimeter_service import settings_for, is_inside, is_duplicate, remember_read, perimeter_scan, check_badge_source, external_presence_or_reject
     if terminal.terminal_role != 'CELL':
         return ScanResponse(**perimeter_scan(db, terminal, reporter_id, method))
     config = settings_for(db, terminal.factory_code)
@@ -122,7 +122,9 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
     current_state = derive_worker_state(db, reporter_id, terminal.factory_code)
     if current_state == WorkerState.OUTSIDE and config.enabled:
         check_badge_source(config, reporter_id)
-        if not is_inside(db, terminal.factory_code, reporter_id):
+        if config.badge_source == 'EXTERNAL':
+            external_presence_or_reject(config, reporter_id)
+        elif not is_inside(db, terminal.factory_code, reporter_id):
             raise HTTPException(409, 'Badge has not entered the factory perimeter')
     if is_duplicate(db, config, terminal, reporter_id, now):
         return ScanResponse(flow='DUPLICATE_IGNORED', worker_state=current_state.value)

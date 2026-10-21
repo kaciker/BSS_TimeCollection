@@ -160,7 +160,7 @@ def test_disabled_perimeter_preserves_legacy_cell_capture(monitor):
     assert len(db.scalars(select(FactoryPerimeterEvent)).all()) == 0
 
 
-def test_factory_presence_isolated_and_external_source_fails_closed(monitor):
+def test_factory_presence_isolated_and_external_source_fails_closed(monitor, monkeypatch):
     from app.models.perimeter import FactoryPerimeterSettings
     from app.services.event_service import scan as capture
     from app.domain.enums import IdentificationMethod as Method
@@ -174,11 +174,36 @@ def test_factory_presence_isolated_and_external_source_fails_closed(monitor):
     config = db.get(FactoryPerimeterSettings, 'DEFAULT')
     config.badge_source = 'EXTERNAL'
     db.commit()
+    from app.services import external_perimeter
+    monkeypatch.setattr(
+        external_perimeter,
+        'check_external_presence',
+        lambda badge: {'status': 'ERROR', 'event_time': None},
+    )
     with pytest.raises(HTTPException) as error:
         capture(db, 'CLOCK-A', '0000', Method.RFID)
     assert error.value.status_code == 503
     db.rollback()
     assert len(db.scalars(select(TimeEvent)).all()) == 0
+
+
+def test_external_connection_failure_does_not_block_cell_exit(monitor, monkeypatch):
+    from app.models.perimeter import FactoryPerimeterSettings
+    from app.services.event_service import scan as capture, record_exit
+    from app.domain.enums import IdentificationMethod as Method
+    client, db = monitor
+    configured_terminal(client)
+    assert capture(db, 'CLOCK-A', 'READONLY-EXIT', Method.KEYPAD).flow == 'ENTRY_RECORDED'
+    db.add(FactoryPerimeterSettings(
+        factory_code='DEFAULT', enabled=True, badge_source='EXTERNAL',
+        dedup_enabled=False, dedup_seconds=0, auto_exit_action_code='STOP',
+    ))
+    db.commit()
+    from app.services import external_perimeter
+    monkeypatch.setattr(external_perimeter, 'check_external_presence', lambda badge: {'status': 'ERROR', 'event_time': None})
+    result = record_exit(db, 'CLOCK-A', 'READONLY-EXIT', Method.KEYPAD, 'STOP')
+    assert result.flow == 'EXIT_RECORDED'
+    assert len(db.scalars(select(TimeEvent)).all()) == 2
 
 
 def test_clone_preserves_factory_role_and_does_not_copy_identity(monitor):

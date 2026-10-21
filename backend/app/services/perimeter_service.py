@@ -28,9 +28,18 @@ def is_inside(db: Session, factory_code: str, badge: str) -> bool:
 
 
 def check_badge_source(config: FactoryPerimeterSettings, badge: str) -> None:
-    # The external adapter is intentionally unavailable until a plant integration is validated.
-    if config.badge_source != "OPEN":
-        raise HTTPException(503, "External badge validator is not configured")
+    if config.badge_source not in ("OPEN", "EXTERNAL"):
+        raise HTTPException(503, "Unknown perimeter badge source")
+
+
+def external_presence_or_reject(config: FactoryPerimeterSettings, badge: str) -> None:
+    if config.badge_source != "EXTERNAL":
+        return
+    from app.services.external_perimeter import check_external_presence
+    result = check_external_presence(badge)
+    if result["status"] != "INSIDE":
+        raise HTTPException(409 if result["status"] in ("OUTSIDE", "STALE", "UNKNOWN") else 503,
+                            f"External perimeter presence: {result['status']}")
 
 
 def is_duplicate(db: Session, config: FactoryPerimeterSettings, terminal: Terminal, badge: str, now: datetime) -> bool:
@@ -62,6 +71,8 @@ def perimeter_scan(db: Session, terminal: Terminal, badge: str, method) -> dict:
     config = settings_for(db, terminal.factory_code)
     if not config.enabled:
         raise HTTPException(409, "Factory perimeter control is disabled")
+    if config.badge_source == "EXTERNAL":
+        raise HTTPException(409, "External perimeter uses the existing factory readers; BSS perimeter terminals are not authoritative")
     check_badge_source(config, badge)
     now = datetime.now(timezone.utc)
     event_time = now.astimezone(ZoneInfo(settings.event_timezone))

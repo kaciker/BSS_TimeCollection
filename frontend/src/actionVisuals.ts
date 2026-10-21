@@ -1,4 +1,7 @@
 // Shared local visual catalogue for administration and terminal actions.
+import type { Language } from "./i18n";
+import { translate } from "./i18n";
+
 export const actionVisuals = [
   {
     "key": "",
@@ -97,5 +100,17 @@ export const actionVisuals = [
     "name": "Acompañamiento médico"
   }
 ];
+
+const visualTranslationKeys: Record<string, string> = {
+  "": "visualNoIllustration", "end-work": "visualEndWork", "break": "visualBreak", factory: "visualFactoryExit", "no-work": "visualNoWork",
+  medical: "visualMedical", personal: "visualPersonal", legal: "visualLegal", bocadillo: "visualSnack", comida: "visualMeal",
+  "medico-empresa": "visualCompanyDoctor", formacion: "visualTraining", "no-productivo": "visualNonProductive", "comite-empresa": "visualWorksCouncil",
+  "trabajo-fuera-fabrica": "visualOffsiteWork", medico: "visualDoctor", "viaje-empresa": "visualBusinessTrip", examenes: "visualExams",
+  "mutua-accidente": "visualInsuranceAccident", "comite-seguridad-salud": "visualHealthSafetyCommittee", "formacion-fuera-jornada": "visualOffHoursTraining",
+  "salida-sindical": "visualUnionLeave", huelga: "visualStrike", "acompanamiento-medico": "visualMedicalEscort",
+};
+export function localizedActionVisuals(language: Language) {
+  return actionVisuals.map(visual => ({ ...visual, name: translate(language, visualTranslationKeys[visual.key] ?? visual.name) }));
+}
 
 export const actionVisualKeys = new Set(actionVisuals.filter(visual => visual.key).map(visual => visual.key));

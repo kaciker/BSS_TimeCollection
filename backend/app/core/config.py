@@ -20,9 +20,21 @@ class Settings(BaseSettings):
     oracle_bearer_token: str = ""
     oracle_timeout_seconds: float = 15.0
 
+    perimeter_sqlserver_credentials_file: str = '/run/secrets/perimeter_sqlserver.json'
+    perimeter_external_max_age_hours: int = 12
+
     terminal_cookie_secure: bool = False
     terminal_session_days: int = 365
     terminal_pairing_minutes: int = 10
+
+    admin_auth_enabled: bool = True
+    admin_username: str = "admin"
+    admin_password_hash: str = ""
+    admin_session_secret: str = ""
+    admin_session_hours: int = 8
+    admin_cookie_secure: bool = False
+    admin_login_max_attempts: int = 5
+    admin_login_window_seconds: int = 300
 
     worker_poll_seconds: float = 3.0
     worker_stale_sending_seconds: int = 300
