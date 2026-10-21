@@ -151,11 +151,13 @@ def cards(
     total = _total(db, query)
     rows = db.execute(query.order_by(ranked.c.badge).offset(offset).limit(limit)).all()
     enabled = bool(db.scalar(select(func.count()).select_from(FactoryPerimeterSettings).where(FactoryPerimeterSettings.enabled.is_(True))))
+    external = bool(db.scalar(select(func.count()).select_from(FactoryPerimeterSettings).where(
+        FactoryPerimeterSettings.enabled.is_(True), FactoryPerimeterSettings.badge_source == "EXTERNAL")))
     return CardPage(items=[CardState(
         reporter_id=row.badge, worker_state=row.cell_state,
-        factory_code=row.factory, factory_state=row.factory_state,
+        factory_code=row.factory, factory_state=(None if external and row.factory == "ARGANDA" else row.factory_state),
         event=EventSnapshot.model_validate(db.get(TimeEvent, row.id)) if row.kind == "CELL" else _perimeter_snapshot(db, db.get(FactoryPerimeterEvent, row.id)),
-    ) for row in rows], total=total, factory_perimeter_enabled=enabled)
+    ) for row in rows], total=total, factory_perimeter_enabled=enabled, external_factory_presence=external)
 
 
 @router.get("/attempts", response_model=AttemptPage)

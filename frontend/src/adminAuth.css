@@ -1,0 +1,91 @@
+.admin-auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #eef2f7;
+}
+
+.admin-auth-card {
+  width: min(420px, 100%);
+  padding: 28px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
+}
+
+.admin-auth-card h1 {
+  margin: 6px 0 8px;
+  font-size: 28px;
+}
+
+.admin-auth-card p {
+  margin: 0 0 22px;
+  color: #64748b;
+}
+
+.admin-auth-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.admin-auth-card label {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+  font-weight: 600;
+}
+
+.admin-auth-card input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.admin-auth-card button,
+.admin-auth-logout {
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.admin-auth-card button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #0f172a;
+  color: #fff;
+}
+
+.admin-auth-card button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.admin-auth-error {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-auth-logout {
+  position: fixed;
+  z-index: 1000;
+  top: 14px;
+  right: 18px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}

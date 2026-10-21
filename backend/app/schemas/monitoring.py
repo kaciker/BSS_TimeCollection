@@ -57,6 +57,7 @@ class CardState(BaseModel):
 
 class CardPage(BaseModel):
     factory_perimeter_enabled: bool = False
+    external_factory_presence: bool = False
     items: list[CardState]
     total: int
 

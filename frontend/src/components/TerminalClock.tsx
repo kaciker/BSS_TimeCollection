@@ -1,6 +1,8 @@
+import { useLanguage } from "../i18n";
 import { useEffect, useState } from "react";
 
 export function TerminalClock({ recordedAt }: { recordedAt: string | null }) {
+  const { t } = useLanguage();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     let timer = 0;
@@ -20,5 +22,5 @@ export function TerminalClock({ recordedAt }: { recordedAt: string | null }) {
   const date = new Date(recordedAt ?? now);
   const digits = [date.getHours(), date.getMinutes(), date.getSeconds()]
     .map(value => String(value).padStart(2, "0")).join(":");
-  return <div className="terminal-clock"><time dateTime={date.toISOString()} aria-label={recordedAt ? "Recorded event time" : "Current time"} aria-live="off">{digits}</time></div>;
+  return <div className="terminal-clock"><time dateTime={date.toISOString()} aria-label={recordedAt ? t("recordedTime") : t("currentTime")} aria-live="off">{digits}</time></div>;
 }

@@ -143,7 +143,7 @@ export function TerminalPage() {
       </div> : <>
         {(config.identification_mode === "KEYPAD" || config.identification_mode === "BOTH") && <NumericKeypad value={badge} onChange={setBadge} onSubmit={() => void scanReporter(badge, "KEYPAD")} disabled={busy} placeholder={t("enterBadge")} continueLabel={t("continue")} />}
         {config.identification_mode === "BOTH" && <div className="method-note">{busy && method === "RFID" ? t("readingCard") : t("keypadNote")}</div>}
-        {config.identification_mode === "RFID" && <div className="rfid-placeholder"><img src="/img/rfid-card.svg" alt="Contactless card" /><p role="status">{busy ? t("readingCard") : t("presentCard")}</p></div>}
+        {config.identification_mode === "RFID" && <div className="rfid-placeholder"><img src="/img/rfid-card.svg" alt={t("contactlessCard")} /><p role="status">{busy ? t("readingCard") : t("presentCard")}</p></div>}
       </>}
       {error && config && <div className="inline-error">{error}</div>}
     </section>

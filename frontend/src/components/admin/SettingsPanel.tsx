@@ -28,12 +28,12 @@ export function SettingsPanel() {
       <p className="form-hint">{t("languageSaved")}</p>
     </section>
     <section className="admin-card">
-      <div className="section-heading"><div><h3>Oracle integration</h3><p>Global integration values apply to every terminal. They are not configured per terminal.</p></div></div>
+      <div className="section-heading"><div><h3>{t("oracleIntegration")}</h3><p>{t("globalIntegrationHelp")}</p></div></div>
       {integration ? <div className="form-grid">
-        <label>Reporter ID type<input value={integration.reporter_id_type} readOnly /><small>Global backend setting. Default: BADGE.</small></label>
-        <label>Source ID<input value={integration.oracle_source_id} readOnly /></label>
-        <label>Oracle delivery<input value={integration.oracle_enabled ? "Enabled" : "Disabled"} readOnly /></label>
-      </div> : integrationError ? <div className="inline-error" role="alert">{integrationError}</div> : <p className="form-hint">Loading integration settings…</p>}
+        <label>{t("reporterIdType")}<input value={integration.reporter_id_type} readOnly /><small>{t("globalBackendDefault")}</small></label>
+        <label>{t("sourceId")}<input value={integration.oracle_source_id} readOnly /></label>
+        <label>{t("oracleDelivery")}<input value={integration.oracle_enabled ? t("enabled") : t("disabled")} readOnly /></label>
+      </div> : integrationError ? <div className="inline-error" role="alert">{integrationError}</div> : <p className="form-hint">{t("loadingIntegration")}</p>}
     </section>
   </div>;
 }

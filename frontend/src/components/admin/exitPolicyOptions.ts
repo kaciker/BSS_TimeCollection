@@ -1,7 +1,13 @@
 export type ExitPolicyMode = "DISABLED" | "SAME_TERMINAL" | "SAME_WORK_CELL" | "INHERIT";
-export const exitPolicyModes: {value:ExitPolicyMode; label:string}[] = [
-  {value:"DISABLED",label:"Disabled — any terminal"},
-  {value:"SAME_TERMINAL",label:"Same Terminal — original entry terminal"},
-  {value:"SAME_WORK_CELL",label:"Same Work Cell — matching configured cell"},
-];
-export const exitPolicyLabel = (mode:ExitPolicyMode) => exitPolicyModes.find(item=>item.value===mode)?.label ?? mode;
+import type { Language } from "../../i18n";
+import { translate } from "../../i18n";
+
+const keys: Record<Exclude<ExitPolicyMode, "INHERIT">, string> = {
+  DISABLED: "exitPolicyDisabled", SAME_TERMINAL: "exitPolicySameTerminal", SAME_WORK_CELL: "exitPolicySameWorkCell",
+};
+export const exitPolicyModes = (language: Language = "en") => ([
+  { value: "DISABLED" as const, label: translate(language, keys.DISABLED) },
+  { value: "SAME_TERMINAL" as const, label: translate(language, keys.SAME_TERMINAL) },
+  { value: "SAME_WORK_CELL" as const, label: translate(language, keys.SAME_WORK_CELL) },
+]);
+export const exitPolicyLabel = (mode: ExitPolicyMode, language: Language = "en") => mode === "INHERIT" ? mode : translate(language, keys[mode]);

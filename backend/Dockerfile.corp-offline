@@ -1,5 +1,16 @@
-# Reuse the deployed, unchanged Python dependencies for the offline CORP build.
+# Reuse the validated application base and install the official Debian 13 ODBC
+# stack from checksum-pinned packages. This build does not depend on Titan egress
+# and does not copy host libraries into the image.
 FROM bsstimecollection-api:pre-perimeter-20261020
+ENV ACCEPT_EULA=Y
 WORKDIR /app
+COPY odbc-packages /tmp/odbc-packages
+RUN cd /tmp/odbc-packages \
+    && sha256sum -c MANIFEST.txt \
+    && dpkg -i ./*.deb \
+    && python -m pip install --no-index --no-deps ./pyodbc-5.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    && odbcinst -q -d -n "ODBC Driver 18 for SQL Server" \
+    && python -c "import pyodbc; assert 'ODBC Driver 18 for SQL Server' in pyodbc.drivers(); print('pyodbc', pyodbc.version)" \
+    && rm -rf /tmp/odbc-packages
 COPY . .
-LABEL org.opencontainers.image.revision="a414089787f68f0d72394557efebd33195fa20cb+corp-corrections"
+LABEL org.opencontainers.image.revision="10df7ce89f796e8f7e6cbfffa728be782ba0d084"

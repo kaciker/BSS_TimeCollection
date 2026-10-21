@@ -1,13 +1,17 @@
 services:
   api:
-    image: bsstimecollection-api:perimeter-corp-20261020
+    image: bsstimecollection-api:arganda-external-22ce771
     build:
       dockerfile: Dockerfile.corp-offline
+    environment:
+      PERIMETER_SQLSERVER_CREDENTIALS_FILE: /run/secrets/perimeter_sqlserver.json
+    volumes:
+      - /opt/BSSTimeCollection/sql/perimeter_sqlserver.json:/run/secrets/perimeter_sqlserver.json:ro
   worker:
-    image: bsstimecollection-api:perimeter-corp-20261020
+    image: bsstimecollection-api:arganda-external-22ce771
     build:
       dockerfile: Dockerfile.corp-offline
   web:
-    image: bsstimecollection-web:perimeter-corp-20261020
+    image: bsstimecollection-web:arganda-external-22ce771
     build:
       dockerfile: Dockerfile.corp-offline
