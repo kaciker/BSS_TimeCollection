@@ -4,9 +4,9 @@ Reference: corporate runtime on Titan APPS, checked read-only on 2026-10-21.
 
 ## Functional source consolidation
 
-The release candidate is based on corporate checkpoint `988a9261fdff87dc70505691bf875e42aadc69a9`, which descends from deployed-hardening commit `96ddb8b` and connector safeguards at `22ce771`. It preserves corporate API/authentication changes, deployed ODBC runtime metadata, and adds the current localized administration/terminal UI with the EXTERNAL presence safeguards retained. It excludes operational metrics work, which is not deployed. Its separately committed checkpoint `7a33fc4` is preserved in draft PR #7 (`25101db`), based on PR #6; review it independently.
+The release candidate is based on corporate checkpoint `988a9261fdff87dc70505691bf875e42aadc69a9`, which descends from deployed-hardening commit `96ddb8b` and connector safeguards at `22ce771`. It preserves corporate API/authentication changes, deployed ODBC runtime metadata, and adds the current localized administration/terminal UI with the EXTERNAL presence safeguards retained. It excludes operational metrics work, which is not deployed. Its separately committed checkpoint `7a33fc4` is preserved in draft PR #8, based on PR #6; review it independently.
 
-GitHub `main` was `6cb48bdb7dcbe9151eb66e9dc849a7f33cdb34cb`; local `main` was `2ecc136641820be0bfd27e55c4517ebb9d2e5665`, a duplicate RFID separator commit with the same tree. Draft PR #6 started from `c4e55b2`; its head is now `689998a` after publishing the release file set and state correction. Corporate follow-up commits after `c4e55b2` include connector corrections, offline ODBC packaging, secret mount and image provenance. The checkpoint line also contains temporary admin authentication and a reproducible frontend build.
+GitHub `main` was `6cb48bdb7dcbe9151eb66e9dc849a7f33cdb34cb`; local `main` was `2ecc136641820be0bfd27e55c4517ebb9d2e5665`, a duplicate RFID separator commit with the same tree. Draft PR #6 started from `c4e55b2`; the release file set and state correction are published on its head. Corporate follow-up commits after `c4e55b2` include connector corrections, offline ODBC packaging, secret mount and image provenance. The checkpoint line also contains temporary admin authentication and a reproducible frontend build.
 
 ## Runtime compared with Git
 
@@ -18,4 +18,4 @@ Runtime Compose uses `docker-compose.yml`, `docker-compose.issue2.yml`, `docker-
 
 ## Unpublished operational metrics
 
-The separate `phase2c/release-candidate` branch has checkpoint `7a33fc4` for `0012_operational_metrics`, singleton worker telemetry, an authenticated aggregate endpoint and an Nginx deny rule. It is not in the running images or database. It is preserved for independent review in draft PR #7 at head `25101db`, with PR #6 as base; do not apply its migration as part of this reconciliation.
+The separate `phase2c/release-candidate` branch has checkpoint `7a33fc4` for `0012_operational_metrics`, singleton worker telemetry, an authenticated aggregate endpoint and an Nginx deny rule. It is not in the running images or database. It is preserved for independent review in draft PR #8, with PR #6 as base; do not apply its migration as part of this reconciliation.
