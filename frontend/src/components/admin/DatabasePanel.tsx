@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import { useLanguage } from "../../i18n";
 
 interface DatabaseStatus {
   backend: string;
@@ -21,6 +22,7 @@ interface TestResult {
 }
 
 export function DatabasePanel() {
+  const { t } = useLanguage();
   const [status, setStatus] = useState<DatabaseStatus | null>(null);
   const [form, setForm] = useState({ host: "", port: "5432", database: "bss_timecollection", username: "", password: "", sslmode: "prefer" });
   const [result, setResult] = useState<TestResult | null>(null);
@@ -45,36 +47,36 @@ export function DatabasePanel() {
 
   return <div className="admin-stack">
     <section className="admin-card">
-      <div className="section-heading"><div><h3>Current primary database</h3><p>The password is never exposed through Administration.</p></div></div>
+      <div className="section-heading"><div><h3>{t("currentDatabase")}</h3><p>{t("passwordNeverExposed")}</p></div></div>
       {status ? <div className="detail-grid database-detail-grid">
-        <div><span>Mode</span><strong>{status.source === "local-compose" ? "Local Docker PostgreSQL" : "External database"}</strong></div>
-        <div><span>Engine</span><strong>{status.backend}</strong></div>
-        <div><span>Host</span><strong>{status.host || "—"}</strong></div>
-        <div><span>Port</span><strong>{status.port || "—"}</strong></div>
-        <div><span>Database</span><strong>{status.database || "—"}</strong></div>
-        <div><span>User</span><strong>{status.username || "—"}</strong></div>
-      </div> : <div className="loading-state">Loading database status…</div>}
+        <div><span>{t("mode")}</span><strong>{status.source === "local-compose" ? t("localPostgres") : t("externalDatabase")}</strong></div>
+        <div><span>{t("engine")}</span><strong>{status.backend}</strong></div>
+        <div><span>{t("host")}</span><strong>{status.host || "—"}</strong></div>
+        <div><span>{t("port")}</span><strong>{status.port || "—"}</strong></div>
+        <div><span>{t("database")}</span><strong>{status.database || "—"}</strong></div>
+        <div><span>{t("user")}</span><strong>{status.username || "—"}</strong></div>
+      </div> : <div className="loading-state">{t("loadingDatabase")}</div>}
     </section>
 
     <section className="admin-card">
-      <div className="section-heading"><div><h3>External PostgreSQL connection</h3><p>Validate a managed external database before changing the deployment configuration. Credentials are used only for this test and are not stored by the application.</p></div></div>
-      {status && !status.connection_test_enabled && <div className="info-notice">Connection testing is disabled on this server. Set <code>DATABASE_ADMIN_TEST_ENABLED=true</code> only on a trusted administration network.</div>}
+      <div className="section-heading"><div><h3>{t("externalPostgres")}</h3><p>{t("externalPostgresHelp")}</p></div></div>
+      {status && !status.connection_test_enabled && <div className="info-notice">{t("testDisabled")} <code>DATABASE_ADMIN_TEST_ENABLED=true</code> {t("trustedNetworkOnly")}</div>}
       <div className="form-grid">
-        <label>Host<input value={form.host} onChange={event => setForm({...form, host:event.target.value})} placeholder="postgres.company.local" /></label>
-        <label>Port<input value={form.port} onChange={event => setForm({...form, port:event.target.value})} inputMode="numeric" /></label>
-        <label>Database<input value={form.database} onChange={event => setForm({...form, database:event.target.value})} /></label>
-        <label>Username<input value={form.username} onChange={event => setForm({...form, username:event.target.value})} /></label>
-        <label>Password<input type="password" autoComplete="new-password" value={form.password} onChange={event => setForm({...form, password:event.target.value})} /></label>
-        <label>SSL mode<select value={form.sslmode} onChange={event => setForm({...form, sslmode:event.target.value})}><option value="prefer">Prefer</option><option value="require">Require</option><option value="verify-ca">Verify CA</option><option value="verify-full">Verify full</option><option value="disable">Disable</option></select></label>
+        <label>{t("host")}<input value={form.host} onChange={event => setForm({...form, host:event.target.value})} placeholder="postgres.company.local" /></label>
+        <label>{t("port")}<input value={form.port} onChange={event => setForm({...form, port:event.target.value})} inputMode="numeric" /></label>
+        <label>{t("database")}<input value={form.database} onChange={event => setForm({...form, database:event.target.value})} /></label>
+        <label>{t("username")}<input value={form.username} onChange={event => setForm({...form, username:event.target.value})} /></label>
+        <label>{t("password")}<input type="password" autoComplete="new-password" value={form.password} onChange={event => setForm({...form, password:event.target.value})} /></label>
+        <label>{t("sslMode")}<select value={form.sslmode} onChange={event => setForm({...form, sslmode:event.target.value})}><option value="prefer">{t("prefer")}</option><option value="require">{t("require")}</option><option value="verify-ca">{t("verifyCa")}</option><option value="verify-full">{t("verifyFull")}</option><option value="disable">{t("sslDisable")}</option></select></label>
       </div>
-      <div className="form-actions"><button className="primary" disabled={busy || !form.host || !form.username || !form.password || !status?.connection_test_enabled} onClick={() => void test()}>{busy ? "Testing…" : "Test connection"}</button></div>
-      {result && <div className="success-notice" role="status"><span aria-hidden="true">✓</span>External PostgreSQL connection validated · {result.host}:{result.port}/{result.database} · {result.latency_ms} ms</div>}
+      <div className="form-actions"><button className="primary" disabled={busy || !form.host || !form.username || !form.password || !status?.connection_test_enabled} onClick={() => void test()}>{busy ? t("testing") : t("testConnection")}</button></div>
+      {result && <div className="success-notice" role="status"><span aria-hidden="true">✓</span>{t("externalDbValidated")} · {result.host}:{result.port}/{result.database} · {result.latency_ms} ms</div>}
       {error && <div className="inline-error" role="alert">{error}</div>}
     </section>
 
     <section className="admin-card">
-      <div className="section-heading"><div><h3>Activation</h3><p>The primary database is changed through deployment configuration after the connection has been validated.</p></div></div>
-      <div className="info-notice">Set <code>DATABASE_URL</code> on the server, run Alembic migrations against the target database, then restart the API and worker. This screen does not change the active connection.</div>
+      <div className="section-heading"><div><h3>{t("activation")}</h3><p>{t("activationHelp")}</p></div></div>
+      <div className="info-notice">{t("databaseActivationHelp")} <code>DATABASE_URL</code> {t("databaseActivationEnd")}</div>
     </section>
   </div>;
 }
