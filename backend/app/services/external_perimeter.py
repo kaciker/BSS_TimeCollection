@@ -38,7 +38,7 @@ def _connection_string() -> str:
     data = json.loads(path.read_text(encoding="utf-8"))
     # Accept the local ODBC configuration without ever logging its values.
     if "connection_string" in data:
-        return data["connection_string"]
+        raise RuntimeError("Use structured SQL credentials; arbitrary ODBC connection strings are not accepted")
     server = data.get("server") or data.get("host")
     database = data.get("database", "SECURITY_DB")
     username = data.get("username") or data.get("user") or data.get("uid")
