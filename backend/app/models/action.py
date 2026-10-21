@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -8,9 +8,10 @@ from app.db.base import Base
 
 class Action(Base):
     __tablename__ = "actions"
+    __table_args__ = (Index("ix_actions_parent_action_id", "parent_action_id"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    code: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    code: Mapped[str] = mapped_column(String(64), unique=True)
     label: Mapped[str] = mapped_column(String(120))
     supplier_device_event: Mapped[str] = mapped_column(String(128), unique=True)
     state_effect: Mapped[str] = mapped_column(String(16))
@@ -19,7 +20,7 @@ class Action(Base):
     visual_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
     display_order: Mapped[int] = mapped_column(Integer, default=100)
     requires_subaction: Mapped[bool] = mapped_column(Boolean, default=False)
-    parent_action_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("actions.id", ondelete="SET NULL"), nullable=True, index=True)
+    parent_action_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("actions.id", ondelete="SET NULL"), nullable=True)
     show_on_terminal: Mapped[bool] = mapped_column(Boolean, default=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

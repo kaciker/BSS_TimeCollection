@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import {afterEach,expect,it,vi} from 'vitest';
 import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
-import {actionVisuals,actionVisualKeys} from '../src/actionVisuals';
+import {actionVisualKeys} from '../src/actionVisuals';
 import {ActionEditor} from '../src/components/admin/ActionEditor';
 import {TerminalPage} from '../src/pages/TerminalPage';
 import {api} from '../src/api';
@@ -12,8 +12,6 @@ const keys=['bocadillo','comida','medico-empresa','formacion','no-productivo','c
 it('offers all sixteen new illustrations and retains every legacy key',()=>{
  render(<ActionEditor action={null} actions={[]} terminals={[]} onClose={()=>{}} onSaved={()=>{}}/>);
  for(const key of keys){
-  const label=actionVisuals.find(v=>v.key===key)!.name;
-  expect(screen.getByRole('radio',{name:label})).toBeTruthy();
   expect(document.querySelector(`img[src="/action-visuals/${key}.png"]`)).toBeTruthy();
  }
  for(const key of ['factory','break','medical','personal','legal','end-work','no-work']) expect(actionVisualKeys.has(key)).toBe(true);

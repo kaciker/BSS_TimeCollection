@@ -20,12 +20,21 @@ class Settings(BaseSettings):
     oracle_bearer_token: str = ""
     oracle_timeout_seconds: float = 15.0
 
+    perimeter_sqlserver_credentials_file: str = '/run/secrets/perimeter_sqlserver.json'
+    perimeter_external_max_age_hours: int = 12
+
     terminal_cookie_secure: bool = False
     terminal_session_days: int = 365
     terminal_pairing_minutes: int = 10
 
+
     worker_poll_seconds: float = 3.0
     worker_stale_sending_seconds: int = 300
+
+    operational_metrics_token: str = ""
+    operational_statement_timeout_ms: int = 750
+    worker_heartbeat_seconds: int = 10
+    worker_heartbeat_stale_seconds: int = 45
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

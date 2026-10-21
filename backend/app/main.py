@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.core.admin_security import install_admin_authentication
 from app.routers import admin, database_admin, health, monitoring, terminal, policies, structure, perimeter
 
 
@@ -8,6 +9,8 @@ app = FastAPI(
     version="0.1.0",
     description="External Time Collection Device event collector for Oracle HCM Time and Labor.",
 )
+
+install_admin_authentication(app)
 
 app.include_router(health.router)
 app.include_router(terminal.router)
@@ -24,6 +27,6 @@ def meta():
     return {
         "name": "BSS Time Collection",
         "version": "0.1.0",
-        "authentication": "disabled",
+        "authentication": "admin-provider-required; terminal-http-only-session",
         "scope": "external-time-collection-device",
     }
