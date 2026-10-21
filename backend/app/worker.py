@@ -1,4 +1,5 @@
 import logging
+import threading
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -10,9 +11,46 @@ from app.domain.enums import DeliveryStatus
 from app.integrations.oracle.client import OracleClient
 from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
+from app.models.worker_runtime_metrics import WorkerRuntimeMetrics
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("delivery-worker")
+
+
+def update_runtime_metrics(*, heartbeat=False, successful_cycle=False, successful_delivery=False, db=None) -> None:
+    """Update the bounded singleton without storing worker or event identities."""
+    now = datetime.now(timezone.utc)
+
+    def apply(session):
+        from sqlalchemy.dialects.postgresql import insert
+
+        values = {"id": 1, "process_started_at": now}
+        if heartbeat:
+            values["heartbeat_at"] = now
+        if successful_cycle:
+            values["last_successful_cycle_at"] = now
+        if successful_delivery:
+            values["last_successful_delivery_at"] = now
+        statement = insert(WorkerRuntimeMetrics).values(**values)
+        update_values = {key: getattr(statement.excluded, key) for key in values if key not in ("id", "process_started_at")}
+        session.execute(statement.on_conflict_do_update(index_elements=[WorkerRuntimeMetrics.id], set_=update_values))
+
+    if db is not None:
+        apply(db)
+        return
+    with SessionLocal() as session:
+        apply(session)
+        session.commit()
+
+
+def _heartbeat_loop(stop: threading.Event) -> None:
+    interval = max(1, settings.worker_heartbeat_seconds)
+    while not stop.is_set():
+        try:
+            update_runtime_metrics(heartbeat=True)
+        except Exception:
+            logger.warning("Worker heartbeat update failed")
+        stop.wait(interval)
 
 
 def recover_stale_events() -> None:
@@ -88,36 +126,49 @@ def deliver(event_id: str, client: OracleClient) -> None:
             event.next_attempt_at = finished_at + timedelta(seconds=delay_seconds)
         else:
             event.next_attempt_at = None
+        if result.result == DeliveryStatus.SENT.value:
+            update_runtime_metrics(successful_delivery=True, db=db)
         db.commit()
         logger.info("Delivery result event=%s status=%s http=%s", event.id, result.result, result.status_code)
 
 
 def main() -> None:
     logger.info("Delivery worker started; Oracle enabled=%s", settings.oracle_enabled)
-    recover_stale_events()
-    client = OracleClient()
-    while True:
-        if not settings.oracle_enabled:
-            time.sleep(max(settings.worker_poll_seconds, 1.0))
-            continue
-        event_id = claim_next_event()
-        if event_id is None:
-            time.sleep(settings.worker_poll_seconds)
-            continue
-        try:
-            deliver(event_id, client)
-        except Exception:
-            logger.exception("Unhandled delivery failure for event=%s", event_id)
-            with SessionLocal() as db:
-                event = db.get(TimeEvent, event_id)
-                if event and event.delivery_status == DeliveryStatus.SENDING.value:
-                    event.delivery_status = DeliveryStatus.UNKNOWN.value
-                    event.next_attempt_at = None
-                    db.commit()
-                    logger.warning(
-                        "Marked event=%s as UNKNOWN after unhandled delivery failure; reconciliation is required before replay",
-                        event.id,
-                    )
+    stop = threading.Event()
+    heartbeat = threading.Thread(target=_heartbeat_loop, args=(stop,), name="worker-heartbeat", daemon=True)
+    heartbeat.start()
+    try:
+        recover_stale_events()
+        client = OracleClient()
+        while True:
+            if not settings.oracle_enabled:
+                time.sleep(max(settings.worker_poll_seconds, 1.0))
+                continue
+            event_id = claim_next_event()
+            try:
+                update_runtime_metrics(successful_cycle=True)
+            except Exception:
+                logger.warning("Worker successful-cycle metric update failed")
+            if event_id is None:
+                time.sleep(settings.worker_poll_seconds)
+                continue
+            try:
+                deliver(event_id, client)
+            except Exception:
+                logger.exception("Unhandled delivery failure for event=%s", event_id)
+                with SessionLocal() as db:
+                    event = db.get(TimeEvent, event_id)
+                    if event and event.delivery_status == DeliveryStatus.SENDING.value:
+                        event.delivery_status = DeliveryStatus.UNKNOWN.value
+                        event.next_attempt_at = None
+                        db.commit()
+                        logger.warning(
+                            "Marked event=%s as UNKNOWN after unhandled delivery failure; reconciliation is required before replay",
+                            event.id,
+                        )
+    finally:
+        stop.set()
+        heartbeat.join(timeout=max(1, settings.worker_heartbeat_seconds))
 
 
 if __name__ == "__main__":
