@@ -30,7 +30,7 @@ Cookie HttpOnly/SameSite=Strict, activación de un uso y pairing temporal. Repro
 
 ## Factory Perimeter
 
-La activación es **por fábrica**: ARGANDA está activada; DEFAULT sigue desactivada. Estado por fábrica. Selección persistida por URL/localStorage (URL prioritaria); asignaciones guardadas explícitas y protección contra respuestas antiguas/avisos contradictorios.
+La activación es **por fábrica**: ARGANDA y DEFAULT están desactivadas; ARGANDA conserva `OPEN` como origen operativo. Estado por fábrica. Selección persistida por URL/localStorage (URL prioritaria); asignaciones guardadas explícitas y protección contra respuestas antiguas/avisos contradictorios.
 
 Con el perímetro activado, una entrada de célula requiere que el UID haya entrado antes en esa misma fábrica. La presencia solo usa UID. `OPEN` es el origen operativo; el conector SECURITY_DB `EXTERNAL` está desplegado en la imagen API, pero requiere credenciales read-only verificadas antes de activar la fábrica. La interfaz no presenta presencia local como autoritativa en modo EXTERNAL.
 
@@ -74,7 +74,7 @@ Claves legacy: `end-work`, `break`, `factory`, `medical`, `personal`, `legal`, `
 
 ## Despliegue CORP y guardrails
 
-CORP `/opt/BSSTimeCollection`, web `http://10.33.137.103:8080`; GitHub main no incluye todavía todo el estado. PR #6 continúa abierto/draft; checkpoint `988a926` desciende de `96ddb8b` e incluye hardening, ODBC offline, autenticación temporal y etiquetado de imágenes. API source label `22ce771`, web `10df7ce`, worker `a414089+corp-corrections`; la web no incluye las traducciones actuales. Compose: `docker-compose.yml`, `docker-compose.issue2.yml`, `docker-compose.perimeter-corp.yml` y overlays temporales.
+CORP `/opt/BSSTimeCollection`, web `http://10.33.137.103:8080`; GitHub main no incluye todavía todo el estado. PR #6 continúa abierto/draft; checkpoint `988a926` desciende de `96ddb8b` e incluye hardening, ODBC offline, autenticación temporal y etiquetado de imágenes. API source label `22ce771`, web `10df7ce`, worker `a414089+corp-corrections`; la web no incluye las traducciones actuales. El head de PR #6 está consolidado en `0749fbea`. Compose: `docker-compose.yml`, `docker-compose.issue2.yml`, `docker-compose.perimeter-corp.yml` y overlays temporales.
 
 Backend actual 77/7 omitidos; frontend 41/build. API/web saludables, worker activo, PostgreSQL/volumen conservados. Evidencia histórica baseline: [docs/deployment/corp-github-sync-20261020.md](docs/deployment/corp-github-sync-20261020.md).
 
