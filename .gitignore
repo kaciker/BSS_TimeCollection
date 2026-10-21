@@ -43,3 +43,7 @@ coverage/
 # Microsoft/ Debian runtime packages are staged from verified upstream sources locally.
 /backend/odbc-packages/*.deb
 /backend/odbc-packages/*.whl
+
+# Authentication credentials and local environment files.
+.env
+*.env

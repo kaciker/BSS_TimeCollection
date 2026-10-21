@@ -21,14 +21,29 @@ class HeaderAdminProvider:
 
 def test_admin_request_fails_closed_when_provider_is_missing():
     previous = getattr(app.state, "admin_auth_provider", None)
-    app.state.admin_auth_provider = HeaderAdminProvider()
-    app.state.admin_auth_provider.configured = False
+    if hasattr(app.state, "admin_auth_provider"):
+        delattr(app.state, "admin_auth_provider")
     try:
         response = TestClient(app).get("/api/v1/admin/integration-settings")
         assert response.status_code == 503
         assert response.json()["detail"] == "Admin authentication provider is not configured."
     finally:
         if previous is not None:
+            app.state.admin_auth_provider = previous
+
+
+def test_admin_request_fails_closed_when_provider_is_unconfigured():
+    previous = getattr(app.state, "admin_auth_provider", None)
+    provider = HeaderAdminProvider()
+    provider.configured = False
+    app.state.admin_auth_provider = provider
+    try:
+        response = TestClient(app).get("/api/v1/admin/integration-settings")
+        assert response.status_code == 503
+    finally:
+        if previous is None:
+            delattr(app.state, "admin_auth_provider")
+        else:
             app.state.admin_auth_provider = previous
 
 
