@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     oracle_bearer_token: str = ""
     oracle_timeout_seconds: float = 15.0
 
+    perimeter_sqlserver_credentials_file: str = '/run/secrets/perimeter_sqlserver.json'
+    perimeter_external_max_age_hours: int = 12
+
     terminal_cookie_secure: bool = False
     terminal_session_days: int = 365
     terminal_pairing_minutes: int = 10
