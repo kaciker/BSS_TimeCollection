@@ -74,7 +74,7 @@ Claves legacy: `end-work`, `break`, `factory`, `medical`, `personal`, `legal`, `
 
 ## Despliegue CORP y guardrails
 
-CORP `/opt/BSSTimeCollection`, web `http://10.33.137.103:8080`; GitHub main no incluye todavía todo el estado. PR #6 está abierto/draft en `6ec23b6` y consolida con checkpoint `988a926`, descendiente de `96ddb8b`, hardening, ODBC offline, autenticación temporal y etiquetado de imágenes. PR #8, draft sobre PR #6, contiene el checkpoint independiente de métricas `0012`. API source label `22ce771`, web `10df7ce`, worker `a414089+corp-corrections`; la web no incluye las traducciones actuales. Compose: `docker-compose.yml`, `docker-compose.issue2.yml`, `docker-compose.perimeter-corp.yml` y overlays temporales.
+CORP `/opt/BSSTimeCollection`, web `http://10.33.137.103:8080`; GitHub main no incluye todavía todo el estado. PR #6 sigue abierto/draft y consolida con checkpoint `988a926`, descendiente de `96ddb8b`, hardening, ODBC offline, autenticación temporal y etiquetado de imágenes. PR #8, draft sobre PR #6, contiene el checkpoint independiente de métricas `0012`. API source label `22ce771`, web `10df7ce`, worker `a414089+corp-corrections`; la web no incluye las traducciones actuales. Compose: `docker-compose.yml`, `docker-compose.issue2.yml`, `docker-compose.perimeter-corp.yml` y overlays temporales.
 
 Backend actual 77/7 omitidos; frontend 41/build. API/web saludables, worker activo, PostgreSQL/volumen conservados. Evidencia histórica baseline: [docs/deployment/corp-github-sync-20261020.md](docs/deployment/corp-github-sync-20261020.md).
 
@@ -82,7 +82,7 @@ Preservar `.env`, configuración, terminales, sesiones, acciones, históricos y 
 
 Conector Arganda: servicio y ODBC Driver 18/pyodbc en la imagen API. Producción continúa en `OPEN` y desactivada; Oracle desactivado. El login SECURITY_DB probado tiene permisos DML y no sirve para montaje read-only. Obtener credenciales verificadas antes de activar `EXTERNAL`. `acc_zone_code` es `nvarchar`; timestamps naive en `Europe/Madrid`. EXIT físico requiere reconciliación aprobada para crear EXIT de célula. Véase [arganda-external-sqlserver.md](docs/arganda-external-sqlserver.md).
 
-Métricas operativas: checkpoint `7a33fc4`, republicado como PR #8 (`e16dfca`) sobre la release consolidada. Incluye migración `0012_operational_metrics`, telemetría singleton y endpoint agregado; no está en imagen ni base desplegadas. Requiere revisión independiente; no migrar en CORP como parte de esta consolidación.
+Métricas operativas: checkpoint `7a33fc4`, republicado como PR #8 sobre la release consolidada. Incluye migración `0012_operational_metrics`, telemetría singleton y endpoint agregado; no está en imagen ni base desplegadas. Requiere revisión independiente; no migrar en CORP como parte de esta consolidación.
 
 ## Siguiente riesgo / backlog
 
