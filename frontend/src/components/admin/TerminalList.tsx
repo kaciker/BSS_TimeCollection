@@ -2,10 +2,12 @@ import { useRef, useState } from "react";
 import { api } from "../../api";
 import type { AdminAction, AdminTerminal, TerminalProvisioning } from "../../types";
 import { TerminalEditor } from "./TerminalEditor";
+import { useLanguage } from "../../i18n";
 
 export function TerminalList({ terminals, actions, onChanged }: {
   terminals: AdminTerminal[]; actions: AdminAction[]; onChanged: (message: string) => void;
 }) {
+  const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [editor, setEditor] = useState<{ terminal: AdminTerminal | null } | null>(null);
@@ -27,10 +29,10 @@ export function TerminalList({ terminals, actions, onChanged }: {
       } else {
         activationInput.current?.focus();
         activationInput.current?.select();
-        if (!document.execCommand("copy")) throw new Error("Select and copy the activation URL manually.");
+        if (!document.execCommand("copy")) throw new Error(t("copyManually"));
       }
       setCopied(true);
-    } catch { setProvisionError("Could not copy the link. Select and copy the activation URL manually."); }
+    } catch { setProvisionError(t("copyFailed")); }
   };
   const filtered = terminals.filter(terminal => `${terminal.code} ${terminal.name} ${terminal.external_device_id}`.toLowerCase().includes(search.toLowerCase()) && (!status || terminal.active === (status === "active")));
   const activationUrl = provisioning ? `${window.location.origin}/terminal/activate#${provisioning.activation_token}` : "";
@@ -42,32 +44,32 @@ export function TerminalList({ terminals, actions, onChanged }: {
     try {
       const value = await api.post<AdminTerminal>(`/api/v1/admin/terminals/${encodeURIComponent(terminal.code)}/clone`, {});
       setProvisioning(null);
-      onChanged(`Terminal ${value.code} cloned. Review its configuration and provision its browser separately.`);
+      onChanged(`${t("terminal")} ${value.code} ${t("clonedReview")}`);
       setEditor({ terminal: value });
     } catch (err) { setProvisionError((err as Error).message); }
     finally { setCloning(null); }
   };
 
   const remove = async (terminal: AdminTerminal) => {
-    if (deleting || !window.confirm(`Remove terminal ${terminal.code}? Its browser access will be revoked. Historical events and transmission logs will remain available.`)) return;
+    if (deleting || !window.confirm(`${t("confirmRemoveTerminal")} ${terminal.code}? ${t("removeTerminalHelp")}`)) return;
     setDeleting(terminal.code);
     setProvisionError("");
     try {
       await api.delete(`/api/v1/admin/terminals/${encodeURIComponent(terminal.code)}`);
       if (provisioning?.code === terminal.code) setProvisioning(null);
-      onChanged(`Terminal ${terminal.code} removed. Historical events remain available.`);
+      onChanged(`${t("terminal")} ${terminal.code} ${t("terminalRemoved")}`);
     } catch (err) { setProvisionError((err as Error).message); }
     finally { setDeleting(null); }
   };
 
   const provision = async (terminal: AdminTerminal) => {
-    if (terminal.provisioned && !window.confirm(`Reprovision ${terminal.code}? The existing browser session will be revoked.`)) return;
+    if (terminal.provisioned && !window.confirm(`${t("confirmReprovision")} ${terminal.code}? ${t("reprovisionHelp")}`)) return;
     setProvisionError("");
     try {
       const value = await api.post<TerminalProvisioning>(`/api/v1/admin/terminals/${encodeURIComponent(terminal.code)}/provision`, {});
       setProvisioning(value);
       setCopied(false);
-      onChanged(`Activation link generated for ${terminal.code}.`);
+      onChanged(`${t("activationLinkGenerated")} ${terminal.code}.`);
     } catch (err) {
       setProvisionError((err as Error).message);
     }
@@ -76,7 +78,7 @@ export function TerminalList({ terminals, actions, onChanged }: {
   const pairBrowser = async () => {
     const terminal = terminals.find(item => item.code === pairingTerminal);
     if (!terminal || !pairingCode.trim()) return;
-    if (terminal.provisioned && !window.confirm(`Pair a new browser with ${terminal.code}? Its current browser session will be revoked when the new browser completes pairing.`)) return;
+    if (terminal.provisioned && !window.confirm(`${t("confirmNewBrowser")} ${terminal.code}? ${t("pairBrowserRevokesHelp")}`)) return;
     setPairingBusy(true);
     setProvisionError("");
     try {
@@ -84,7 +86,7 @@ export function TerminalList({ terminals, actions, onChanged }: {
       setPairingCode("");
       setPairingTerminal("");
       setPairingOpen(false);
-      onChanged(`Pairing approved for ${terminal.code}. The browser will activate automatically.`);
+      onChanged(`${t("pairingApprovedFor")} ${terminal.code}. ${t("browserActivatesAutomatically")}`);
     } catch (err) {
       setProvisionError((err as Error).message);
     } finally {
@@ -93,32 +95,32 @@ export function TerminalList({ terminals, actions, onChanged }: {
   };
 
   return <>
-    <div className="page-actions"><div className="list-stats"><strong>{terminals.length}</strong> terminals <span className="stat-separator" /><span className="status-dot" />{terminals.filter(terminal => terminal.active).length} active</div><div className="table-controls"><button className="secondary" onClick={() => setPairingOpen(value => !value)}>Pair browser</button><button className="primary" onClick={() => setEditor({terminal:null})}><span aria-hidden="true">＋</span> New terminal</button></div></div>
+    <div className="page-actions"><div className="list-stats"><strong>{terminals.length}</strong> {t("terminalsCount")} <span className="stat-separator" /><span className="status-dot" />{terminals.filter(terminal => terminal.active).length} {t("active")}</div><div className="table-controls"><button className="secondary" onClick={() => setPairingOpen(value => !value)}>{t("pairBrowser")}</button><button className="primary" onClick={() => setEditor({terminal:null})}><span aria-hidden="true">＋</span> {t("newTerminal")}</button></div></div>
     {pairingOpen && <section className="admin-card admin-form-card">
-      <div className="section-heading"><div><h3>Pair browser by code</h3><p>On an unprovisioned workstation, open the terminal URL and enter the code shown there below. The existing activation-link method remains available.</p></div><button className="icon-button" aria-label="Close browser pairing" onClick={() => setPairingOpen(false)}>×</button></div>
-      <div className="form-grid"><label>Pairing code<input className="pairing-input" value={pairingCode} placeholder="ABCD-EFGH" maxLength={16} autoComplete="off" onChange={event => setPairingCode(event.target.value.toUpperCase())} /></label><label>Assign to terminal<select value={pairingTerminal} onChange={event => setPairingTerminal(event.target.value)}><option value="">Select terminal</option>{terminals.filter(terminal => terminal.active).map(terminal => <option key={terminal.code} value={terminal.code}>{terminal.code} · {terminal.name}</option>)}</select></label></div>
-      <div className="form-actions"><button className="primary" disabled={pairingBusy || !pairingCode.trim() || !pairingTerminal} onClick={() => void pairBrowser()}>{pairingBusy ? "Pairing…" : "Approve pairing"}</button></div>
+      <div className="section-heading"><div><h3>{t("pairByCode")}</h3><p>{t("pairHelp")}</p></div><button className="icon-button" aria-label={t("closePairing")} onClick={() => setPairingOpen(false)}>×</button></div>
+      <div className="form-grid"><label>{t("pairingCode")}<input className="pairing-input" value={pairingCode} placeholder="ABCD-EFGH" maxLength={16} autoComplete="off" onChange={event => setPairingCode(event.target.value.toUpperCase())} /></label><label>{t("assignTerminal")}<select value={pairingTerminal} onChange={event => setPairingTerminal(event.target.value)}><option value="">{t("selectTerminal")}</option>{terminals.filter(terminal => terminal.active).map(terminal => <option key={terminal.code} value={terminal.code}>{terminal.code} · {terminal.name}</option>)}</select></label></div>
+      <div className="form-actions"><button className="primary" disabled={pairingBusy || !pairingCode.trim() || !pairingTerminal} onClick={() => void pairBrowser()}>{pairingBusy ? t("pairing") : t("approvePairing")}</button></div>
     </section>}
     {provisioning && <section className="admin-card admin-form-card">
-      <div className="section-heading"><div><h3>Activation link · {provisioning.code}</h3><p>Open this link once on the physical workstation. The token is consumed, stored as an HttpOnly browser session and removed from the address bar.</p></div><button className="icon-button" aria-label="Close activation link" onClick={() => setProvisioning(null)}>×</button></div>
-      <label className="field-control">One-time activation URL<input ref={activationInput} readOnly value={activationUrl} onFocus={event => event.currentTarget.select()} /></label>
-      <div className="form-actions"><button className="secondary" onClick={() => void copyActivationUrl()}>{copied ? "Copied" : "Copy activation URL"}</button></div>
+      <div className="section-heading"><div><h3>{t("activationLink")} · {provisioning.code}</h3><p>{t("activationHelp")}</p></div><button className="icon-button" aria-label={t("closeActivation")} onClick={() => setProvisioning(null)}>×</button></div>
+      <label className="field-control">{t("oneTimeUrl")}<input ref={activationInput} readOnly value={activationUrl} onFocus={event => event.currentTarget.select()} /></label>
+      <div className="form-actions"><button className="secondary" onClick={() => void copyActivationUrl()}>{copied ? t("copied") : t("copyUrl")}</button></div>
     </section>}
     {provisionError && <div className="inline-error" role="alert">{provisionError}</div>}
-    <section className="admin-card resource-list" aria-label="Terminal list">
-      <div className="list-toolbar"><label className="search-field"><span className="sr-only">Search terminals</span><input placeholder="Search by name, code or device ID" value={search} onChange={event => setSearch(event.target.value)} /></label><label><span className="sr-only">Terminal status</span><select value={status} onChange={event => setStatus(event.target.value)}><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label><span className="subtle">{filtered.length} results</span></div>
-      <div className="table-wrap"><table><thead><tr><th>Terminal</th><th>Oracle device ID</th><th>Input method</th><th>Structure</th><th>Browser binding</th><th>Status</th><th><span className="sr-only">Manage terminal</span></th></tr></thead><tbody>{filtered.map(terminal => <tr key={terminal.code}>
-        <td><strong>{terminal.name}</strong>{terminal.terminal_role !== "CELL" && <div className="cell-secondary">Factory perimeter</div>}<div className="cell-secondary"><code>{terminal.code}</code></div></td><td><code>{terminal.external_device_id}</code></td><td>{terminal.identification_mode === "BOTH" ? "Reader + keypad" : terminal.identification_mode === "RFID" ? "Badge reader" : "Keypad"}</td>
-        <td>{terminal.structure_path ?? <span className="unconfigured">Legacy / unassigned</span>}</td>
-        <td><span className={`resource-status ${terminal.provisioned ? "is-active" : "is-inactive"}`}><span />{terminal.provisioned ? "Provisioned" : terminal.activation_pending ? "Activation pending" : "Not provisioned"}</span></td>
-        <td><span className={`resource-status ${terminal.active ? "is-active" : "is-inactive"}`}><span />{terminal.active ? "Active" : "Inactive"}</span></td><td><div className="table-controls"><button className="text-button" aria-label={`Edit terminal ${terminal.code}`} onClick={() => setEditor({terminal})}>Edit</button><button className="text-button" aria-label={`Clone terminal ${terminal.code}`} disabled={!!cloning} onClick={() => void clone(terminal)}>{cloning === terminal.code ? "Cloning…" : "Clone"}</button><button className="text-button" onClick={() => void provision(terminal)}>{terminal.provisioned ? "Reprovision" : "Provision"}</button><button className="text-button delete-button" aria-label={`Remove terminal ${terminal.code}`} disabled={!!deleting} onClick={() => void remove(terminal)}>{deleting === terminal.code ? "Removing…" : "Remove"}</button></div></td>
+    <section className="admin-card resource-list" aria-label={t("terminals")}>
+      <div className="list-toolbar"><label className="search-field"><span className="sr-only">{t("searchTerminals")}</span><input placeholder={t("searchTerminalPlaceholder")} value={search} onChange={event => setSearch(event.target.value)} /></label><label><span className="sr-only">{t("terminalStatus")}</span><select value={status} onChange={event => setStatus(event.target.value)}><option value="">{t("allStatuses")}</option><option value="active">{t("enabled")}</option><option value="inactive">{t("disabled")}</option></select></label><span className="subtle">{filtered.length} {t("results")}</span></div>
+      <div className="table-wrap"><table><thead><tr><th>{t("terminal")}</th><th>{t("oracleDeviceId")}</th><th>{t("inputMethod")}</th><th>{t("structure")}</th><th>{t("browserBinding")}</th><th>{t("status")}</th><th><span className="sr-only">{t("manageTerminal")}</span></th></tr></thead><tbody>{filtered.map(terminal => <tr key={terminal.code}>
+        <td><strong>{terminal.name}</strong>{terminal.terminal_role !== "CELL" && <div className="cell-secondary">{t("factoryPerimeter")}</div>}<div className="cell-secondary"><code>{terminal.code}</code></div></td><td><code>{terminal.external_device_id}</code></td><td>{terminal.identification_mode === "BOTH" ? t("readerKeypad") : terminal.identification_mode === "RFID" ? t("badgeReader") : t("keypad")}</td>
+        <td>{terminal.structure_path ?? <span className="unconfigured">{t("legacyUnassigned")}</span>}</td>
+        <td><span className={`resource-status ${terminal.provisioned ? "is-active" : "is-inactive"}`}><span />{terminal.provisioned ? t("provisioned") : terminal.activation_pending ? t("activationPending") : t("notProvisioned")}</span></td>
+        <td><span className={`resource-status ${terminal.active ? "is-active" : "is-inactive"}`}><span />{terminal.active ? t("enabled") : t("disabled")}</span></td><td><div className="table-controls"><button className="text-button" aria-label={`${t("edit")} ${t("terminal")} ${terminal.code}`} onClick={() => setEditor({terminal})}>{t("edit")}</button><button className="text-button" aria-label={`${t("clone")} ${t("terminal")} ${terminal.code}`} disabled={!!cloning} onClick={() => void clone(terminal)}>{cloning === terminal.code ? t("cloning") : t("clone")}</button><button className="text-button" onClick={() => void provision(terminal)}>{terminal.provisioned ? t("reprovision") : t("provision")}</button><button className="text-button delete-button" aria-label={`${t("remove")} ${t("terminal")} ${terminal.code}`} disabled={!!deleting} onClick={() => void remove(terminal)}>{deleting === terminal.code ? t("removing") : t("remove")}</button></div></td>
       </tr>)}</tbody></table></div>
-      {!filtered.length && <div className="empty-state"><h3>No terminals found</h3><p>{terminals.length ? "Try a different search or status filter." : "Create a terminal to configure a factory clock."}</p></div>}
+      {!filtered.length && <div className="empty-state"><h3>{t("noTerminalsFound")}</h3><p>{terminals.length ? t("tryDifferentSearch") : t("createTerminalHint")}</p></div>}
     </section>
     {editor && <TerminalEditor terminal={editor.terminal} actions={actions} onClose={() => setEditor(null)} onSaved={terminal => {
       setEditor(null);
       if (terminal.activation_token) { setProvisioning({code: terminal.code, activation_token: terminal.activation_token}); setCopied(false); }
-      onChanged(`Terminal ${terminal.code} ${editor.terminal ? "updated" : "created"} successfully.`);
+      onChanged(`${t("terminal")} ${terminal.code} ${editor.terminal ? t("terminalUpdated") : t("terminalCreated")}`);
     }} />}
   </>;
 }
