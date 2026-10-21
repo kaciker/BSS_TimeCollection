@@ -45,8 +45,8 @@ def set_config(factory_code: str, payload: FactoryConfigUpdate, db: Session = De
         action = db.scalar(select(Action).where(Action.code == payload.auto_exit_action_code, Action.active.is_(True), Action.state_effect == 'EXIT', Action.requires_subaction.is_(False)))
         if action is None:
             raise HTTPException(422, 'Automatic cell EXIT action must exist, be active and not require subactions')
-    if payload.badge_source == "EXTERNAL":
-        raise HTTPException(422, "External badge source is not yet implemented")
+    if payload.badge_source == "EXTERNAL" and factory_code != "ARGANDA":
+        raise HTTPException(422, "External SQL Server perimeter is configured only for ARGANDA")
     c = db.get(FactoryPerimeterSettings, factory_code)
     if c is None:
         c = FactoryPerimeterSettings(factory_code=factory_code)
