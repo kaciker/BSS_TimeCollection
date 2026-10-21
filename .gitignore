@@ -38,3 +38,8 @@ coverage/
 # Environment-managed workspace briefing (local only)
 /AGENTS.md
 /MYCODEX_CONTEXT_CATALOG.md
+
+
+# Microsoft/ Debian runtime packages are staged from verified upstream sources locally.
+/backend/odbc-packages/*.deb
+/backend/odbc-packages/*.whl
