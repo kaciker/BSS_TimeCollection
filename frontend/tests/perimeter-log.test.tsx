@@ -1,1 +1,16 @@
-Ly8gQHZpdGVzdC1lbnZpcm9ubWVudCBqc2RvbQppbXBvcnQge2FmdGVyRWFjaCxleHBlY3QsaXR9IGZyb20gJ3ZpdGVzdCc7CmltcG9ydCB7Y2xlYW51cCxyZW5kZXIsc2NyZWVufSBmcm9tICdAdGVzdGluZy1saWJyYXJ5L3JlYWN0JzsKaW1wb3J0IHtFdmVudEluc3BlY3Rvcn0gZnJvbSAnLi4vc3JjL2NvbXBvbmVudHMvRXZlbnRJbnNwZWN0b3InOwppbXBvcnQgdHlwZSB7RXZlbnREZXRhaWx9IGZyb20gJy4uL3NyYy9jb21wb25lbnRzL21vbml0b3JpbmdUeXBlcyc7CmFmdGVyRWFjaCgoKT0+e2NsZWFudXAoKTtsb2NhbFN0b3JhZ2UucmVtb3ZlSXRlbSgiYnNzLXRpbWVjb2xsZWN0aW9uLWxhbmd1YWdlIil9KTsKaXQoJ2lkZW50aWZpZXMgcGVyaW1ldGVyIGhpc3RvcnkgYXMgbG9jYWwgYW5kIG9taXRzIE9yYWNsZSBwYXlsb2FkL3RyYW5zbWlzc2lvbiBVSScsKCk9PnsKIGxvY2FsU3RvcmFnZS5zZXRJdGVtKCdic3MtdGltZWNvbGxlY3Rpb24tbGFuZ3VhZ2UnLCdlcycpOwogY29uc3QgZGV0YWlsPXtldmVudDp7aWQ6J3BlcmltZXRlcjp0ZXN0JyxldmVudF9raW5kOidQRVJJTUVURVInLHJlcG9ydGVyX2lkOicwMDAxJyxmYWN0b3J5X2NvZGU6J0FSR0FOREEnLHRlcm1pbmFsX2NvZGU6J0dBVEUnLHN0YXRlX2VmZmVjdDonRVhJVCcsZXZlbnRfZGF0ZXRpbWU6JzIwMjYtMTAtMjBUMTA6MDA6MDBaJyxjb3JyZWxhdGlvbl9pZDonY29ycmVsYXRpb24nLGF1dG9fY2VsbF9leGl0X2V2ZW50X2lkOidjZWxsLWV4aXQnfSxhdHRlbXB0czpbXSxvcmFjbGVfZW5hYmxlZDpmYWxzZSxvcmFjbGVfcGF5bG9hZF9wcmV2aWV3Om51bGx9IGFzIEV2ZW50RGV0YWlsOwogcmVuZGVyKDxFdmVudEluc3BlY3RvciBkZXRhaWw9e2RldGFpbH0gb25DbG9zZT17KCk9Pnt9fS8+KTsKIGV4cGVjdChzY3JlZW4uZ2V0QnlUZXh0KCdTb2xvIGxvY2FsJykpLnRvQmVUcnV0aHkoKTsKIGV4cGVjdChzY3JlZW4uZ2V0QnlUZXh0KCdBUkdBTkRBJykpLnRvQmVUcnV0aHkoKTsKIGV4cGVjdChzY3JlZW4uZ2V0QnlUZXh0KCdjZWxsLWV4aXQnKSkudG9CZVRydXRoeSgpOwogZXhwZWN0KHNjcmVlbi5xdWVyeUJ5VGV4dCgnT3JhY2xlIHBheWxvYWQgcHJldmlldycpKS50b0JlTnVsbCgpOwogZXhwZWN0KHNjcmVlbi5xdWVyeUJ5VGV4dCgvbm90IGJlZW4gc2VudCB0byBPcmFjbGUgeWV0LykpLnRvQmVOdWxsKCk7Cn0pOwo=
+// @vitest-environment jsdom
+import {afterEach,expect,it} from 'vitest';
+import {cleanup,render,screen} from '@testing-library/react';
+import {EventInspector} from '../src/components/EventInspector';
+import type {EventDetail} from '../src/components/monitoringTypes';
+afterEach(()=>{cleanup();localStorage.removeItem("bss-timecollection-language")});
+it('identifies perimeter history as local and omits Oracle payload/transmission UI',()=>{
+ localStorage.setItem('bss-timecollection-language','es');
+ const detail={event:{id:'perimeter:test',event_kind:'PERIMETER',reporter_id:'0001',factory_code:'ARGANDA',terminal_code:'GATE',state_effect:'EXIT',event_datetime:'2026-10-20T10:00:00Z',correlation_id:'correlation',auto_cell_exit_event_id:'cell-exit'},attempts:[],oracle_enabled:false,oracle_payload_preview:null} as EventDetail;
+ render(<EventInspector detail={detail} onClose={()=>{}}/>);
+ expect(screen.getByText('Solo local')).toBeTruthy();
+ expect(screen.getByText('ARGANDA')).toBeTruthy();
+ expect(screen.getByText('cell-exit')).toBeTruthy();
+ expect(screen.queryByText('Oracle payload preview')).toBeNull();
+ expect(screen.queryByText(/not been sent to Oracle yet/)).toBeNull();
+});

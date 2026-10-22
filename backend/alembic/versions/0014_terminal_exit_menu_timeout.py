@@ -1,1 +1,24 @@
-IiIiQWRkIGEgY29uZmlndXJhYmxlIHRpbWVvdXQgZm9yIHRoZSB0ZXJtaW5hbCBleGl0IG1lbnUuCgpSZXZpc2lvbiBJRDogMDAxNF90ZXJtaW5hbF9leGl0X21lbnVfdGltZW91dApSZXZpc2VzOiAwMDEzX2V4dGVybmFsX3BlcmltZXRlcl9yZXBsaWNhCiIiIgpmcm9tIGFsZW1iaWMgaW1wb3J0IG9wCmltcG9ydCBzcWxhbGNoZW15IGFzIHNhCgoKcmV2aXNpb24gPSAiMDAxNF90ZXJtaW5hbF9leGl0X21lbnVfdGltZW91dCIKZG93bl9yZXZpc2lvbiA9ICIwMDEzX2V4dGVybmFsX3BlcmltZXRlcl9yZXBsaWNhIgpicmFuY2hfbGFiZWxzID0gTm9uZQpkZXBlbmRzX29uID0gTm9uZQoKCmRlZiB1cGdyYWRlKCk6CiAgICBvcC5hZGRfY29sdW1uKAogICAgICAgICJ0ZXJtaW5hbHMiLAogICAgICAgIHNhLkNvbHVtbigiZXhpdF9tZW51X3RpbWVvdXRfc2Vjb25kcyIsIHNhLkludGVnZXIoKSwgc2VydmVyX2RlZmF1bHQ9IjUiLCBudWxsYWJsZT1GYWxzZSksCiAgICApCgoKZGVmIGRvd25ncmFkZSgpOgogICAgb3AuZHJvcF9jb2x1bW4oInRlcm1pbmFscyIsICJleGl0X21lbnVfdGltZW91dF9zZWNvbmRzIikK
+"""Add a configurable timeout for the terminal exit menu.
+
+Revision ID: 0014_terminal_exit_menu_timeout
+Revises: 0013_external_perimeter_replica
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+revision = "0014_terminal_exit_menu_timeout"
+down_revision = "0013_external_perimeter_replica"
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    op.add_column(
+        "terminals",
+        sa.Column("exit_menu_timeout_seconds", sa.Integer(), server_default="5", nullable=False),
+    )
+
+
+def downgrade():
+    op.drop_column("terminals", "exit_menu_timeout_seconds")

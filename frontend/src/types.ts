@@ -1,1 +1,99 @@
-ZXhwb3J0IHR5cGUgSWRlbnRpZmljYXRpb25Nb2RlID0gIlJGSUQiIHwgIktFWVBBRCIgfCAiQk9USCI7CmV4cG9ydCB0eXBlIElkZW50aWZpY2F0aW9uTWV0aG9kID0gIlJGSUQiIHwgIktFWVBBRCI7CgpleHBvcnQgaW50ZXJmYWNlIFRlcm1pbmFsQWN0aW9uIHsKICBjb2RlOiBzdHJpbmc7CiAgbGFiZWw6IHN0cmluZzsKICBoYXNfc3ViYWN0aW9uczogYm9vbGVhbjsKICB2aXN1YWxfa2V5Pzogc3RyaW5nIHwgbnVsbDsKfQoKZXhwb3J0IGludGVyZmFjZSBUZXJtaW5hbENvbmZpZyB7CiAgdGVybWluYWxfcm9sZT86IHN0cmluZzsKICBjb2RlOiBzdHJpbmc7CiAgbmFtZTogc3RyaW5nOwogIGlkZW50aWZpY2F0aW9uX21vZGU6IElkZW50aWZpY2F0aW9uTW9kZTsKICBleGl0X21lbnVfdGltZW91dF9zZWNvbmRzOiBudW1iZXI7CiAgYWN0aW9uczogVGVybWluYWxBY3Rpb25bXTsKfQoKZXhwb3J0IGludGVyZmFjZSBUZXJtaW5hbFBhaXJpbmdTdGFydCB7CiAgcGFpcmluZ19jb2RlOiBzdHJpbmc7CiAgcmVxdWVzdF90b2tlbjogc3RyaW5nOwogIGV4cGlyZXNfYXQ6IHN0cmluZzsKICBwb2xsX2FmdGVyX3NlY29uZHM6IG51bWJlcjsKfQoKZXhwb3J0IGludGVyZmFjZSBUZXJtaW5hbFBhaXJpbmdTdGF0dXMgewogIHN0YXR1czogIldBSVRJTkciIHwgIkFQUFJPVkVEIjsKICBjb25maWc/OiBUZXJtaW5hbENvbmZpZyB8IG51bGw7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgQ2FwdHVyZWRFdmVudCB7CiAgaWQ6IHN0cmluZzsKICBhY3Rpb25fY29kZTogc3RyaW5nOwogIGFjdGlvbl9sYWJlbDogc3RyaW5nOwogIGV2ZW50X2RhdGV0aW1lOiBzdHJpbmc7CiAgZGVsaXZlcnlfc3RhdHVzOiBzdHJpbmc7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgU2NhblJlc3BvbnNlIHsKICBmbG93OiAiRU5UUllfUkVDT1JERUQiIHwgIkVYSVRfUkVRVUlSRUQiIHwgIlNVQkFDVElPTl9SRVFVSVJFRCIgfCAiRVhJVF9SRUNPUkRFRCIgfCAiRFVQTElDQVRFX0lHTk9SRUQiIHwgIkZBQ1RPUllfRU5UUllfUkVDT1JERUQiIHwgIkZBQ1RPUllfRVhJVF9SRUNPUkRFRCIgfCAiQUxSRUFEWV9JTlNJREUiIHwgIkFMUkVBRFlfT1VUU0lERSI7CiAgd29ya2VyX3N0YXRlOiAiSU5TSURFIiB8ICJPVVRTSURFIjsKICBldmVudD86IENhcHR1cmVkRXZlbnQ7CiAgYWN0aW9uczogVGVybWluYWxBY3Rpb25bXTsKfQoKZXhwb3J0IGludGVyZmFjZSBBZG1pblRlcm1pbmFsIHsKICBmYWN0b3J5X2NvZGU/OiBzdHJpbmc7CiAgdGVybWluYWxfcm9sZT86IHN0cmluZzsKICBjb2RlOiBzdHJpbmc7CiAgbmFtZTogc3RyaW5nOwogIGV4dGVybmFsX2RldmljZV9pZDogc3RyaW5nOwogIGlkZW50aWZpY2F0aW9uX21vZGU6IElkZW50aWZpY2F0aW9uTW9kZTsKICBleGl0X21lbnVfdGltZW91dF9zZWNvbmRzOiBudW1iZXI7CiAgcmVwb3J0ZXJfaWRfdHlwZTogc3RyaW5nOwogIG9yYWNsZV9hdHRyaWJ1dGVzOiBSZWNvcmQ8c3RyaW5nLCB1bmtub3duPjsKICBhY3RpdmU6IGJvb2xlYW47CiAgYWN0aW9uX2NvZGVzOiBzdHJpbmdbXTsKICBwcm92aXNpb25lZDogYm9vbGVhbjsKICBhY3RpdmF0aW9uX3BlbmRpbmc6IGJvb2xlYW47CiAgZXhpdF9wb2xpY3lfbW9kZTogIkRJU0FCTEVEIiB8ICJTQU1FX1RFUk1JTkFMIiB8ICJTQU1FX1dPUktfQ0VMTCIgfCAiSU5IRVJJVCI7CiAgZWZmZWN0aXZlX2V4aXRfcG9saWN5X21vZGU6ICJESVNBQkxFRCIgfCAiU0FNRV9URVJNSU5BTCIgfCAiU0FNRV9XT1JLX0NFTEwiOwogIGdsb2JhbF9leGl0X3BvbGljeV9tb2RlOiAiRElTQUJMRUQiIHwgIlNBTUVfVEVSTUlOQUwiIHwgIlNBTUVfV09SS19DRUxMIjsKICBhY3RpdmF0aW9uX3Rva2VuPzogc3RyaW5nIHwgbnVsbDsKICBwcm9qZWN0X2xpbmVfaWQ/OiBudW1iZXIgfCBudWxsOyB3b3Jrc2hvcF9pZD86IG51bWJlciB8IG51bGw7IHN1YndvcmtzaG9wX2lkPzogbnVtYmVyIHwgbnVsbDsgc3RydWN0dXJlX3BhdGg/OiBzdHJpbmcgfCBudWxsOwp9CgpleHBvcnQgaW50ZXJmYWNlIFRlcm1pbmFsUHJvdmlzaW9uaW5nIHsKICBjb2RlOiBzdHJpbmc7CiAgYWN0aXZhdGlvbl90b2tlbjogc3RyaW5nOwp9CgpleHBvcnQgaW50ZXJmYWNlIEFkbWluQWN0aW9uIHsKICBjb2RlOiBzdHJpbmc7CiAgbGFiZWw6IHN0cmluZzsKICBzdXBwbGllcl9kZXZpY2VfZXZlbnQ6IHN0cmluZzsKICBzdGF0ZV9lZmZlY3Q6ICJFTlRFUiIgfCAiRVhJVCI7CiAgb3JhY2xlX2F0dHJpYnV0ZXM6IFJlY29yZDxzdHJpbmcsIHVua25vd24+OwogIGRpc3BsYXlfb3JkZXI6IG51bWJlcjsKICByZXF1aXJlc19zdWJhY3Rpb246IGJvb2xlYW47CiAgcGFyZW50X2FjdGlvbl9jb2RlPzogc3RyaW5nIHwgbnVsbDsKICBzdWJhY3Rpb25fY29kZXM6IHN0cmluZ1tdOwogIHZpc3VhbF9rZXk/OiBzdHJpbmcgfCBudWxsOwogIHNob3dfb25fdGVybWluYWw6IGJvb2xlYW47CiAgYWN0aXZlOiBib29sZWFuOwp9CgpleHBvcnQgaW50ZXJmYWNlIEFkbWluRXZlbnQgewogIGlkOiBzdHJpbmc7CiAgdGVybWluYWxfY29kZTogc3RyaW5nOwogIGFjdGlvbl9sYWJlbDogc3RyaW5nOwogIHJlcG9ydGVyX2lkOiBzdHJpbmc7CiAgZXZlbnRfZGF0ZXRpbWU6IHN0cmluZzsKICBkZWxpdmVyeV9zdGF0dXM6IHN0cmluZzsKICBhdHRlbXB0X2NvdW50OiBudW1iZXI7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgU3RydWN0dXJlSXRlbSB7IGlkOiBudW1iZXI7IGNvZGU6IHN0cmluZzsgZGVzY3JpcHRpb246IHN0cmluZzsgYWN0aXZlOiBib29sZWFuOyB3b3Jrc2hvcF9pZD86IG51bWJlcjsgc3Vid29ya3Nob3BfaWQ/OiBudW1iZXIgfQpleHBvcnQgaW50ZXJmYWNlIFN0cnVjdHVyZURhdGEgeyB3b3Jrc2hvcHM6IFN0cnVjdHVyZUl0ZW1bXTsgc3Vid29ya3Nob3BzOiBTdHJ1Y3R1cmVJdGVtW107IHByb2plY3RfbGluZXM6IFN0cnVjdHVyZUl0ZW1bXSB9Cg==
+export type IdentificationMode = "RFID" | "KEYPAD" | "BOTH";
+export type IdentificationMethod = "RFID" | "KEYPAD";
+
+export interface TerminalAction {
+  code: string;
+  label: string;
+  has_subactions: boolean;
+  visual_key?: string | null;
+}
+
+export interface TerminalConfig {
+  terminal_role?: string;
+  code: string;
+  name: string;
+  identification_mode: IdentificationMode;
+  exit_menu_timeout_seconds: number;
+  actions: TerminalAction[];
+}
+
+export interface TerminalPairingStart {
+  pairing_code: string;
+  request_token: string;
+  expires_at: string;
+  poll_after_seconds: number;
+}
+
+export interface TerminalPairingStatus {
+  status: "WAITING" | "APPROVED";
+  config?: TerminalConfig | null;
+}
+
+export interface CapturedEvent {
+  id: string;
+  action_code: string;
+  action_label: string;
+  event_datetime: string;
+  delivery_status: string;
+}
+
+export interface ScanResponse {
+  flow: "ENTRY_RECORDED" | "EXIT_REQUIRED" | "SUBACTION_REQUIRED" | "EXIT_RECORDED" | "DUPLICATE_IGNORED" | "FACTORY_ENTRY_RECORDED" | "FACTORY_EXIT_RECORDED" | "ALREADY_INSIDE" | "ALREADY_OUTSIDE";
+  worker_state: "INSIDE" | "OUTSIDE";
+  event?: CapturedEvent;
+  actions: TerminalAction[];
+}
+
+export interface AdminTerminal {
+  factory_code?: string;
+  terminal_role?: string;
+  code: string;
+  name: string;
+  external_device_id: string;
+  identification_mode: IdentificationMode;
+  exit_menu_timeout_seconds: number;
+  reporter_id_type: string;
+  oracle_attributes: Record<string, unknown>;
+  active: boolean;
+  action_codes: string[];
+  provisioned: boolean;
+  activation_pending: boolean;
+  exit_policy_mode: "DISABLED" | "SAME_TERMINAL" | "SAME_WORK_CELL" | "INHERIT";
+  effective_exit_policy_mode: "DISABLED" | "SAME_TERMINAL" | "SAME_WORK_CELL";
+  global_exit_policy_mode: "DISABLED" | "SAME_TERMINAL" | "SAME_WORK_CELL";
+  activation_token?: string | null;
+  project_line_id?: number | null; workshop_id?: number | null; subworkshop_id?: number | null; structure_path?: string | null;
+}
+
+export interface TerminalProvisioning {
+  code: string;
+  activation_token: string;
+}
+
+export interface AdminAction {
+  code: string;
+  label: string;
+  supplier_device_event: string;
+  state_effect: "ENTER" | "EXIT";
+  oracle_attributes: Record<string, unknown>;
+  display_order: number;
+  requires_subaction: boolean;
+  parent_action_code?: string | null;
+  subaction_codes: string[];
+  visual_key?: string | null;
+  show_on_terminal: boolean;
+  active: boolean;
+}
+
+export interface AdminEvent {
+  id: string;
+  terminal_code: string;
+  action_label: string;
+  reporter_id: string;
+  event_datetime: string;
+  delivery_status: string;
+  attempt_count: number;
+}
+
+export interface StructureItem { id: number; code: string; description: string; active: boolean; workshop_id?: number; subworkshop_id?: number }
+export interface StructureData { workshops: StructureItem[]; subworkshops: StructureItem[]; project_lines: StructureItem[] }

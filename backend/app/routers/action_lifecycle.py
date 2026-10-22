@@ -1,1 +1,55 @@
-ZnJvbSBmYXN0YXBpIGltcG9ydCBBUElSb3V0ZXIsIERlcGVuZHMsIEhUVFBFeGNlcHRpb24KZnJvbSBzcWxhbGNoZW15IGltcG9ydCBzZWxlY3QKZnJvbSBzcWxhbGNoZW15Lm9ybSBpbXBvcnQgU2Vzc2lvbgoKZnJvbSBhcHAuZGIuc2Vzc2lvbiBpbXBvcnQgZ2V0X2RiCmZyb20gYXBwLm1vZGVscy5hY3Rpb24gaW1wb3J0IEFjdGlvbgpmcm9tIGFwcC5tb2RlbHMucGVyaW1ldGVyIGltcG9ydCBGYWN0b3J5UGVyaW1ldGVyU2V0dGluZ3MKZnJvbSBhcHAubW9kZWxzLnRpbWVfZXZlbnQgaW1wb3J0IFRpbWVFdmVudApmcm9tIGFwcC5zZXJ2aWNlcy5jb25maWd1cmF0aW9uX3NlcnZpY2UgaW1wb3J0IGNvbW1pdF9jb25maWd1cmF0aW9uCgoKcm91dGVyID0gQVBJUm91dGVyKHByZWZpeD0iL2FwaS92MS9hZG1pbiIsIHRhZ3M9WyJhZG1pbiJdKQoKCmRlZiBfZGVsZXRlX2Jsb2NrZXJzKGRiOiBTZXNzaW9uLCBhY3Rpb246IEFjdGlvbikgLT4gbGlzdFtzdHJdOgogICAgYmxvY2tlcnM6IGxpc3Rbc3RyXSA9IFtdCgogICAgaWYgZGIuc2NhbGFyKHNlbGVjdChUaW1lRXZlbnQuaWQpLndoZXJlKFRpbWVFdmVudC5hY3Rpb25faWQgPT0gYWN0aW9uLmlkKS5saW1pdCgxKSkgaXMgbm90IE5vbmU6CiAgICAgICAgYmxvY2tlcnMuYXBwZW5kKCJpdCBpcyByZWZlcmVuY2VkIGJ5IHJlY29yZGVkIHRpbWUgZXZlbnRzIikKCiAgICB0ZXJtaW5hbF9jb2RlcyA9IHNvcnRlZCh0ZXJtaW5hbC5jb2RlIGZvciB0ZXJtaW5hbCBpbiBhY3Rpb24udGVybWluYWxzKQogICAgaWYgdGVybWluYWxfY29kZXM6CiAgICAgICAgYmxvY2tlcnMuYXBwZW5kKGYiaXQgaXMgYXNzaWduZWQgdG8gdGVybWluYWwocyk6IHsnLCAnLmpvaW4odGVybWluYWxfY29kZXMpfSIpCgogICAgY2hpbGRfY29kZXMgPSBzb3J0ZWQoY2hpbGQuY29kZSBmb3IgY2hpbGQgaW4gYWN0aW9uLnN1YmFjdGlvbnMpCiAgICBpZiBjaGlsZF9jb2RlczoKICAgICAgICBibG9ja2Vycy5hcHBlbmQoZiJpdCBpcyB0aGUgcGFyZW50IG9mIHN1Yi1hY3Rpb24ocyk6IHsnLCAnLmpvaW4oY2hpbGRfY29kZXMpfSIpCgogICAgcGVyaW1ldGVyX2ZhY3RvcmllcyA9IGxpc3QoZGIuc2NhbGFycygKICAgICAgICBzZWxlY3QoRmFjdG9yeVBlcmltZXRlclNldHRpbmdzLmZhY3RvcnlfY29kZSkud2hlcmUoCiAgICAgICAgICAgIEZhY3RvcnlQZXJpbWV0ZXJTZXR0aW5ncy5hdXRvX2V4aXRfYWN0aW9uX2NvZGUgPT0gYWN0aW9uLmNvZGUKICAgICAgICApCiAgICApLmFsbCgpKQogICAgaWYgcGVyaW1ldGVyX2ZhY3RvcmllczoKICAgICAgICBibG9ja2Vycy5hcHBlbmQoZiJpdCBpcyBjb25maWd1cmVkIGFzIGF1dG9tYXRpYyBmYWN0b3J5IGV4aXQgZm9yOiB7JywgJy5qb2luKHNvcnRlZChwZXJpbWV0ZXJfZmFjdG9yaWVzKSl9IikKCiAgICByZXR1cm4gYmxvY2tlcnMKCgpAcm91dGVyLmRlbGV0ZSgiL2FjdGlvbnMve2FjdGlvbl9jb2RlfSIpCmRlZiBkZWxldGVfYWN0aW9uKGFjdGlvbl9jb2RlOiBzdHIsIGRiOiBTZXNzaW9uID0gRGVwZW5kcyhnZXRfZGIpKToKICAgIGFjdGlvbiA9IGRiLnNjYWxhcihzZWxlY3QoQWN0aW9uKS53aGVyZShBY3Rpb24uY29kZSA9PSBhY3Rpb25fY29kZSkud2l0aF9mb3JfdXBkYXRlKCkpCiAgICBpZiBhY3Rpb24gaXMgTm9uZToKICAgICAgICByYWlzZSBIVFRQRXhjZXB0aW9uKDQwNCwgIkFjdGlvbiBub3QgZm91bmQiKQoKICAgIGJsb2NrZXJzID0gX2RlbGV0ZV9ibG9ja2VycyhkYiwgYWN0aW9uKQogICAgaWYgYmxvY2tlcnM6CiAgICAgICAgcmFpc2UgSFRUUEV4Y2VwdGlvbigKICAgICAgICAgICAgNDA5LAogICAgICAgICAgICBmIkFjdGlvbiB7YWN0aW9uX2NvZGV9IGNhbm5vdCBiZSBkZWxldGVkIGJlY2F1c2Ugeyc7ICcuam9pbihibG9ja2Vycyl9LiBEZWFjdGl2YXRlIGl0IGluc3RlYWQuIiwKICAgICAgICApCgogICAgZGIuZGVsZXRlKGFjdGlvbikKICAgIGNvbW1pdF9jb25maWd1cmF0aW9uKGRiKQogICAgcmV0dXJuIHsiZGV0YWlsIjogZiJBY3Rpb24ge2FjdGlvbl9jb2RlfSBkZWxldGVkIn0K
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.models.action import Action
+from app.models.perimeter import FactoryPerimeterSettings
+from app.models.time_event import TimeEvent
+from app.services.configuration_service import commit_configuration
+
+
+router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
+
+
+def _delete_blockers(db: Session, action: Action) -> list[str]:
+    blockers: list[str] = []
+
+    if db.scalar(select(TimeEvent.id).where(TimeEvent.action_id == action.id).limit(1)) is not None:
+        blockers.append("it is referenced by recorded time events")
+
+    terminal_codes = sorted(terminal.code for terminal in action.terminals)
+    if terminal_codes:
+        blockers.append(f"it is assigned to terminal(s): {', '.join(terminal_codes)}")
+
+    child_codes = sorted(child.code for child in action.subactions)
+    if child_codes:
+        blockers.append(f"it is the parent of sub-action(s): {', '.join(child_codes)}")
+
+    perimeter_factories = list(db.scalars(
+        select(FactoryPerimeterSettings.factory_code).where(
+            FactoryPerimeterSettings.auto_exit_action_code == action.code
+        )
+    ).all())
+    if perimeter_factories:
+        blockers.append(f"it is configured as automatic factory exit for: {', '.join(sorted(perimeter_factories))}")
+
+    return blockers
+
+
+@router.delete("/actions/{action_code}")
+def delete_action(action_code: str, db: Session = Depends(get_db)):
+    action = db.scalar(select(Action).where(Action.code == action_code).with_for_update())
+    if action is None:
+        raise HTTPException(404, "Action not found")
+
+    blockers = _delete_blockers(db, action)
+    if blockers:
+        raise HTTPException(
+            409,
+            f"Action {action_code} cannot be deleted because {'; '.join(blockers)}. Deactivate it instead.",
+        )
+
+    db.delete(action)
+    commit_configuration(db)
+    return {"detail": f"Action {action_code} deleted"}

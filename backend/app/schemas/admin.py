@@ -1,1 +1,135 @@
-ZnJvbSBkYXRldGltZSBpbXBvcnQgZGF0ZXRpbWUKZnJvbSB0eXBpbmcgaW1wb3J0IEFueSwgTGl0ZXJhbAoKZnJvbSBweWRhbnRpYyBpbXBvcnQgQmFzZU1vZGVsLCBDb25maWdEaWN0LCBGaWVsZCwgZmllbGRfdmFsaWRhdG9yCgpmcm9tIGFwcC5kb21haW4uZW51bXMgaW1wb3J0IElkZW50aWZpY2F0aW9uTW9kZSwgU3RhdGVFZmZlY3QKCgpjbGFzcyBUZXJtaW5hbFNldHRpbmdzKEJhc2VNb2RlbCk6CiAgICBtb2RlbF9jb25maWcgPSBDb25maWdEaWN0KHN0cl9zdHJpcF93aGl0ZXNwYWNlPVRydWUpCiAgICBuYW1lOiBzdHIgPSBGaWVsZChtaW5fbGVuZ3RoPTEsIG1heF9sZW5ndGg9MTYwKQogICAgcGVyaW1ldGVyX29ubHk6IGJvb2wgfCBOb25lID0gTm9uZQogICAgZXh0ZXJuYWxfZGV2aWNlX2lkOiBzdHIgfCBOb25lID0gRmllbGQoZGVmYXVsdD1Ob25lLCBtaW5fbGVuZ3RoPTEsIG1heF9sZW5ndGg9NDApCiAgICBpZGVudGlmaWNhdGlvbl9tb2RlOiBJZGVudGlmaWNhdGlvbk1vZGUgPSBJZGVudGlmaWNhdGlvbk1vZGUuQk9USAogICAgZXhpdF9tZW51X3RpbWVvdXRfc2Vjb25kczogaW50IHwgTm9uZSA9IEZpZWxkKGRlZmF1bHQ9Tm9uZSwgZ2U9MCwgbGU9MTIwKQogICAgb3JhY2xlX2F0dHJpYnV0ZXM6IGRpY3Rbc3RyLCBBbnldID0gRmllbGQoZGVmYXVsdF9mYWN0b3J5PWRpY3QpCiAgICBhY3RpdmU6IGJvb2wgPSBUcnVlCiAgICBwcm9qZWN0X2xpbmVfaWQ6IGludCB8IE5vbmUgPSBOb25lCiAgICB3b3Jrc2hvcF9pZDogaW50IHwgTm9uZSA9IE5vbmUKICAgIHN1YndvcmtzaG9wX2lkOiBpbnQgfCBOb25lID0gTm9uZQogICAgYWN0aW9uX2NvZGVzOiBsaXN0W3N0cl0gPSBGaWVsZChkZWZhdWx0X2ZhY3Rvcnk9bGlzdCkKICAgIGV4aXRfcG9saWN5X21vZGU6IExpdGVyYWxbIkRJU0FCTEVEIiwgIlNBTUVfVEVSTUlOQUwiLCAiU0FNRV9XT1JLX0NFTEwiLCAiSU5IRVJJVCJdIHwgTm9uZSA9IE5vbmUKCiAgICBAZmllbGRfdmFsaWRhdG9yKCJvcmFjbGVfYXR0cmlidXRlcyIpCiAgICBAY2xhc3NtZXRob2QKICAgIGRlZiB2YWxpZGF0ZV93b3JrX2NlbGwoY2xzLCBhdHRyaWJ1dGVzKToKICAgICAgICBpZiAid29ya19jZWxsIiBpbiBhdHRyaWJ1dGVzOgogICAgICAgICAgICB2YWx1ZSA9IGF0dHJpYnV0ZXNbIndvcmtfY2VsbCJdCiAgICAgICAgICAgIGlmIG5vdCBpc2luc3RhbmNlKHZhbHVlLCBzdHIpIG9yIG5vdCAwIDwgbGVuKHZhbHVlLnN0cmlwKCkpIDw9IDY0OgogICAgICAgICAgICAgICAgcmFpc2UgVmFsdWVFcnJvcigid29ya19jZWxsIG11c3QgYmUgYSBub24tZW1wdHkgc3RyaW5nIG9mIGF0IG1vc3QgNjQgY2hhcmFjdGVyczsgcmVtb3ZlIHRoZSBrZXkgdG8gbGVhdmUgaXQgdW5jb25maWd1cmVkIikKICAgICAgICAgICAgYXR0cmlidXRlcyA9IHsqKmF0dHJpYnV0ZXMsICJ3b3JrX2NlbGwiOiB2YWx1ZS5zdHJpcCgpfQogICAgICAgIHJldHVybiBhdHRyaWJ1dGVzCgoKY2xhc3MgVGVybWluYWxDcmVhdGUoVGVybWluYWxTZXR0aW5ncyk6CiAgICAjIE9wdGlvbmFsIG9ubHkgZm9yIG1pZ3JhdGlvbi90ZXN0IGNvbXBhdGliaWxpdHkuIE5vcm1hbCBhZG1pbmlzdHJhdGlvbiBvbWl0cyBpdAogICAgIyBhbmQgdGhlIGJhY2tlbmQgYWxsb2NhdGVzIGFuIGltbXV0YWJsZSBhcHBsaWNhdGlvbi1tYW5hZ2VkIGNvZGUuCiAgICBjb2RlOiBzdHIgfCBOb25lID0gRmllbGQoZGVmYXVsdD1Ob25lLCBtaW5fbGVuZ3RoPTEsIG1heF9sZW5ndGg9NjQpCgoKY2xhc3MgVGVybWluYWxSZWFkKEJhc2VNb2RlbCk6CiAgICBmYWN0b3J5X2NvZGU6IHN0ciA9ICdERUZBVUxUJwogICAgdGVybWluYWxfcm9sZTogc3RyID0gJ0NFTEwnCiAgICBjb2RlOiBzdHIKICAgIG5hbWU6IHN0cgogICAgZXh0ZXJuYWxfZGV2aWNlX2lkOiBzdHIKICAgIGlkZW50aWZpY2F0aW9uX21vZGU6IHN0cgogICAgZXhpdF9tZW51X3RpbWVvdXRfc2Vjb25kczogaW50ID0gNQogICAgcmVwb3J0ZXJfaWRfdHlwZTogc3RyCiAgICBvcmFjbGVfYXR0cmlidXRlczogZGljdFtzdHIsIEFueV0KICAgIGFjdGl2ZTogYm9vbAogICAgYWN0aW9uX2NvZGVzOiBsaXN0W3N0cl0KICAgIHByb3Zpc2lvbmVkOiBib29sCiAgICBhY3RpdmF0aW9uX3BlbmRpbmc6IGJvb2wKICAgIGFjdGl2YXRpb25fdG9rZW46IHN0ciB8IE5vbmUgPSBOb25lCiAgICBwcm9qZWN0X2xpbmVfaWQ6IGludCB8IE5vbmUgPSBOb25lCiAgICB3b3Jrc2hvcF9pZDogaW50IHwgTm9uZSA9IE5vbmUKICAgIHN1YndvcmtzaG9wX2lkOiBpbnQgfCBOb25lID0gTm9uZQogICAgc3RydWN0dXJlX3BhdGg6IHN0ciB8IE5vbmUgPSBOb25lCiAgICBleGl0X3BvbGljeV9tb2RlOiBzdHIKICAgIGVmZmVjdGl2ZV9leGl0X3BvbGljeV9tb2RlOiBzdHIKICAgIGdsb2JhbF9leGl0X3BvbGljeV9tb2RlOiBzdHIKCgpjbGFzcyBUZXJtaW5hbEFjdGlvbnNVcGRhdGUoQmFzZU1vZGVsKToKICAgIGFjdGlvbl9jb2RlczogbGlzdFtzdHJdCgoKY2xhc3MgVGVybWluYWxQcm92aXNpb25pbmdSZWFkKEJhc2VNb2RlbCk6CiAgICBjb2RlOiBzdHIKICAgIGFjdGl2YXRpb25fdG9rZW46IHN0cgoKCmNsYXNzIFRlcm1pbmFsUGFpcmluZ0FwcHJvdmFsKEJhc2VNb2RlbCk6CiAgICBwYWlyaW5nX2NvZGU6IHN0ciA9IEZpZWxkKG1pbl9sZW5ndGg9OCwgbWF4X2xlbmd0aD0xNikKCgpjbGFzcyBBY3Rpb25TZXR0aW5ncyhCYXNlTW9kZWwpOgogICAgbW9kZWxfY29uZmlnID0gQ29uZmlnRGljdChzdHJfc3RyaXBfd2hpdGVzcGFjZT1UcnVlKQogICAgbGFiZWw6IHN0ciA9IEZpZWxkKG1pbl9sZW5ndGg9MSwgbWF4X2xlbmd0aD0xMjApCiAgICBzdXBwbGllcl9kZXZpY2VfZXZlbnQ6IHN0ciA9IEZpZWxkKG1pbl9sZW5ndGg9MSwgbWF4X2xlbmd0aD00MCkKICAgIHN0YXRlX2VmZmVjdDogU3RhdGVFZmZlY3QKICAgIG9yYWNsZV9hdHRyaWJ1dGVzOiBkaWN0W3N0ciwgQW55XSA9IEZpZWxkKGRlZmF1bHRfZmFjdG9yeT1kaWN0KQogICAgZGlzcGxheV9vcmRlcjogaW50ID0gRmllbGQoZGVmYXVsdD0xMDAsIGdlPTAsIGxlPTEwMDAwMCkKICAgIHZpc3VhbF9rZXk6IHN0ciB8IE5vbmUgPSBGaWVsZChkZWZhdWx0PU5vbmUsIG1heF9sZW5ndGg9NjQsIHBhdHRlcm49ciJeW2EtejAtOS1dKyQiKQogICAgcmVxdWlyZXNfc3ViYWN0aW9uOiBib29sID0gRmFsc2UKICAgIHBhcmVudF9hY3Rpb25fY29kZTogc3RyIHwgTm9uZSA9IEZpZWxkKGRlZmF1bHQ9Tm9uZSwgbWF4X2xlbmd0aD02NCkKICAgIHNob3dfb25fdGVybWluYWw6IGJvb2wgPSBUcnVlCiAgICBhY3RpdmU6IGJvb2wgPSBUcnVlCgoKY2xhc3MgQWN0aW9uQ3JlYXRlKEFjdGlvblNldHRpbmdzKToKICAgIGNvZGU6IHN0ciA9IEZpZWxkKG1pbl9sZW5ndGg9MSwgbWF4X2xlbmd0aD02NCkKCgpjbGFzcyBBY3Rpb25SZWFkKEJhc2VNb2RlbCk6CiAgICBjb2RlOiBzdHIKICAgIGxhYmVsOiBzdHIKICAgIHN1cHBsaWVyX2RldmljZV9ldmVudDogc3RyCiAgICBzdGF0ZV9lZmZlY3Q6IHN0cgogICAgb3JhY2xlX2F0dHJpYnV0ZXM6IGRpY3Rbc3RyLCBBbnldCiAgICBkaXNwbGF5X29yZGVyOiBpbnQKICAgIHJlcXVpcmVzX3N1YmFjdGlvbjogYm9vbAogICAgcGFyZW50X2FjdGlvbl9jb2RlOiBzdHIgfCBOb25lCiAgICBzdWJhY3Rpb25fY29kZXM6IGxpc3Rbc3RyXQogICAgdmlzdWFsX2tleTogc3RyIHwgTm9uZSA9IE5vbmUKICAgIHNob3dfb25fdGVybWluYWw6IGJvb2wgPSBUcnVlCiAgICBhY3RpdmU6IGJvb2wKCgpjbGFzcyBFdmVudFJlYWQoQmFzZU1vZGVsKToKICAgIGlkOiBzdHIKICAgIHJlcXVlc3RfbnVtYmVyOiBzdHIKICAgIHRlcm1pbmFsX2NvZGU6IHN0cgogICAgZGV2aWNlX2lkOiBzdHIKICAgIGFjdGlvbl9jb2RlOiBzdHIKICAgIGFjdGlvbl9sYWJlbDogc3RyCiAgICBzdXBwbGllcl9kZXZpY2VfZXZlbnQ6IHN0cgogICAgc3RhdGVfZWZmZWN0OiBzdHIKICAgIHJlcG9ydGVyX2lkOiBzdHIKICAgIHJlcG9ydGVyX2lkX3R5cGU6IHN0cgogICAgaWRlbnRpZmljYXRpb25fbWV0aG9kOiBzdHIKICAgIGV2ZW50X2RhdGV0aW1lOiBkYXRldGltZQogICAgb3JhY2xlX2F0dHJpYnV0ZXM6IGRpY3Rbc3RyLCBBbnldCiAgICB3b3Jrc2hvcF9jb2RlOiBzdHIgfCBOb25lID0gTm9uZQogICAgd29ya3Nob3BfZGVzY3JpcHRpb246IHN0ciB8IE5vbmUgPSBOb25lCiAgICBzdWJ3b3Jrc2hvcF9jb2RlOiBzdHIgfCBOb25lID0gTm9uZQogICAgc3Vid29ya3Nob3BfZGVzY3JpcHRpb246IHN0ciB8IE5vbmUgPSBOb25lCiAgICBwcm9qZWN0X2xpbmVfY29kZTogc3RyIHwgTm9uZSA9IE5vbmUKICAgIHByb2plY3RfbGluZV9kZXNjcmlwdGlvbjogc3RyIHwgTm9uZSA9IE5vbmUKICAgIGRlbGl2ZXJ5X3N0YXR1czogc3RyCiAgICBhdHRlbXB0X2NvdW50OiBpbnQKICAgIHNlbnRfYXQ6IGRhdGV0aW1lIHwgTm9uZQogICAgb3JhY2xlX3JlcXVlc3RfaWQ6IHN0ciB8IE5vbmUKICAgIG9yYWNsZV9ldmVudF9pZDogc3RyIHwgTm9uZQo=
+from datetime import datetime
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.domain.enums import IdentificationMode, StateEffect
+
+
+class TerminalSettings(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    name: str = Field(min_length=1, max_length=160)
+    perimeter_only: bool | None = None
+    external_device_id: str | None = Field(default=None, min_length=1, max_length=40)
+    identification_mode: IdentificationMode = IdentificationMode.BOTH
+    exit_menu_timeout_seconds: int | None = Field(default=None, ge=0, le=120)
+    oracle_attributes: dict[str, Any] = Field(default_factory=dict)
+    active: bool = True
+    project_line_id: int | None = None
+    workshop_id: int | None = None
+    subworkshop_id: int | None = None
+    action_codes: list[str] = Field(default_factory=list)
+    exit_policy_mode: Literal["DISABLED", "SAME_TERMINAL", "SAME_WORK_CELL", "INHERIT"] | None = None
+
+    @field_validator("oracle_attributes")
+    @classmethod
+    def validate_work_cell(cls, attributes):
+        if "work_cell" in attributes:
+            value = attributes["work_cell"]
+            if not isinstance(value, str) or not 0 < len(value.strip()) <= 64:
+                raise ValueError("work_cell must be a non-empty string of at most 64 characters; remove the key to leave it unconfigured")
+            attributes = {**attributes, "work_cell": value.strip()}
+        return attributes
+
+
+class TerminalCreate(TerminalSettings):
+    # Optional only for migration/test compatibility. Normal administration omits it
+    # and the backend allocates an immutable application-managed code.
+    code: str | None = Field(default=None, min_length=1, max_length=64)
+
+
+class TerminalRead(BaseModel):
+    factory_code: str = 'DEFAULT'
+    terminal_role: str = 'CELL'
+    code: str
+    name: str
+    external_device_id: str
+    identification_mode: str
+    exit_menu_timeout_seconds: int = 5
+    reporter_id_type: str
+    oracle_attributes: dict[str, Any]
+    active: bool
+    action_codes: list[str]
+    provisioned: bool
+    activation_pending: bool
+    activation_token: str | None = None
+    project_line_id: int | None = None
+    workshop_id: int | None = None
+    subworkshop_id: int | None = None
+    structure_path: str | None = None
+    exit_policy_mode: str
+    effective_exit_policy_mode: str
+    global_exit_policy_mode: str
+
+
+class TerminalActionsUpdate(BaseModel):
+    action_codes: list[str]
+
+
+class TerminalProvisioningRead(BaseModel):
+    code: str
+    activation_token: str
+
+
+class TerminalPairingApproval(BaseModel):
+    pairing_code: str = Field(min_length=8, max_length=16)
+
+
+class ActionSettings(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    label: str = Field(min_length=1, max_length=120)
+    supplier_device_event: str = Field(min_length=1, max_length=40)
+    state_effect: StateEffect
+    oracle_attributes: dict[str, Any] = Field(default_factory=dict)
+    display_order: int = Field(default=100, ge=0, le=100000)
+    visual_key: str | None = Field(default=None, max_length=64, pattern=r"^[a-z0-9-]+$")
+    requires_subaction: bool = False
+    parent_action_code: str | None = Field(default=None, max_length=64)
+    show_on_terminal: bool = True
+    active: bool = True
+
+
+class ActionCreate(ActionSettings):
+    code: str = Field(min_length=1, max_length=64)
+
+
+class ActionRead(BaseModel):
+    code: str
+    label: str
+    supplier_device_event: str
+    state_effect: str
+    oracle_attributes: dict[str, Any]
+    display_order: int
+    requires_subaction: bool
+    parent_action_code: str | None
+    subaction_codes: list[str]
+    visual_key: str | None = None
+    show_on_terminal: bool = True
+    active: bool
+
+
+class EventRead(BaseModel):
+    id: str
+    request_number: str
+    terminal_code: str
+    device_id: str
+    action_code: str
+    action_label: str
+    supplier_device_event: str
+    state_effect: str
+    reporter_id: str
+    reporter_id_type: str
+    identification_method: str
+    event_datetime: datetime
+    oracle_attributes: dict[str, Any]
+    workshop_code: str | None = None
+    workshop_description: str | None = None
+    subworkshop_code: str | None = None
+    subworkshop_description: str | None = None
+    project_line_code: str | None = None
+    project_line_description: str | None = None
+    delivery_status: str
+    attempt_count: int
+    sent_at: datetime | None
+    oracle_request_id: str | None
+    oracle_event_id: str | None

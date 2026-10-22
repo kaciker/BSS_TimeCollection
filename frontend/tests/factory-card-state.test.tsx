@@ -1,1 +1,40 @@
-Ly8gQHZpdGVzdC1lbnZpcm9ubWVudCBqc2RvbQppbXBvcnQge2FmdGVyRWFjaCxleHBlY3QsaXQsdml9IGZyb20gJ3ZpdGVzdCc7CmltcG9ydCB7YWN0LGNsZWFudXAsZmlyZUV2ZW50LHJlbmRlcixzY3JlZW4sd2FpdEZvcn0gZnJvbSAnQHRlc3RpbmctbGlicmFyeS9yZWFjdCc7CmltcG9ydCB7TW9uaXRvcmluZ1BhbmVsfSBmcm9tICcuLi9zcmMvY29tcG9uZW50cy9Nb25pdG9yaW5nUGFuZWwnOwppbXBvcnQge2FwaX0gZnJvbSAnLi4vc3JjL2FwaSc7CnZpLm1vY2soJy4uL3NyYy9hcGknLCgpPT4oe2FwaTp7Z2V0OnZpLmZuKCl9fSkpOwphZnRlckVhY2goKCk9PntjbGVhbnVwKCk7dmkuY2xlYXJBbGxNb2NrcygpO2xvY2FsU3RvcmFnZS5yZW1vdmVJdGVtKCJic3MtdGltZWNvbGxlY3Rpb24tbGFuZ3VhZ2UiKX0pOwppdCgnc2hvd3MgaW5kZXBlbmRlbnQgZmFjdG9yeSBhbmQgY2VsbCBzdGF0ZXMgYW5kIHNlbmRzIGJvdGggZmlsdGVycycsYXN5bmMoKT0+ewogbG9jYWxTdG9yYWdlLnNldEl0ZW0oJ2Jzcy10aW1lY29sbGVjdGlvbi1sYW5ndWFnZScsJ2VzJyk7CiB2aS5tb2NrZWQoYXBpLmdldCkubW9ja0ltcGxlbWVudGF0aW9uKGFzeW5jIHVybD0+dXJsLmluY2x1ZGVzKCcvY2xvY2tzJyk/W106e2ZhY3RvcnlfcGVyaW1ldGVyX2VuYWJsZWQ6dHJ1ZSx0b3RhbDoxLGl0ZW1zOlt7cmVwb3J0ZXJfaWQ6JzAwMScsd29ya2VyX3N0YXRlOidPVVRTSURFJyxmYWN0b3J5X3N0YXRlOidJTlNJREUnLGZhY3RvcnlfY29kZTonQVJHQU5EQScsZXZlbnQ6e2lkOid4Jyx0ZXJtaW5hbF9jb2RlOidHQVRFJyxldmVudF9kYXRldGltZTonMjAyNi0xMC0yMFQxMDowMDowMFonLGFjdGlvbl9sYWJlbDonRmFjdG9yeSBlbnRyeScsZGVsaXZlcnlfc3RhdHVzOidMT0NBTF9PTkxZJ319XX0gYXMgbmV2ZXIpOwogcmVuZGVyKDxNb25pdG9yaW5nUGFuZWwgdGVybWluYWxzPXtbXX0vPik7CiBjb25zdCBmYWN0b3J5PWF3YWl0IHNjcmVlbi5maW5kQnlMYWJlbFRleHQoJ0VzdGFkbyBkZSBmw6FicmljYScpOwogZXhwZWN0KHNjcmVlbi5nZXRCeVRleHQoJ0Z1ZXJhJywge3NlbGVjdG9yOidzcGFuJ30pKS50b0JlVHJ1dGh5KCk7ZXhwZWN0KHNjcmVlbi5nZXRCeVRleHQoJ0RlbnRybycsIHtzZWxlY3Rvcjonc3Bhbid9KSkudG9CZVRydXRoeSgpOwogZmlyZUV2ZW50LmNoYW5nZShmYWN0b3J5LHt0YXJnZXQ6e3ZhbHVlOidJTlNJREUnfX0pOwogZmlyZUV2ZW50LmNoYW5nZShzY3JlZW4uZ2V0QnlMYWJlbFRleHQoJ0VzdGFkbyBkZSBjw6lsdWxhJykse3RhcmdldDp7dmFsdWU6J09VVFNJREUnfX0pOwogZmlyZUV2ZW50LmNsaWNrKHNjcmVlbi5nZXRCeVJvbGUoJ2J1dHRvbicse25hbWU6J0FwbGljYXIgZmlsdHJvcyd9KSk7CiBhd2FpdCB3YWl0Rm9yKCgpPT5leHBlY3QoYXBpLmdldCkudG9IYXZlQmVlbkNhbGxlZFdpdGgoZXhwZWN0LnN0cmluZ0NvbnRhaW5pbmcoJ3dvcmtlcl9zdGF0ZT1PVVRTSURFJmZhY3Rvcnlfc3RhdGU9SU5TSURFJykpKTsKfSk7Cml0KCdoaWRlcyBmYWN0b3J5IGNvbHVtbiBhbmQgZmlsdGVyIHdoZW4gcGVyaW1ldGVyIGlzIGRpc2FibGVkLCBpbmNsdWRpbmcgZW1wdHkgcmVzdWx0cycsYXN5bmMoKT0+ewogdmkubW9ja2VkKGFwaS5nZXQpLm1vY2tJbXBsZW1lbnRhdGlvbihhc3luYyB1cmw9PnVybC5pbmNsdWRlcygnL2Nsb2NrcycpP1tdOntmYWN0b3J5X3BlcmltZXRlcl9lbmFibGVkOmZhbHNlLHRvdGFsOjAsaXRlbXM6W119IGFzIG5ldmVyKTsKIHJlbmRlcig8TW9uaXRvcmluZ1BhbmVsIHRlcm1pbmFscz17W119Lz4pOwogYXdhaXQgc2NyZWVuLmZpbmRCeVRleHQoJ05vIHJlc3VsdHMgbWF0Y2ggdGhlc2UgZmlsdGVycy4nKTsKIGV4cGVjdChzY3JlZW4ucXVlcnlCeUxhYmVsVGV4dCgnRXN0YWRvIGRlIGbDoWJyaWNhJykpLnRvQmVOdWxsKCk7ZXhwZWN0KHNjcmVlbi5xdWVyeUJ5Um9sZSgnY29sdW1uaGVhZGVyJyx7bmFtZTonRXN0YWRvIGRlIGbDoWJyaWNhJ30pKS50b0JlTnVsbCgpOwp9KTsKaXQoJ29wZW5zIGV2ZW50IGRldGFpbHMgaW4gYSBzY3JvbGxhYmxlIG1vZGFsIGFuZCBjbG9zZXMgd2l0aCBFc2NhcGUgb3Igb3V0c2lkZSBjbGljaycsYXN5bmMoKT0+ewogbG9jYWxTdG9yYWdlLnNldEl0ZW0oJ2Jzcy10aW1lY29sbGVjdGlvbi1sYW5ndWFnZScsJ2VuJyk7CiBjb25zdCBldmVudD17aWQ6J2V2ZW50LTEnLHRlcm1pbmFsX2NvZGU6J0NMT0NLJyxldmVudF9kYXRldGltZTonMjAyNi0xMC0yMFQxMDowMDowMFonLGFjdGlvbl9sYWJlbDonRXhpdCcsZGVsaXZlcnlfc3RhdHVzOidQRU5ESU5HJ307CiB2aS5tb2NrZWQoYXBpLmdldCkubW9ja0ltcGxlbWVudGF0aW9uKGFzeW5jIHVybD0+dXJsLmluY2x1ZGVzKCcvY2xvY2tzJyk/W106dXJsLmluY2x1ZGVzKCcvZXZlbnRzL2V2ZW50LTEnKT97ZXZlbnQ6ey4uLmV2ZW50LHJlcG9ydGVyX2lkOicwMDEnLGV2ZW50X2tpbmQ6J0NFTEwnfSxhdHRlbXB0czpbXSxvcmFjbGVfZW5hYmxlZDpmYWxzZSxvcmFjbGVfcGF5bG9hZF9wcmV2aWV3Ontvazp0cnVlfX06e2ZhY3RvcnlfcGVyaW1ldGVyX2VuYWJsZWQ6ZmFsc2UsdG90YWw6MSxpdGVtczpbe3JlcG9ydGVyX2lkOicwMDEnLHdvcmtlcl9zdGF0ZTonT1VUU0lERScsZXZlbnR9XX0gYXMgbmV2ZXIpOwogcmVuZGVyKDxNb25pdG9yaW5nUGFuZWwgdGVybWluYWxzPXtbXX0vPik7CiBmaXJlRXZlbnQuY2xpY2soYXdhaXQgc2NyZWVuLmZpbmRCeVJvbGUoJ2J1dHRvbicse25hbWU6J0RldGFpbHMnfSkpOwogY29uc3QgZGlhbG9nPWF3YWl0IHNjcmVlbi5maW5kQnlSb2xlKCdkaWFsb2cnLHtuYW1lOidFdmVudCBkZXRhaWxzJ30pIGFzIEhUTUxEaWFsb2dFbGVtZW50OwogZXhwZWN0KGRpYWxvZy5jbGFzc05hbWUpLnRvQ29udGFpbignZXZlbnQtbW9kYWwtZGlhbG9nJyk7CiBleHBlY3QoZGlhbG9nLnF1ZXJ5U2VsZWN0b3IoJy5ldmVudC1tb2RhbCcpKS50b0JlVHJ1dGh5KCk7CiBmaXJlRXZlbnQua2V5RG93bihkaWFsb2cse2tleTonRXNjYXBlJ30pOwogYXdhaXQgd2FpdEZvcigoKT0+ZXhwZWN0KHNjcmVlbi5xdWVyeUJ5Um9sZSgnZGlhbG9nJyx7bmFtZTonRXZlbnQgZGV0YWlscyd9KSkudG9CZU51bGwoKSk7CiBmaXJlRXZlbnQuY2xpY2soc2NyZWVuLmdldEJ5Um9sZSgnYnV0dG9uJyx7bmFtZTonRGV0YWlscyd9KSk7CiBjb25zdCBzZWNvbmQ9YXdhaXQgc2NyZWVuLmZpbmRCeVJvbGUoJ2RpYWxvZycse25hbWU6J0V2ZW50IGRldGFpbHMnfSk7CiBmaXJlRXZlbnQuY2xpY2soc2Vjb25kKTsKIGF3YWl0IHdhaXRGb3IoKCk9PmV4cGVjdChzY3JlZW4ucXVlcnlCeVJvbGUoJ2RpYWxvZycse25hbWU6J0V2ZW50IGRldGFpbHMnfSkpLnRvQmVOdWxsKCkpOwp9KTsK
+// @vitest-environment jsdom
+import {afterEach,expect,it,vi} from 'vitest';
+import {act,cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {MonitoringPanel} from '../src/components/MonitoringPanel';
+import {api} from '../src/api';
+vi.mock('../src/api',()=>({api:{get:vi.fn()}}));
+afterEach(()=>{cleanup();vi.clearAllMocks();localStorage.removeItem("bss-timecollection-language")});
+it('shows independent factory and cell states and sends both filters',async()=>{
+ localStorage.setItem('bss-timecollection-language','es');
+ vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:{factory_perimeter_enabled:true,total:1,items:[{reporter_id:'001',worker_state:'OUTSIDE',factory_state:'INSIDE',factory_code:'ARGANDA',event:{id:'x',terminal_code:'GATE',event_datetime:'2026-10-20T10:00:00Z',action_label:'Factory entry',delivery_status:'LOCAL_ONLY'}}]} as never);
+ render(<MonitoringPanel terminals={[]}/>);
+ const factory=await screen.findByLabelText('Estado de fábrica');
+ expect(screen.getByText('Fuera', {selector:'span'})).toBeTruthy();expect(screen.getByText('Dentro', {selector:'span'})).toBeTruthy();
+ fireEvent.change(factory,{target:{value:'INSIDE'}});
+ fireEvent.change(screen.getByLabelText('Estado de célula'),{target:{value:'OUTSIDE'}});
+ fireEvent.click(screen.getByRole('button',{name:'Aplicar filtros'}));
+ await waitFor(()=>expect(api.get).toHaveBeenCalledWith(expect.stringContaining('worker_state=OUTSIDE&factory_state=INSIDE')));
+});
+it('hides factory column and filter when perimeter is disabled, including empty results',async()=>{
+ vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:{factory_perimeter_enabled:false,total:0,items:[]} as never);
+ render(<MonitoringPanel terminals={[]}/>);
+ await screen.findByText('No results match these filters.');
+ expect(screen.queryByLabelText('Estado de fábrica')).toBeNull();expect(screen.queryByRole('columnheader',{name:'Estado de fábrica'})).toBeNull();
+});
+it('opens event details in a scrollable modal and closes with Escape or outside click',async()=>{
+ localStorage.setItem('bss-timecollection-language','en');
+ const event={id:'event-1',terminal_code:'CLOCK',event_datetime:'2026-10-20T10:00:00Z',action_label:'Exit',delivery_status:'PENDING'};
+ vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:url.includes('/events/event-1')?{event:{...event,reporter_id:'001',event_kind:'CELL'},attempts:[],oracle_enabled:false,oracle_payload_preview:{ok:true}}:{factory_perimeter_enabled:false,total:1,items:[{reporter_id:'001',worker_state:'OUTSIDE',event}]} as never);
+ render(<MonitoringPanel terminals={[]}/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Details'}));
+ const dialog=await screen.findByRole('dialog',{name:'Event details'}) as HTMLDialogElement;
+ expect(dialog.className).toContain('event-modal-dialog');
+ expect(dialog.querySelector('.event-modal')).toBeTruthy();
+ fireEvent.keyDown(dialog,{key:'Escape'});
+ await waitFor(()=>expect(screen.queryByRole('dialog',{name:'Event details'})).toBeNull());
+ fireEvent.click(screen.getByRole('button',{name:'Details'}));
+ const second=await screen.findByRole('dialog',{name:'Event details'});
+ fireEvent.click(second);
+ await waitFor(()=>expect(screen.queryByRole('dialog',{name:'Event details'})).toBeNull());
+});

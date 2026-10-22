@@ -1,1 +1,196 @@
-ZnJvbSBkYXRldGltZSBpbXBvcnQgZGF0ZXRpbWUKZnJvbSBoYXNobGliIGltcG9ydCBzaGEyNTYKZnJvbSB1dWlkIGltcG9ydCB1dWlkNApmcm9tIHpvbmVpbmZvIGltcG9ydCBab25lSW5mbwoKZnJvbSBmYXN0YXBpIGltcG9ydCBIVFRQRXhjZXB0aW9uLCBzdGF0dXMKZnJvbSBzcWxhbGNoZW15IGltcG9ydCBzZWxlY3QsIHRleHQKZnJvbSBzcWxhbGNoZW15Lm9ybSBpbXBvcnQgU2Vzc2lvbgoKZnJvbSBhcHAuY29yZS5jb25maWcgaW1wb3J0IHNldHRpbmdzCmZyb20gYXBwLmRvbWFpbi5lbnVtcyBpbXBvcnQgSWRlbnRpZmljYXRpb25NZXRob2QsIElkZW50aWZpY2F0aW9uTW9kZSwgU3RhdGVFZmZlY3QsIFdvcmtlclN0YXRlCmZyb20gYXBwLm1vZGVscy5hY3Rpb24gaW1wb3J0IEFjdGlvbgpmcm9tIGFwcC5tb2RlbHMudGVybWluYWwgaW1wb3J0IFRlcm1pbmFsCmZyb20gYXBwLm1vZGVscy50aW1lX2V2ZW50IGltcG9ydCBUaW1lRXZlbnQKZnJvbSBhcHAuc2NoZW1hcy50ZXJtaW5hbCBpbXBvcnQgQ2FwdHVyZWRFdmVudCwgU2NhblJlc3BvbnNlLCBUZXJtaW5hbEFjdGlvbgpmcm9tIGFwcC5zZXJ2aWNlcy5zdGF0ZV9zZXJ2aWNlIGltcG9ydCBkZXJpdmVfd29ya2VyX3N0YXRlCmZyb20gYXBwLnNlcnZpY2VzLmV4aXRfcG9saWN5IGltcG9ydCBjaGVja19leGl0X3BvbGljeQoKCmRlZiBfbG9ja19iYWRnZShkYjogU2Vzc2lvbiwgcmVwb3J0ZXJfaWQ6IHN0cikgLT4gTm9uZToKICAgICMgU2VyaWFsaXplIHN0YXRlIGV2YWx1YXRpb24gYW5kIGNhcHR1cmUgYWNyb3NzIGFsbCBQb3N0Z3JlU1FMIHRlcm1pbmFscy4KICAgICMgQSB0cmFuc2FjdGlvbiBhZHZpc29yeSBsb2NrIGFsc28gY292ZXJzIGEgYmFkZ2Ugd2l0aCBubyBleGlzdGluZyBldmVudHMuCiAgICBpZiBkYi5nZXRfYmluZCgpLmRpYWxlY3QubmFtZSA9PSAicG9zdGdyZXNxbCI6CiAgICAgICAga2V5ID0gaW50LmZyb21fYnl0ZXMoc2hhMjU2KHJlcG9ydGVyX2lkLmVuY29kZSgpKS5kaWdlc3QoKVs6OF0sICJiaWciLCBzaWduZWQ9VHJ1ZSkKICAgICAgICBkYi5leGVjdXRlKHRleHQoIlNFTEVDVCBwZ19hZHZpc29yeV94YWN0X2xvY2soOmtleSkiKSwgeyJrZXkiOiBrZXl9KQoKCmRlZiBfZ2V0X3Rlcm1pbmFsKGRiOiBTZXNzaW9uLCB0ZXJtaW5hbF9jb2RlOiBzdHIpIC0+IFRlcm1pbmFsOgogICAgdGVybWluYWwgPSBkYi5zY2FsYXIoc2VsZWN0KFRlcm1pbmFsKS53aGVyZShUZXJtaW5hbC5jb2RlID09IHRlcm1pbmFsX2NvZGUpKQogICAgaWYgdGVybWluYWwgaXMgTm9uZSBvciBub3QgdGVybWluYWwuYWN0aXZlIG9yIHRlcm1pbmFsLmRlbGV0ZWRfYXQgaXMgbm90IE5vbmU6CiAgICAgICAgcmFpc2UgSFRUUEV4Y2VwdGlvbihzdGF0dXNfY29kZT1zdGF0dXMuSFRUUF80MDRfTk9UX0ZPVU5ELCBkZXRhaWw9IlRlcm1pbmFsIG5vdCBmb3VuZCBvciBpbmFjdGl2ZSIpCiAgICByZXR1cm4gdGVybWluYWwKCgpkZWYgX3ZhbGlkYXRlX21ldGhvZCh0ZXJtaW5hbDogVGVybWluYWwsIG1ldGhvZDogSWRlbnRpZmljYXRpb25NZXRob2QpIC0+IE5vbmU6CiAgICBhbGxvd2VkID0gdGVybWluYWwuaWRlbnRpZmljYXRpb25fbW9kZQogICAgaWYgYWxsb3dlZCAhPSBJZGVudGlmaWNhdGlvbk1vZGUuQk9USC52YWx1ZSBhbmQgYWxsb3dlZCAhPSBtZXRob2QudmFsdWU6CiAgICAgICAgcmFpc2UgSFRUUEV4Y2VwdGlvbihzdGF0dXNfY29kZT1zdGF0dXMuSFRUUF80MDlfQ09ORkxJQ1QsIGRldGFpbD0iSWRlbnRpZmljYXRpb24gbWV0aG9kIGlzIG5vdCBlbmFibGVkIG9uIHRoaXMgdGVybWluYWwiKQoKCmRlZiBfYWN0aXZlX2FjdGlvbnModGVybWluYWw6IFRlcm1pbmFsLCBlZmZlY3Q6IFN0YXRlRWZmZWN0KSAtPiBsaXN0W0FjdGlvbl06CiAgICByZXR1cm4gc29ydGVkKAogICAgICAgIFthY3Rpb24gZm9yIGFjdGlvbiBpbiB0ZXJtaW5hbC5hY3Rpb25zIGlmIGFjdGlvbi5hY3RpdmUgYW5kIGFjdGlvbi5zaG93X29uX3Rlcm1pbmFsIGFuZCBhY3Rpb24uc3RhdGVfZWZmZWN0ID09IGVmZmVjdC52YWx1ZV0sCiAgICAgICAga2V5PWxhbWJkYSBhY3Rpb246IChhY3Rpb24uZGlzcGxheV9vcmRlciwgYWN0aW9uLmlkKSwKICAgICkKCgpkZWYgX3Rlcm1pbmFsX2FjdGlvbihhY3Rpb246IEFjdGlvbikgLT4gVGVybWluYWxBY3Rpb246CiAgICByZXR1cm4gVGVybWluYWxBY3Rpb24oY29kZT1hY3Rpb24uY29kZSwgbGFiZWw9YWN0aW9uLmxhYmVsLCBoYXNfc3ViYWN0aW9ucz1hY3Rpb24ucmVxdWlyZXNfc3ViYWN0aW9uLCB2aXN1YWxfa2V5PWFjdGlvbi52aXN1YWxfa2V5KQoKCmRlZiBfY3JlYXRlX2V2ZW50KGRiOiBTZXNzaW9uLCB0ZXJtaW5hbDogVGVybWluYWwsIGFjdGlvbjogQWN0aW9uLCByZXBvcnRlcl9pZDogc3RyLCBtZXRob2Q6IElkZW50aWZpY2F0aW9uTWV0aG9kLCAqLCBjb21taXQ6IGJvb2wgPSBUcnVlLCBldmVudF90aW1lOiBkYXRldGltZSB8IE5vbmUgPSBOb25lLCBjb3JyZWxhdGlvbl9pZDogc3RyIHwgTm9uZSA9IE5vbmUsIHNuYXBzaG90OiBUaW1lRXZlbnQgfCBOb25lID0gTm9uZSkgLT4gVGltZUV2ZW50OgogICAgaWYgdGVybWluYWwudGVybWluYWxfcm9sZSAhPSAiQ0VMTCI6CiAgICAgICAgcmFpc2UgSFRUUEV4Y2VwdGlvbig0MDksICJQZXJpbWV0ZXIgdGVybWluYWxzIGNhbm5vdCBjcmVhdGUgY2VsbCB0aW1lIGV2ZW50cyIpCiAgICBldmVudF9pZCA9IHN0cih1dWlkNCgpKQogICAgZXZlbnRfdGltZSA9IGV2ZW50X3RpbWUgb3IgZGF0ZXRpbWUubm93KFpvbmVJbmZvKHNldHRpbmdzLmV2ZW50X3RpbWV6b25lKSkKICAgICMgd29ya19jZWxsIGlzIGEgbG9jYWwgZXhpdC1wb2xpY3kgYXR0cmlidXRlLCBub3QgcGFydCBvZiB0aGUgT3JhY2xlIFRDRCBjb250ZXh0LgogICAgb3JhY2xlX2F0dHJpYnV0ZXMgPSB7a2V5OiB2YWx1ZSBmb3Iga2V5LCB2YWx1ZSBpbiAodGVybWluYWwub3JhY2xlX2F0dHJpYnV0ZXMgb3Ige30pLml0ZW1zKCkgaWYga2V5ICE9ICJ3b3JrX2NlbGwifQogICAgb3JhY2xlX2F0dHJpYnV0ZXMudXBkYXRlKHtrZXk6IHZhbHVlIGZvciBrZXksIHZhbHVlIGluIChhY3Rpb24ub3JhY2xlX2F0dHJpYnV0ZXMgb3Ige30pLml0ZW1zKCkgaWYga2V5ICE9ICJ3b3JrX2NlbGwifSkKICAgIHN0cnVjdHVyZSA9IHRlcm1pbmFsLnByb2plY3RfbGluZQogICAgYnJhbmNoID0gc3RydWN0dXJlLnN1YndvcmtzaG9wIGlmIHN0cnVjdHVyZSBlbHNlIE5vbmUKICAgIHdvcmtzaG9wID0gYnJhbmNoLndvcmtzaG9wIGlmIGJyYW5jaCBlbHNlIE5vbmUKICAgIGlmIHNuYXBzaG90IGlzIE5vbmUgYW5kIHN0cnVjdHVyZSBhbmQgKG5vdCBzdHJ1Y3R1cmUuYWN0aXZlIG9yIG5vdCBicmFuY2guYWN0aXZlIG9yIG5vdCB3b3Jrc2hvcC5hY3RpdmUpOgogICAgICAgIHJhaXNlIEhUVFBFeGNlcHRpb24oc3RhdHVzX2NvZGU9NDA5LCBkZXRhaWw9IkFzc2lnbmVkIG9wZXJhdGlvbmFsIHN0cnVjdHVyZSBpcyBpbmFjdGl2ZSIpCiAgICBldmVudCA9IFRpbWVFdmVudCgKICAgICAgICB3b3Jrc2hvcF9jb2RlPXdvcmtzaG9wLmNvZGUgaWYgd29ya3Nob3AgZWxzZSBOb25lLAogICAgICAgIHdvcmtzaG9wX2Rlc2NyaXB0aW9uPXdvcmtzaG9wLmRlc2NyaXB0aW9uIGlmIHdvcmtzaG9wIGVsc2UgTm9uZSwKICAgICAgICBzdWJ3b3Jrc2hvcF9jb2RlPWJyYW5jaC5jb2RlIGlmIGJyYW5jaCBlbHNlIE5vbmUsCiAgICAgICAgc3Vid29ya3Nob3BfZGVzY3JpcHRpb249YnJhbmNoLmRlc2NyaXB0aW9uIGlmIGJyYW5jaCBlbHNlIE5vbmUsCiAgICAgICAgcHJvamVjdF9saW5lX2NvZGU9c3RydWN0dXJlLmNvZGUgaWYgc3RydWN0dXJlIGVsc2UgTm9uZSwKICAgICAgICBwcm9qZWN0X2xpbmVfZGVzY3JpcHRpb249c3RydWN0dXJlLmRlc2NyaXB0aW9uIGlmIHN0cnVjdHVyZSBlbHNlIE5vbmUsCiAgICAgICAgaWQ9ZXZlbnRfaWQsCiAgICAgICAgY29ycmVsYXRpb25faWQ9Y29ycmVsYXRpb25faWQsCiAgICAgICAgcmVxdWVzdF9udW1iZXI9ZiJCU1Mte3Rlcm1pbmFsLmNvZGV9LXtldmVudF9pZH0iLAogICAgICAgIHRlcm1pbmFsX2lkPXRlcm1pbmFsLmlkLAogICAgICAgIGFjdGlvbl9pZD1hY3Rpb24uaWQsCiAgICAgICAgdGVybWluYWxfY29kZT10ZXJtaW5hbC5jb2RlLAogICAgICAgIGRldmljZV9pZD10ZXJtaW5hbC5leHRlcm5hbF9kZXZpY2VfaWQsCiAgICAgICAgYWN0aW9uX2NvZGU9YWN0aW9uLmNvZGUsCiAgICAgICAgYWN0aW9uX2xhYmVsPWFjdGlvbi5sYWJlbCwKICAgICAgICBzdXBwbGllcl9kZXZpY2VfZXZlbnQ9YWN0aW9uLnN1cHBsaWVyX2RldmljZV9ldmVudCwKICAgICAgICBzdGF0ZV9lZmZlY3Q9YWN0aW9uLnN0YXRlX2VmZmVjdCwKICAgICAgICByZXBvcnRlcl9pZD1yZXBvcnRlcl9pZCwKICAgICAgICByZXBvcnRlcl9pZF90eXBlPXNldHRpbmdzLm9yYWNsZV9yZXBvcnRlcl9pZF90eXBlLAogICAgICAgIGlkZW50aWZpY2F0aW9uX21ldGhvZD1tZXRob2QudmFsdWUsCiAgICAgICAgZXZlbnRfZGF0ZXRpbWU9ZXZlbnRfdGltZSwKICAgICAgICBldmVudF90aW1lem9uZT1zZXR0aW5ncy5ldmVudF90aW1lem9uZSwKICAgICAgICBvcmFjbGVfYXR0cmlidXRlcz1vcmFjbGVfYXR0cmlidXRlcywKICAgICAgICBkZWxpdmVyeV9zdGF0dXM9IlBFTkRJTkciLAogICAgKQogICAgaWYgc25hcHNob3QgaXMgbm90IE5vbmU6CiAgICAgICAgZm9yIGZpZWxkIGluICgidGVybWluYWxfY29kZSIsICJkZXZpY2VfaWQiLCAid29ya3Nob3BfY29kZSIsICJ3b3Jrc2hvcF9kZXNjcmlwdGlvbiIsICJzdWJ3b3Jrc2hvcF9jb2RlIiwgInN1YndvcmtzaG9wX2Rlc2NyaXB0aW9uIiwgInByb2plY3RfbGluZV9jb2RlIiwgInByb2plY3RfbGluZV9kZXNjcmlwdGlvbiIpOgogICAgICAgICAgICBzZXRhdHRyKGV2ZW50LCBmaWVsZCwgZ2V0YXR0cihzbmFwc2hvdCwgZmllbGQpKQogICAgICAgIGV2ZW50Lm9yYWNsZV9hdHRyaWJ1dGVzID0geyoqKHNuYXBzaG90Lm9yYWNsZV9hdHRyaWJ1dGVzIG9yIHt9KSwgKip7azogdiBmb3IgaywgdiBpbiAoYWN0aW9uLm9yYWNsZV9hdHRyaWJ1dGVzIG9yIHt9KS5pdGVtcygpIGlmIGsgIT0gIndvcmtfY2VsbCJ9fQogICAgZGIuYWRkKGV2ZW50KQogICAgaWYgY29tbWl0OgogICAgICAgIGRiLmNvbW1pdCgpCiAgICAgICAgZGIucmVmcmVzaChldmVudCkKICAgIHJldHVybiBldmVudAoKCmRlZiBfZXZlbnRfcmVzcG9uc2UoZXZlbnQ6IFRpbWVFdmVudCkgLT4gQ2FwdHVyZWRFdmVudDoKICAgIHJldHVybiBDYXB0dXJlZEV2ZW50KAogICAgICAgIGlkPWV2ZW50LmlkLAogICAgICAgIGFjdGlvbl9jb2RlPWV2ZW50LmFjdGlvbl9jb2RlLAogICAgICAgIGFjdGlvbl9sYWJlbD1ldmVudC5hY3Rpb25fbGFiZWwsCiAgICAgICAgZXZlbnRfZGF0ZXRpbWU9ZXZlbnQuZXZlbnRfZGF0ZXRpbWUsCiAgICAgICAgZGVsaXZlcnlfc3RhdHVzPWV2ZW50LmRlbGl2ZXJ5X3N0YXR1cywKICAgICkKCgpkZWYgc2NhbihkYjogU2Vzc2lvbiwgdGVybWluYWxfY29kZTogc3RyLCByZXBvcnRlcl9pZDogc3RyLCBtZXRob2Q6IElkZW50aWZpY2F0aW9uTWV0aG9kKSAtPiBTY2FuUmVzcG9uc2U6CiAgICBfbG9ja19iYWRnZShkYiwgcmVwb3J0ZXJfaWQpCiAgICB0ZXJtaW5hbCA9IF9nZXRfdGVybWluYWwoZGIsIHRlcm1pbmFsX2NvZGUpCiAgICBfdmFsaWRhdGVfbWV0aG9kKHRlcm1pbmFsLCBtZXRob2QpCiAgICBmcm9tIGRhdGV0aW1lIGltcG9ydCB0aW1lem9uZQogICAgZnJvbSBhcHAuc2VydmljZXMucGVyaW1ldGVyX3NlcnZpY2UgaW1wb3J0IHNldHRpbmdzX2ZvciwgaXNfaW5zaWRlLCBpc19kdXBsaWNhdGUsIHJlbWVtYmVyX3JlYWQsIHBlcmltZXRlcl9zY2FuLCBjaGVja19iYWRnZV9zb3VyY2UKICAgIGlmIHRlcm1pbmFsLnRlcm1pbmFsX3JvbGUgIT0gIkNFTEwiOgogICAgICAgIHJldHVybiBTY2FuUmVzcG9uc2UoKipwZXJpbWV0ZXJfc2NhbihkYiwgdGVybWluYWwsIHJlcG9ydGVyX2lkLCBtZXRob2QpKQogICAgY29uZmlnID0gc2V0dGluZ3NfZm9yKGRiLCB0ZXJtaW5hbC5mYWN0b3J5X2NvZGUpCiAgICBub3cgPSBkYXRldGltZS5ub3codGltZXpvbmUudXRjKQogICAgY3VycmVudF9zdGF0ZSA9IGRlcml2ZV93b3JrZXJfc3RhdGUoZGIsIHJlcG9ydGVyX2lkLCB0ZXJtaW5hbC5mYWN0b3J5X2NvZGUpCiAgICBpZiBjdXJyZW50X3N0YXRlID09IFdvcmtlclN0YXRlLk9VVFNJREUgYW5kIGNvbmZpZy5lbmFibGVkOgogICAgICAgIGNoZWNrX2JhZGdlX3NvdXJjZShjb25maWcsIHJlcG9ydGVyX2lkKQogICAgICAgIGlmIGNvbmZpZy5iYWRnZV9zb3VyY2UgIT0gIkVYVEVSTkFMIiBhbmQgbm90IGlzX2luc2lkZShkYiwgdGVybWluYWwuZmFjdG9yeV9jb2RlLCByZXBvcnRlcl9pZCk6CiAgICAgICAgICAgIHJhaXNlIEhUVFBFeGNlcHRpb24oNDA5LCAiQmFkZ2UgaGFzIG5vdCBlbnRlcmVkIHRoZSBmYWN0b3J5IHBlcmltZXRlciIpCiAgICBpZiBpc19kdXBsaWNhdGUoZGIsIGNvbmZpZywgdGVybWluYWwsIHJlcG9ydGVyX2lkLCBub3cpOgogICAgICAgIHJldHVybiBTY2FuUmVzcG9uc2UoZmxvdz0iRFVQTElDQVRFX0lHTk9SRUQiLCB3b3JrZXJfc3RhdGU9Y3VycmVudF9zdGF0ZS52YWx1ZSkKCiAgICBpZiBjdXJyZW50X3N0YXRlID09IFdvcmtlclN0YXRlLk9VVFNJREU6CiAgICAgICAgZW50cnlfYWN0aW9ucyA9IF9hY3RpdmVfYWN0aW9ucyh0ZXJtaW5hbCwgU3RhdGVFZmZlY3QuRU5URVIpCiAgICAgICAgaWYgbGVuKGVudHJ5X2FjdGlvbnMpICE9IDE6CiAgICAgICAgICAgIHJhaXNlIEhUVFBFeGNlcHRpb24oCiAgICAgICAgICAgICAgICBzdGF0dXNfY29kZT1zdGF0dXMuSFRUUF80MDlfQ09ORkxJQ1QsCiAgICAgICAgICAgICAgICBkZXRhaWw9IlRlcm1pbmFsIG11c3QgaGF2ZSBleGFjdGx5IG9uZSBhY3RpdmUgRU5URVIgYWN0aW9uIGZvciBhdXRvbWF0aWMgZW50cnkiLAogICAgICAgICAgICApCiAgICAgICAgcmVtZW1iZXJfcmVhZChkYiwgdGVybWluYWwsIHJlcG9ydGVyX2lkLCBub3cpCiAgICAgICAgZXZlbnQgPSBfY3JlYXRlX2V2ZW50KGRiLCB0ZXJtaW5hbCwgZW50cnlfYWN0aW9uc1swXSwgcmVwb3J0ZXJfaWQsIG1ldGhvZCkKICAgICAgICByZXR1cm4gU2NhblJlc3BvbnNlKGZsb3c9IkVOVFJZX1JFQ09SREVEIiwgd29ya2VyX3N0YXRlPVdvcmtlclN0YXRlLklOU0lERS52YWx1ZSwgZXZlbnQ9X2V2ZW50X3Jlc3BvbnNlKGV2ZW50KSkKCiAgICBjaGVja19leGl0X3BvbGljeShkYiwgdGVybWluYWwsIHJlcG9ydGVyX2lkKQogICAgZW5hYmxlZF9leGl0cyA9IF9hY3RpdmVfYWN0aW9ucyh0ZXJtaW5hbCwgU3RhdGVFZmZlY3QuRVhJVCkKICAgIGVuYWJsZWRfaWRzID0ge2FjdGlvbi5pZCBmb3IgYWN0aW9uIGluIGVuYWJsZWRfZXhpdHN9CiAgICBleGl0X2FjdGlvbnMgPSBbYWN0aW9uIGZvciBhY3Rpb24gaW4gZW5hYmxlZF9leGl0cyBpZiBhY3Rpb24ucGFyZW50X2FjdGlvbl9pZCBpcyBOb25lIG9yIGFjdGlvbi5wYXJlbnRfYWN0aW9uX2lkIG5vdCBpbiBlbmFibGVkX2lkc10KICAgIGlmIG5vdCBleGl0X2FjdGlvbnM6CiAgICAgICAgcmFpc2UgSFRUUEV4Y2VwdGlvbihzdGF0dXNfY29kZT1zdGF0dXMuSFRUUF80MDlfQ09ORkxJQ1QsIGRldGFpbD0iVGVybWluYWwgaGFzIG5vIGFjdGl2ZSBFWElUIGFjdGlvbnMiKQogICAgcmV0dXJuIFNjYW5SZXNwb25zZSgKICAgICAgICBmbG93PSJFWElUX1JFUVVJUkVEIiwKICAgICAgICB3b3JrZXJfc3RhdGU9V29ya2VyU3RhdGUuSU5TSURFLnZhbHVlLAogICAgICAgIGFjdGlvbnM9W190ZXJtaW5hbF9hY3Rpb24oYWN0aW9uKSBmb3IgYWN0aW9uIGluIGV4aXRfYWN0aW9uc10sCiAgICApCgoKZGVmIHJlY29yZF9leGl0KGRiOiBTZXNzaW9uLCB0ZXJtaW5hbF9jb2RlOiBzdHIsIHJlcG9ydGVyX2lkOiBzdHIsIG1ldGhvZDogSWRlbnRpZmljYXRpb25NZXRob2QsIGFjdGlvbl9jb2RlOiBzdHIpIC0+IFNjYW5SZXNwb25zZToKICAgIF9sb2NrX2JhZGdlKGRiLCByZXBvcnRlcl9pZCkKICAgIHRlcm1pbmFsID0gX2dldF90ZXJtaW5hbChkYiwgdGVybWluYWxfY29kZSkKICAgIF92YWxpZGF0ZV9tZXRob2QodGVybWluYWwsIG1ldGhvZCkKICAgIGlmIHRlcm1pbmFsLnRlcm1pbmFsX3JvbGUgIT0gIkNFTEwiOgogICAgICAgIHJhaXNlIEhUVFBFeGNlcHRpb24oNDA5LCAiUGVyaW1ldGVyIHRlcm1pbmFscyBkbyBub3QgYWNjZXB0IGNlbGwgZXhpdCBhY3Rpb25zIikKICAgIGZyb20gZGF0ZXRpbWUgaW1wb3J0IHRpbWV6b25lCiAgICBmcm9tIGFwcC5zZXJ2aWNlcy5wZXJpbWV0ZXJfc2VydmljZSBpbXBvcnQgc2V0dGluZ3NfZm9yLCBpc19kdXBsaWNhdGUKICAgIGN1cnJlbnRfc3RhdGUgPSBkZXJpdmVfd29ya2VyX3N0YXRlKGRiLCByZXBvcnRlcl9pZCwgdGVybWluYWwuZmFjdG9yeV9jb2RlKQogICAgaWYgY3VycmVudF9zdGF0ZSAhPSBXb3JrZXJTdGF0ZS5JTlNJREUgYW5kIGlzX2R1cGxpY2F0ZShkYiwgc2V0dGluZ3NfZm9yKGRiLCB0ZXJtaW5hbC5mYWN0b3J5X2NvZGUpLCB0ZXJtaW5hbCwgcmVwb3J0ZXJfaWQsIGRhdGV0aW1lLm5vdyh0aW1lem9uZS51dGMpKToKICAgICAgICByZXR1cm4gU2NhblJlc3BvbnNlKGZsb3c9IkRVUExJQ0FURV9JR05PUkVEIiwgd29ya2VyX3N0YXRlPWN1cnJlbnRfc3RhdGUudmFsdWUpCiAgICBpZiBjdXJyZW50X3N0YXRlICE9IFdvcmtlclN0YXRlLklOU0lERToKICAgICAgICByYWlzZSBIVFRQRXhjZXB0aW9uKHN0YXR1c19jb2RlPXN0YXR1cy5IVFRQXzQwOV9DT05GTElDVCwgZGV0YWlsPSJXb3JrZXIgaXMgbm90IGN1cnJlbnRseSBpbnNpZGUgYWNjb3JkaW5nIHRvIGxvY2FsIFRDRCBldmVudHMiKQoKICAgIGNoZWNrX2V4aXRfcG9saWN5KGRiLCB0ZXJtaW5hbCwgcmVwb3J0ZXJfaWQpCiAgICBleGl0X2FjdGlvbnMgPSBfYWN0aXZlX2FjdGlvbnModGVybWluYWwsIFN0YXRlRWZmZWN0LkVYSVQpCiAgICBhY3Rpb24gPSBuZXh0KChpdGVtIGZvciBpdGVtIGluIGV4aXRfYWN0aW9ucyBpZiBpdGVtLmNvZGUgPT0gYWN0aW9uX2NvZGUpLCBOb25lKQogICAgaWYgYWN0aW9uIGlzIE5vbmU6CiAgICAgICAgcmFpc2UgSFRUUEV4Y2VwdGlvbihzdGF0dXNfY29kZT1zdGF0dXMuSFRUUF80MDBfQkFEX1JFUVVFU1QsIGRldGFpbD0iRXhpdCBhY3Rpb24gaXMgbm90IGVuYWJsZWQgb24gdGhpcyB0ZXJtaW5hbCIpCgogICAgaWYgYWN0aW9uLnJlcXVpcmVzX3N1YmFjdGlvbjoKICAgICAgICBjaGlsZHJlbiA9IHNvcnRlZCgKICAgICAgICAgICAgW2l0ZW0gZm9yIGl0ZW0gaW4gZXhpdF9hY3Rpb25zIGlmIGl0ZW0ucGFyZW50X2FjdGlvbl9pZCA9PSBhY3Rpb24uaWRdLAogICAgICAgICAgICBrZXk9bGFtYmRhIGl0ZW06IChpdGVtLmRpc3BsYXlfb3JkZXIsIGl0ZW0uaWQpLAogICAgICAgICkKICAgICAgICBpZiBub3QgY2hpbGRyZW46CiAgICAgICAgICAgIHJhaXNlIEhUVFBFeGNlcHRpb24oc3RhdHVzX2NvZGU9c3RhdHVzLkhUVFBfNDA5X0NPTkZMSUNULCBkZXRhaWw9IlNlbGVjdGVkIGV4aXQgYWN0aW9uIGhhcyBubyBhY3RpdmUgc3ViLWFjdGlvbnMiKQogICAgICAgIHJldHVybiBTY2FuUmVzcG9uc2UoCiAgICAgICAgICAgIGZsb3c9IlNVQkFDVElPTl9SRVFVSVJFRCIsCiAgICAgICAgICAgIHdvcmtlcl9zdGF0ZT1Xb3JrZXJTdGF0ZS5JTlNJREUudmFsdWUsCiAgICAgICAgICAgIGFjdGlvbnM9W190ZXJtaW5hbF9hY3Rpb24oaXRlbSkgZm9yIGl0ZW0gaW4gY2hpbGRyZW5dLAogICAgICAgICkKCiAgICBpZiBhY3Rpb24ucGFyZW50X2FjdGlvbl9pZCBpcyBub3QgTm9uZToKICAgICAgICBwYXJlbnQgPSBuZXh0KChpdGVtIGZvciBpdGVtIGluIGV4aXRfYWN0aW9ucyBpZiBpdGVtLmlkID09IGFjdGlvbi5wYXJlbnRfYWN0aW9uX2lkKSwgTm9uZSkKICAgICAgICBpZiBwYXJlbnQgaXMgbm90IE5vbmUgYW5kIG5vdCBwYXJlbnQucmVxdWlyZXNfc3ViYWN0aW9uOgogICAgICAgICAgICByYWlzZSBIVFRQRXhjZXB0aW9uKHN0YXR1c19jb2RlPXN0YXR1cy5IVFRQXzQwOV9DT05GTElDVCwgZGV0YWlsPSJTdWItYWN0aW9uIHBhcmVudCBpcyBub3QgZW5hYmxlZCBvbiB0aGlzIHRlcm1pbmFsIikKCiAgICBmcm9tIGRhdGV0aW1lIGltcG9ydCB0aW1lem9uZQogICAgZnJvbSBhcHAuc2VydmljZXMucGVyaW1ldGVyX3NlcnZpY2UgaW1wb3J0IHJlbWVtYmVyX3JlYWQKICAgIHJlbWVtYmVyX3JlYWQoZGIsIHRlcm1pbmFsLCByZXBvcnRlcl9pZCwgZGF0ZXRpbWUubm93KHRpbWV6b25lLnV0YykpCiAgICBldmVudCA9IF9jcmVhdGVfZXZlbnQoZGIsIHRlcm1pbmFsLCBhY3Rpb24sIHJlcG9ydGVyX2lkLCBtZXRob2QpCiAgICByZXR1cm4gU2NhblJlc3BvbnNlKGZsb3c9IkVYSVRfUkVDT1JERUQiLCB3b3JrZXJfc3RhdGU9V29ya2VyU3RhdGUuT1VUU0lERS52YWx1ZSwgZXZlbnQ9X2V2ZW50X3Jlc3BvbnNlKGV2ZW50KSkK
+from datetime import datetime
+from hashlib import sha256
+from uuid import uuid4
+from zoneinfo import ZoneInfo
+
+from fastapi import HTTPException, status
+from sqlalchemy import select, text
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.domain.enums import IdentificationMethod, IdentificationMode, StateEffect, WorkerState
+from app.models.action import Action
+from app.models.terminal import Terminal
+from app.models.time_event import TimeEvent
+from app.schemas.terminal import CapturedEvent, ScanResponse, TerminalAction
+from app.services.state_service import derive_worker_state
+from app.services.exit_policy import check_exit_policy
+
+
+def _lock_badge(db: Session, reporter_id: str) -> None:
+    # Serialize state evaluation and capture across all PostgreSQL terminals.
+    # A transaction advisory lock also covers a badge with no existing events.
+    if db.get_bind().dialect.name == "postgresql":
+        key = int.from_bytes(sha256(reporter_id.encode()).digest()[:8], "big", signed=True)
+        db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": key})
+
+
+def _get_terminal(db: Session, terminal_code: str) -> Terminal:
+    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code))
+    if terminal is None or not terminal.active or terminal.deleted_at is not None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Terminal not found or inactive")
+    return terminal
+
+
+def _validate_method(terminal: Terminal, method: IdentificationMethod) -> None:
+    allowed = terminal.identification_mode
+    if allowed != IdentificationMode.BOTH.value and allowed != method.value:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Identification method is not enabled on this terminal")
+
+
+def _active_actions(terminal: Terminal, effect: StateEffect) -> list[Action]:
+    return sorted(
+        [action for action in terminal.actions if action.active and action.show_on_terminal and action.state_effect == effect.value],
+        key=lambda action: (action.display_order, action.id),
+    )
+
+
+def _terminal_action(action: Action) -> TerminalAction:
+    return TerminalAction(code=action.code, label=action.label, has_subactions=action.requires_subaction, visual_key=action.visual_key)
+
+
+def _create_event(db: Session, terminal: Terminal, action: Action, reporter_id: str, method: IdentificationMethod, *, commit: bool = True, event_time: datetime | None = None, correlation_id: str | None = None, snapshot: TimeEvent | None = None) -> TimeEvent:
+    if terminal.terminal_role != "CELL":
+        raise HTTPException(409, "Perimeter terminals cannot create cell time events")
+    event_id = str(uuid4())
+    event_time = event_time or datetime.now(ZoneInfo(settings.event_timezone))
+    # work_cell is a local exit-policy attribute, not part of the Oracle TCD context.
+    oracle_attributes = {key: value for key, value in (terminal.oracle_attributes or {}).items() if key != "work_cell"}
+    oracle_attributes.update({key: value for key, value in (action.oracle_attributes or {}).items() if key != "work_cell"})
+    structure = terminal.project_line
+    branch = structure.subworkshop if structure else None
+    workshop = branch.workshop if branch else None
+    if snapshot is None and structure and (not structure.active or not branch.active or not workshop.active):
+        raise HTTPException(status_code=409, detail="Assigned operational structure is inactive")
+    event = TimeEvent(
+        workshop_code=workshop.code if workshop else None,
+        workshop_description=workshop.description if workshop else None,
+        subworkshop_code=branch.code if branch else None,
+        subworkshop_description=branch.description if branch else None,
+        project_line_code=structure.code if structure else None,
+        project_line_description=structure.description if structure else None,
+        id=event_id,
+        correlation_id=correlation_id,
+        request_number=f"BSS-{terminal.code}-{event_id}",
+        terminal_id=terminal.id,
+        action_id=action.id,
+        terminal_code=terminal.code,
+        device_id=terminal.external_device_id,
+        action_code=action.code,
+        action_label=action.label,
+        supplier_device_event=action.supplier_device_event,
+        state_effect=action.state_effect,
+        reporter_id=reporter_id,
+        reporter_id_type=settings.oracle_reporter_id_type,
+        identification_method=method.value,
+        event_datetime=event_time,
+        event_timezone=settings.event_timezone,
+        oracle_attributes=oracle_attributes,
+        delivery_status="PENDING",
+    )
+    if snapshot is not None:
+        for field in ("terminal_code", "device_id", "workshop_code", "workshop_description", "subworkshop_code", "subworkshop_description", "project_line_code", "project_line_description"):
+            setattr(event, field, getattr(snapshot, field))
+        event.oracle_attributes = {**(snapshot.oracle_attributes or {}), **{k: v for k, v in (action.oracle_attributes or {}).items() if k != "work_cell"}}
+    db.add(event)
+    if commit:
+        db.commit()
+        db.refresh(event)
+    return event
+
+
+def _event_response(event: TimeEvent) -> CapturedEvent:
+    return CapturedEvent(
+        id=event.id,
+        action_code=event.action_code,
+        action_label=event.action_label,
+        event_datetime=event.event_datetime,
+        delivery_status=event.delivery_status,
+    )
+
+
+def scan(db: Session, terminal_code: str, reporter_id: str, method: IdentificationMethod) -> ScanResponse:
+    _lock_badge(db, reporter_id)
+    terminal = _get_terminal(db, terminal_code)
+    _validate_method(terminal, method)
+    from datetime import timezone
+    from app.services.perimeter_service import settings_for, is_inside, is_duplicate, remember_read, perimeter_scan, check_badge_source
+    if terminal.terminal_role != "CELL":
+        return ScanResponse(**perimeter_scan(db, terminal, reporter_id, method))
+    config = settings_for(db, terminal.factory_code)
+    now = datetime.now(timezone.utc)
+    current_state = derive_worker_state(db, reporter_id, terminal.factory_code)
+    if current_state == WorkerState.OUTSIDE and config.enabled:
+        check_badge_source(config, reporter_id)
+        if config.badge_source != "EXTERNAL" and not is_inside(db, terminal.factory_code, reporter_id):
+            raise HTTPException(409, "Badge has not entered the factory perimeter")
+    if is_duplicate(db, config, terminal, reporter_id, now):
+        return ScanResponse(flow="DUPLICATE_IGNORED", worker_state=current_state.value)
+
+    if current_state == WorkerState.OUTSIDE:
+        entry_actions = _active_actions(terminal, StateEffect.ENTER)
+        if len(entry_actions) != 1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Terminal must have exactly one active ENTER action for automatic entry",
+            )
+        remember_read(db, terminal, reporter_id, now)
+        event = _create_event(db, terminal, entry_actions[0], reporter_id, method)
+        return ScanResponse(flow="ENTRY_RECORDED", worker_state=WorkerState.INSIDE.value, event=_event_response(event))
+
+    check_exit_policy(db, terminal, reporter_id)
+    enabled_exits = _active_actions(terminal, StateEffect.EXIT)
+    enabled_ids = {action.id for action in enabled_exits}
+    exit_actions = [action for action in enabled_exits if action.parent_action_id is None or action.parent_action_id not in enabled_ids]
+    if not exit_actions:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Terminal has no active EXIT actions")
+    return ScanResponse(
+        flow="EXIT_REQUIRED",
+        worker_state=WorkerState.INSIDE.value,
+        actions=[_terminal_action(action) for action in exit_actions],
+    )
+
+
+def record_exit(db: Session, terminal_code: str, reporter_id: str, method: IdentificationMethod, action_code: str) -> ScanResponse:
+    _lock_badge(db, reporter_id)
+    terminal = _get_terminal(db, terminal_code)
+    _validate_method(terminal, method)
+    if terminal.terminal_role != "CELL":
+        raise HTTPException(409, "Perimeter terminals do not accept cell exit actions")
+    from datetime import timezone
+    from app.services.perimeter_service import settings_for, is_duplicate
+    current_state = derive_worker_state(db, reporter_id, terminal.factory_code)
+    if current_state != WorkerState.INSIDE and is_duplicate(db, settings_for(db, terminal.factory_code), terminal, reporter_id, datetime.now(timezone.utc)):
+        return ScanResponse(flow="DUPLICATE_IGNORED", worker_state=current_state.value)
+    if current_state != WorkerState.INSIDE:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Worker is not currently inside according to local TCD events")
+
+    check_exit_policy(db, terminal, reporter_id)
+    exit_actions = _active_actions(terminal, StateEffect.EXIT)
+    action = next((item for item in exit_actions if item.code == action_code), None)
+    if action is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Exit action is not enabled on this terminal")
+
+    if action.requires_subaction:
+        children = sorted(
+            [item for item in exit_actions if item.parent_action_id == action.id],
+            key=lambda item: (item.display_order, item.id),
+        )
+        if not children:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Selected exit action has no active sub-actions")
+        return ScanResponse(
+            flow="SUBACTION_REQUIRED",
+            worker_state=WorkerState.INSIDE.value,
+            actions=[_terminal_action(item) for item in children],
+        )
+
+    if action.parent_action_id is not None:
+        parent = next((item for item in exit_actions if item.id == action.parent_action_id), None)
+        if parent is not None and not parent.requires_subaction:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Sub-action parent is not enabled on this terminal")
+
+    from datetime import timezone
+    from app.services.perimeter_service import remember_read
+    remember_read(db, terminal, reporter_id, datetime.now(timezone.utc))
+    event = _create_event(db, terminal, action, reporter_id, method)
+    return ScanResponse(flow="EXIT_RECORDED", worker_state=WorkerState.OUTSIDE.value, event=_event_response(event))

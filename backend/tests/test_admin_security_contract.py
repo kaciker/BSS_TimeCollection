@@ -1,1 +1,77 @@
-ZnJvbSBmYXN0YXBpIGltcG9ydCBGYXN0QVBJCmZyb20gZmFzdGFwaS50ZXN0Y2xpZW50IGltcG9ydCBUZXN0Q2xpZW50Cgpmcm9tIGFwcC5jb3JlLmFkbWluX3NlY3VyaXR5IGltcG9ydCBpbnN0YWxsX2FkbWluX2F1dGhlbnRpY2F0aW9uCgoKY2xhc3MgRHVtbXlQcm92aWRlcjoKICAgIGRlZiBfX2luaXRfXyhzZWxmLCBhdXRoZW50aWNhdGUsIGF1dGhfZW5kcG9pbnRzPSgpLCBjb25maWd1cmVkPVRydWUpOgogICAgICAgIHNlbGYuX2F1dGhlbnRpY2F0ZSA9IGF1dGhlbnRpY2F0ZQogICAgICAgIHNlbGYuX2F1dGhfZW5kcG9pbnRzID0gc2V0KGF1dGhfZW5kcG9pbnRzKQogICAgICAgIHNlbGYuX2NvbmZpZ3VyZWQgPSBjb25maWd1cmVkCgogICAgQHByb3BlcnR5CiAgICBkZWYgY29uZmlndXJlZChzZWxmKToKICAgICAgICByZXR1cm4gc2VsZi5fY29uZmlndXJlZAoKICAgIGRlZiBhdXRoZW50aWNhdGUoc2VsZiwgcmVxdWVzdCk6CiAgICAgICAgcmV0dXJuIHNlbGYuX2F1dGhlbnRpY2F0ZShyZXF1ZXN0KQoKICAgIGRlZiBpc19hdXRoZW50aWNhdGlvbl9lbmRwb2ludChzZWxmLCByZXF1ZXN0KToKICAgICAgICByZXR1cm4gKHJlcXVlc3QubWV0aG9kLCByZXF1ZXN0LnVybC5wYXRoKSBpbiBzZWxmLl9hdXRoX2VuZHBvaW50cwoKCmRlZiBidWlsZF9hcHAocHJvdmlkZXI9Tm9uZSk6CiAgICBhcHAgPSBGYXN0QVBJKCkKICAgIGluc3RhbGxfYWRtaW5fYXV0aGVudGljYXRpb24oYXBwLCBwcm92aWRlcikKCiAgICBAYXBwLmdldCgiL2FwaS92MS9hZG1pbi9leGFtcGxlIikKICAgIGRlZiBhZG1pbl9lbmRwb2ludCgpOgogICAgICAgIHJldHVybiB7Im9rIjogVHJ1ZX0KCiAgICBAYXBwLnBvc3QoIi9hcGkvdjEvYWRtaW4vYXV0aC9sb2dpbiIpCiAgICBkZWYgbG9naW5fZW5kcG9pbnQoKToKICAgICAgICByZXR1cm4geyJhdXRoZW50aWNhdGVkIjogVHJ1ZX0KCiAgICBAYXBwLnBvc3QoIi9hcGkvdjEvYWRtaW4vYXV0aC9sb2dvdXQiKQogICAgZGVmIGxvZ291dF9lbmRwb2ludCgpOgogICAgICAgIHJldHVybiB7ImF1dGhlbnRpY2F0ZWQiOiBGYWxzZX0KCiAgICByZXR1cm4gYXBwCgoKZGVmIHRlc3RfdW5hdXRoZW50aWNhdGVkX2FkbWluX3JlcXVlc3RfaXNfcmVqZWN0ZWQoKToKICAgIHJlc3BvbnNlID0gVGVzdENsaWVudChidWlsZF9hcHAoRHVtbXlQcm92aWRlcihsYW1iZGEgcmVxdWVzdDogTm9uZSkpKS5nZXQoIi9hcGkvdjEvYWRtaW4vZXhhbXBsZSIpCiAgICBhc3NlcnQgcmVzcG9uc2Uuc3RhdHVzX2NvZGUgPT0gNDAxCiAgICBhc3NlcnQgcmVzcG9uc2UuaGVhZGVyc1sid3d3LWF1dGhlbnRpY2F0ZSJdID09ICJCZWFyZXIiCgoKZGVmIHRlc3RfaW52YWxpZF9jcmVkZW50aWFsc19hcmVfcmVqZWN0ZWQoKToKICAgIGRlZiByZWplY3RfaW52YWxpZF9jcmVkZW50aWFscyhyZXF1ZXN0KToKICAgICAgICByZXR1cm4gImFkbWluIiBpZiByZXF1ZXN0LmhlYWRlcnMuZ2V0KCJhdXRob3JpemF0aW9uIikgPT0gIkJlYXJlciB2YWxpZCIgZWxzZSBOb25lCgogICAgY2xpZW50ID0gVGVzdENsaWVudChidWlsZF9hcHAoRHVtbXlQcm92aWRlcihyZWplY3RfaW52YWxpZF9jcmVkZW50aWFscykpKQogICAgcmVzcG9uc2UgPSBjbGllbnQuZ2V0KCIvYXBpL3YxL2FkbWluL2V4YW1wbGUiLCBoZWFkZXJzPXsiQXV0aG9yaXphdGlvbiI6ICJCZWFyZXIgaW52YWxpZCJ9KQogICAgYXNzZXJ0IHJlc3BvbnNlLnN0YXR1c19jb2RlID09IDQwMQoKCmRlZiB0ZXN0X21pc3NpbmdfYXV0aGVudGljYXRpb25fcHJvdmlkZXJfZmFpbHNfY2xvc2VkKCk6CiAgICByZXNwb25zZSA9IFRlc3RDbGllbnQoYnVpbGRfYXBwKCkpLmdldCgiL2FwaS92MS9hZG1pbi9leGFtcGxlIikKICAgIGFzc2VydCByZXNwb25zZS5zdGF0dXNfY29kZSA9PSA1MDMKICAgIGFzc2VydCAibm90IGNvbmZpZ3VyZWQiIGluIHJlc3BvbnNlLmpzb24oKVsiZGV0YWlsIl0KCgpkZWYgdGVzdF91bmNvbmZpZ3VyZWRfYXV0aGVudGljYXRpb25fcHJvdmlkZXJfZmFpbHNfY2xvc2VkKCk6CiAgICBwcm92aWRlciA9IER1bW15UHJvdmlkZXIobGFtYmRhIHJlcXVlc3Q6ICJhZG1pbiIsIGNvbmZpZ3VyZWQ9RmFsc2UpCiAgICByZXNwb25zZSA9IFRlc3RDbGllbnQoYnVpbGRfYXBwKHByb3ZpZGVyKSkuZ2V0KCIvYXBpL3YxL2FkbWluL2V4YW1wbGUiKQogICAgYXNzZXJ0IHJlc3BvbnNlLnN0YXR1c19jb2RlID09IDUwMwoKCmRlZiB0ZXN0X3Byb3ZpZGVyX21heV9vcGVuX29ubHlfaXRzX2V4cGxpY2l0X2xvZ2luX2VuZHBvaW50KCk6CiAgICBwcm92aWRlciA9IER1bW15UHJvdmlkZXIoCiAgICAgICAgbGFtYmRhIHJlcXVlc3Q6IE5vbmUsCiAgICAgICAgYXV0aF9lbmRwb2ludHM9eygiUE9TVCIsICIvYXBpL3YxL2FkbWluL2F1dGgvbG9naW4iKX0sCiAgICApCiAgICBjbGllbnQgPSBUZXN0Q2xpZW50KGJ1aWxkX2FwcChwcm92aWRlcikpCiAgICBhc3NlcnQgY2xpZW50LnBvc3QoIi9hcGkvdjEvYWRtaW4vYXV0aC9sb2dpbiIpLnN0YXR1c19jb2RlID09IDIwMAogICAgYXNzZXJ0IGNsaWVudC5wb3N0KCIvYXBpL3YxL2FkbWluL2F1dGgvbG9nb3V0Iikuc3RhdHVzX2NvZGUgPT0gNDAxCg==
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from app.core.admin_security import install_admin_authentication
+
+
+class DummyProvider:
+    def __init__(self, authenticate, auth_endpoints=(), configured=True):
+        self._authenticate = authenticate
+        self._auth_endpoints = set(auth_endpoints)
+        self._configured = configured
+
+    @property
+    def configured(self):
+        return self._configured
+
+    def authenticate(self, request):
+        return self._authenticate(request)
+
+    def is_authentication_endpoint(self, request):
+        return (request.method, request.url.path) in self._auth_endpoints
+
+
+def build_app(provider=None):
+    app = FastAPI()
+    install_admin_authentication(app, provider)
+
+    @app.get("/api/v1/admin/example")
+    def admin_endpoint():
+        return {"ok": True}
+
+    @app.post("/api/v1/admin/auth/login")
+    def login_endpoint():
+        return {"authenticated": True}
+
+    @app.post("/api/v1/admin/auth/logout")
+    def logout_endpoint():
+        return {"authenticated": False}
+
+    return app
+
+
+def test_unauthenticated_admin_request_is_rejected():
+    response = TestClient(build_app(DummyProvider(lambda request: None))).get("/api/v1/admin/example")
+    assert response.status_code == 401
+    assert response.headers["www-authenticate"] == "Bearer"
+
+
+def test_invalid_credentials_are_rejected():
+    def reject_invalid_credentials(request):
+        return "admin" if request.headers.get("authorization") == "Bearer valid" else None
+
+    client = TestClient(build_app(DummyProvider(reject_invalid_credentials)))
+    response = client.get("/api/v1/admin/example", headers={"Authorization": "Bearer invalid"})
+    assert response.status_code == 401
+
+
+def test_missing_authentication_provider_fails_closed():
+    response = TestClient(build_app()).get("/api/v1/admin/example")
+    assert response.status_code == 503
+    assert "not configured" in response.json()["detail"]
+
+
+def test_unconfigured_authentication_provider_fails_closed():
+    provider = DummyProvider(lambda request: "admin", configured=False)
+    response = TestClient(build_app(provider)).get("/api/v1/admin/example")
+    assert response.status_code == 503
+
+
+def test_provider_may_open_only_its_explicit_login_endpoint():
+    provider = DummyProvider(
+        lambda request: None,
+        auth_endpoints={("POST", "/api/v1/admin/auth/login")},
+    )
+    client = TestClient(build_app(provider))
+    assert client.post("/api/v1/admin/auth/login").status_code == 200
+    assert client.post("/api/v1/admin/auth/logout").status_code == 401

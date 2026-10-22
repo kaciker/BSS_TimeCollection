@@ -1,1 +1,77 @@
-ZnJvbSBhcHAubW9kZWxzLnBlcmltZXRlciBpbXBvcnQgRmFjdG9yeVBlcmltZXRlclNldHRpbmdzCmZyb20gdGVzdF9jb25maWd1cmF0aW9uIGltcG9ydCBhY3RpdmF0ZV9jcmVhdGVkX3Rlcm1pbmFsLCBjb25maWd1cmVkX3Rlcm1pbmFsLCBjcmVhdGVfYWN0aW9uCmZyb20gdGVzdF9tb25pdG9yaW5nIGltcG9ydCBtb25pdG9yCgoKZGVmIHRlc3RfdW51c2VkX2FjdGlvbl9jYW5fYmVfZGVsZXRlZChtb25pdG9yKToKICAgIGNsaWVudCwgXyA9IG1vbml0b3IKICAgIGNyZWF0ZV9hY3Rpb24oY2xpZW50LCAiVEVNUF9VTlVTRUQiKQoKICAgIHJlc3BvbnNlID0gY2xpZW50LmRlbGV0ZSgiL2FwaS92MS9hZG1pbi9hY3Rpb25zL1RFTVBfVU5VU0VEIikKCiAgICBhc3NlcnQgcmVzcG9uc2Uuc3RhdHVzX2NvZGUgPT0gMjAwLCByZXNwb25zZS50ZXh0CiAgICBhc3NlcnQgcmVzcG9uc2UuanNvbigpWyJkZXRhaWwiXSA9PSAiQWN0aW9uIFRFTVBfVU5VU0VEIGRlbGV0ZWQiCiAgICBhc3NlcnQgYWxsKGFjdGlvblsiY29kZSJdICE9ICJURU1QX1VOVVNFRCIgZm9yIGFjdGlvbiBpbiBjbGllbnQuZ2V0KCIvYXBpL3YxL2FkbWluL2FjdGlvbnMiKS5qc29uKCkpCgoKZGVmIHRlc3RfYWN0aW9uX3dpdGhfcmVjb3JkZWRfaGlzdG9yeV9jYW5ub3RfYmVfZGVsZXRlZChtb25pdG9yKToKICAgIGNsaWVudCwgXyA9IG1vbml0b3IKICAgIHRlcm1pbmFsLCBfID0gY29uZmlndXJlZF90ZXJtaW5hbChjbGllbnQpCiAgICBhY3RpdmF0ZV9jcmVhdGVkX3Rlcm1pbmFsKGNsaWVudCwgdGVybWluYWwpCiAgICBzY2FuID0gY2xpZW50LnBvc3QoIi9hcGkvdjEvdGVybWluYWwvc2NhbiIsIGpzb249eyJyZXBvcnRlcl9pZCI6ICIwMDAxIiwgImlkZW50aWZpY2F0aW9uX21ldGhvZCI6ICJLRVlQQUQifSkKICAgIGFzc2VydCBzY2FuLnN0YXR1c19jb2RlID09IDIwMCwgc2Nhbi50ZXh0CgogICAgcmVzcG9uc2UgPSBjbGllbnQuZGVsZXRlKCIvYXBpL3YxL2FkbWluL2FjdGlvbnMvU1RBUlQiKQoKICAgIGFzc2VydCByZXNwb25zZS5zdGF0dXNfY29kZSA9PSA0MDkKICAgIGFzc2VydCAicmVjb3JkZWQgdGltZSBldmVudHMiIGluIHJlc3BvbnNlLmpzb24oKVsiZGV0YWlsIl0KICAgIGFzc2VydCAiRGVhY3RpdmF0ZSBpdCBpbnN0ZWFkIiBpbiByZXNwb25zZS5qc29uKClbImRldGFpbCJdCiAgICBhc3NlcnQgYW55KGFjdGlvblsiY29kZSJdID09ICJTVEFSVCIgZm9yIGFjdGlvbiBpbiBjbGllbnQuZ2V0KCIvYXBpL3YxL2FkbWluL2FjdGlvbnMiKS5qc29uKCkpCgoKZGVmIHRlc3RfcGFyZW50X2FjdGlvbl93aXRoX3N1YmFjdGlvbnNfY2Fubm90X2JlX2RlbGV0ZWQobW9uaXRvcik6CiAgICBjbGllbnQsIF8gPSBtb25pdG9yCiAgICBwYXJlbnQgPSBjbGllbnQucG9zdCgiL2FwaS92MS9hZG1pbi9hY3Rpb25zIiwganNvbj17CiAgICAgICAgImNvZGUiOiAiUEFSRU5UX0VYSVQiLAogICAgICAgICJsYWJlbCI6ICJQYXJlbnQgZXhpdCIsCiAgICAgICAgInN1cHBsaWVyX2RldmljZV9ldmVudCI6ICJCU1NfUEFSRU5UX0VYSVQiLAogICAgICAgICJzdGF0ZV9lZmZlY3QiOiAiRVhJVCIsCiAgICAgICAgImRpc3BsYXlfb3JkZXIiOiAxMCwKICAgICAgICAib3JhY2xlX2F0dHJpYnV0ZXMiOiB7fSwKICAgICAgICAicmVxdWlyZXNfc3ViYWN0aW9uIjogVHJ1ZSwKICAgIH0pCiAgICBhc3NlcnQgcGFyZW50LnN0YXR1c19jb2RlID09IDIwMSwgcGFyZW50LnRleHQKICAgIGNoaWxkID0gY2xpZW50LnBvc3QoIi9hcGkvdjEvYWRtaW4vYWN0aW9ucyIsIGpzb249ewogICAgICAgICJjb2RlIjogIkNISUxEX0VYSVQiLAogICAgICAgICJsYWJlbCI6ICJDaGlsZCBleGl0IiwKICAgICAgICAic3VwcGxpZXJfZGV2aWNlX2V2ZW50IjogIkJTU19DSElMRF9FWElUIiwKICAgICAgICAic3RhdGVfZWZmZWN0IjogIkVYSVQiLAogICAgICAgICJkaXNwbGF5X29yZGVyIjogMTEsCiAgICAgICAgIm9yYWNsZV9hdHRyaWJ1dGVzIjoge30sCiAgICAgICAgInBhcmVudF9hY3Rpb25fY29kZSI6ICJQQVJFTlRfRVhJVCIsCiAgICB9KQogICAgYXNzZXJ0IGNoaWxkLnN0YXR1c19jb2RlID09IDIwMSwgY2hpbGQudGV4dAoKICAgIHJlc3BvbnNlID0gY2xpZW50LmRlbGV0ZSgiL2FwaS92MS9hZG1pbi9hY3Rpb25zL1BBUkVOVF9FWElUIikKCiAgICBhc3NlcnQgcmVzcG9uc2Uuc3RhdHVzX2NvZGUgPT0gNDA5CiAgICBhc3NlcnQgInBhcmVudCBvZiBzdWItYWN0aW9uKHMpOiBDSElMRF9FWElUIiBpbiByZXNwb25zZS5qc29uKClbImRldGFpbCJdCgoKZGVmIHRlc3RfYXV0b19leGl0X2FjdGlvbl9jYW5ub3RfYmVfZGVsZXRlZChtb25pdG9yKToKICAgIGNsaWVudCwgZGIgPSBtb25pdG9yCiAgICBjcmVhdGVfYWN0aW9uKGNsaWVudCwgIkFVVE9fRkFDVE9SWV9FWElUIikKICAgIGRiLmFkZChGYWN0b3J5UGVyaW1ldGVyU2V0dGluZ3MoCiAgICAgICAgZmFjdG9yeV9jb2RlPSJBUkdBTkRBIiwKICAgICAgICBlbmFibGVkPVRydWUsCiAgICAgICAgYmFkZ2Vfc291cmNlPSJPUEVOIiwKICAgICAgICBkZWR1cF9lbmFibGVkPVRydWUsCiAgICAgICAgZGVkdXBfc2Vjb25kcz01LAogICAgICAgIGF1dG9fZXhpdF9hY3Rpb25fY29kZT0iQVVUT19GQUNUT1JZX0VYSVQiLAogICAgKSkKICAgIGRiLmNvbW1pdCgpCgogICAgcmVzcG9uc2UgPSBjbGllbnQuZGVsZXRlKCIvYXBpL3YxL2FkbWluL2FjdGlvbnMvQVVUT19GQUNUT1JZX0VYSVQiKQoKICAgIGFzc2VydCByZXNwb25zZS5zdGF0dXNfY29kZSA9PSA0MDkKICAgIGFzc2VydCAiYXV0b21hdGljIGZhY3RvcnkgZXhpdCBmb3I6IEFSR0FOREEiIGluIHJlc3BvbnNlLmpzb24oKVsiZGV0YWlsIl0K
+from app.models.perimeter import FactoryPerimeterSettings
+from test_configuration import activate_created_terminal, configured_terminal, create_action
+from test_monitoring import monitor
+
+
+def test_unused_action_can_be_deleted(monitor):
+    client, _ = monitor
+    create_action(client, "TEMP_UNUSED")
+
+    response = client.delete("/api/v1/admin/actions/TEMP_UNUSED")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["detail"] == "Action TEMP_UNUSED deleted"
+    assert all(action["code"] != "TEMP_UNUSED" for action in client.get("/api/v1/admin/actions").json())
+
+
+def test_action_with_recorded_history_cannot_be_deleted(monitor):
+    client, _ = monitor
+    terminal, _ = configured_terminal(client)
+    activate_created_terminal(client, terminal)
+    scan = client.post("/api/v1/terminal/scan", json={"reporter_id": "0001", "identification_method": "KEYPAD"})
+    assert scan.status_code == 200, scan.text
+
+    response = client.delete("/api/v1/admin/actions/START")
+
+    assert response.status_code == 409
+    assert "recorded time events" in response.json()["detail"]
+    assert "Deactivate it instead" in response.json()["detail"]
+    assert any(action["code"] == "START" for action in client.get("/api/v1/admin/actions").json())
+
+
+def test_parent_action_with_subactions_cannot_be_deleted(monitor):
+    client, _ = monitor
+    parent = client.post("/api/v1/admin/actions", json={
+        "code": "PARENT_EXIT",
+        "label": "Parent exit",
+        "supplier_device_event": "BSS_PARENT_EXIT",
+        "state_effect": "EXIT",
+        "display_order": 10,
+        "oracle_attributes": {},
+        "requires_subaction": True,
+    })
+    assert parent.status_code == 201, parent.text
+    child = client.post("/api/v1/admin/actions", json={
+        "code": "CHILD_EXIT",
+        "label": "Child exit",
+        "supplier_device_event": "BSS_CHILD_EXIT",
+        "state_effect": "EXIT",
+        "display_order": 11,
+        "oracle_attributes": {},
+        "parent_action_code": "PARENT_EXIT",
+    })
+    assert child.status_code == 201, child.text
+
+    response = client.delete("/api/v1/admin/actions/PARENT_EXIT")
+
+    assert response.status_code == 409
+    assert "parent of sub-action(s): CHILD_EXIT" in response.json()["detail"]
+
+
+def test_auto_exit_action_cannot_be_deleted(monitor):
+    client, db = monitor
+    create_action(client, "AUTO_FACTORY_EXIT")
+    db.add(FactoryPerimeterSettings(
+        factory_code="ARGANDA",
+        enabled=True,
+        badge_source="OPEN",
+        dedup_enabled=True,
+        dedup_seconds=5,
+        auto_exit_action_code="AUTO_FACTORY_EXIT",
+    ))
+    db.commit()
+
+    response = client.delete("/api/v1/admin/actions/AUTO_FACTORY_EXIT")
+
+    assert response.status_code == 409
+    assert "automatic factory exit for: ARGANDA" in response.json()["detail"]

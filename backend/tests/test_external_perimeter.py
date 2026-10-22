@@ -1,1 +1,99 @@
-IiIiRXh0ZXJuYWwgQXJnYW5kYSBTUUwgU2VydmVyIGFkYXB0ZXIgY29udHJhY3QgYW5kIGZhaWx1cmUgaGFuZGxpbmcuIiIiCmZyb20gZGF0ZXRpbWUgaW1wb3J0IGRhdGV0aW1lLCB0aW1lZGVsdGEsIHRpbWV6b25lCmZyb20gem9uZWluZm8gaW1wb3J0IFpvbmVJbmZvCgpmcm9tIGFwcC5zZXJ2aWNlcy5leHRlcm5hbF9wZXJpbWV0ZXIgaW1wb3J0IHJlYWRlcl9udW1iZXJfdG9fYXR0cl92YWx1ZSwgY2hlY2tfZXh0ZXJuYWxfcHJlc2VuY2UKZnJvbSB0ZXN0X21vbml0b3JpbmcgaW1wb3J0IG1vbml0b3IKCgpkZWYgdGVzdF9yZWFkZXJfYnl0ZV9zd2FwKCk6CiAgICBhc3NlcnQgcmVhZGVyX251bWJlcl90b19hdHRyX3ZhbHVlKCIwNTgyNjA5Njk5IikgPT0gIjYwMjY1MDkxNCIKICAgIGFzc2VydCByZWFkZXJfbnVtYmVyX3RvX2F0dHJfdmFsdWUoIjAwMDAwMDAwMDAiKSA9PSAiMCIKICAgIGFzc2VydCByZWFkZXJfbnVtYmVyX3RvX2F0dHJfdmFsdWUoIjAwMDAwMDAwMDEiKSA9PSAiMTY3NzcyMTYiCiAgICBhc3NlcnQgcmVhZGVyX251bWJlcl90b19hdHRyX3ZhbHVlKCI0Mjk0OTY3Mjk1IikgPT0gIjQyOTQ5NjcyOTUiCgoKZGVmIHRlc3RfcmVhZGVyX2ludmFsaWQoKToKICAgIGZvciB2YWx1ZSBpbiAoIiIsICItMSIsICIxMkEiLCAiNDI5NDk2NzI5NiIsICLvvJHvvJLvvJMiLCAiMHgxMCIpOgogICAgICAgIHRyeToKICAgICAgICAgICAgcmVhZGVyX251bWJlcl90b19hdHRyX3ZhbHVlKHZhbHVlKQogICAgICAgICAgICBhc3NlcnQgRmFsc2UsIHZhbHVlCiAgICAgICAgZXhjZXB0IFZhbHVlRXJyb3I6CiAgICAgICAgICAgIHBhc3MKCgpkZWYgdGVzdF9wcmVzZW5jZV9zdGF0ZXMobW9ua2V5cGF0Y2gpOgogICAgZnJvbSBhcHAuY29yZS5jb25maWcgaW1wb3J0IHNldHRpbmdzCiAgICBtb25rZXlwYXRjaC5zZXRhdHRyKHNldHRpbmdzLCAicGVyaW1ldGVyX2V4dGVybmFsX21heF9hZ2VfaG91cnMiLCAxMikKICAgIG5vdyA9IGRhdGV0aW1lKDIwMjYsIDEwLCAyMSwgMTIsIHR6aW5mbz10aW1lem9uZS51dGMpCiAgICB0eiA9IFpvbmVJbmZvKHNldHRpbmdzLmV2ZW50X3RpbWV6b25lKQogICAgaW5zaWRlID0gKG5vdyAtIHRpbWVkZWx0YShob3Vycz0xMSkpLmFzdGltZXpvbmUodHopLnJlcGxhY2UodHppbmZvPU5vbmUpCiAgICBzdGFsZSA9IChub3cgLSB0aW1lZGVsdGEoaG91cnM9MTMpKS5hc3RpbWV6b25lKHR6KS5yZXBsYWNlKHR6aW5mbz1Ob25lKQogICAgYXNzZXJ0IGNoZWNrX2V4dGVybmFsX3ByZXNlbmNlKCIwNTgyNjA5Njk5Iiwgbm93PW5vdywgcXVlcnk9bGFtYmRhIGJhZGdlOiAoaW5zaWRlLCAiMiIpKVsic3RhdHVzIl0gPT0gIklOU0lERSIKICAgIGFzc2VydCBjaGVja19leHRlcm5hbF9wcmVzZW5jZSgiMDU4MjYwOTY5OSIsIG5vdz1ub3csIHF1ZXJ5PWxhbWJkYSBiYWRnZTogKHN0YWxlLCAiMiIpKVsic3RhdHVzIl0gPT0gIlNUQUxFIgogICAgYXNzZXJ0IGNoZWNrX2V4dGVybmFsX3ByZXNlbmNlKCIwNTgyNjA5Njk5Iiwgbm93PW5vdywgcXVlcnk9bGFtYmRhIGJhZGdlOiAoc3RhbGUsICIxIikpWyJzdGF0dXMiXSA9PSAiT1VUU0lERSIKICAgIGV4YWN0bHlfdHdlbHZlID0gKG5vdyAtIHRpbWVkZWx0YShob3Vycz0xMikpLmFzdGltZXpvbmUodHopLnJlcGxhY2UodHppbmZvPU5vbmUpCiAgICBhc3NlcnQgY2hlY2tfZXh0ZXJuYWxfcHJlc2VuY2UoIjA1ODI2MDk2OTkiLCBub3c9bm93LCBxdWVyeT1sYW1iZGEgYmFkZ2U6IChleGFjdGx5X3R3ZWx2ZSwgIjIiKSlbInN0YXR1cyJdID09ICJJTlNJREUiCiAgICBhc3NlcnQgY2hlY2tfZXh0ZXJuYWxfcHJlc2VuY2UoIjA1ODI2MDk2OTkiLCBub3c9bm93LCBxdWVyeT1sYW1iZGEgYmFkZ2U6IChpbnNpZGUsICJpbnZhbGlkIikpWyJzdGF0dXMiXSA9PSAiVU5LTk9XTiIKICAgIGZ1dHVyZSA9IChub3cgKyB0aW1lZGVsdGEobWludXRlcz0yKSkuYXN0aW1lem9uZSh0eikucmVwbGFjZSh0emluZm89Tm9uZSkKICAgIGFzc2VydCBjaGVja19leHRlcm5hbF9wcmVzZW5jZSgiMDU4MjYwOTY5OSIsIG5vdz1ub3csIHF1ZXJ5PWxhbWJkYSBiYWRnZTogKGZ1dHVyZSwgIjIiKSlbInN0YXR1cyJdID09ICJFUlJPUiIKICAgIGFzc2VydCBjaGVja19leHRlcm5hbF9wcmVzZW5jZSgiMDU4MjYwOTY5OSIsIG5vdz1ub3csIHF1ZXJ5PWxhbWJkYSBiYWRnZTogTm9uZSlbInN0YXR1cyJdID09ICJVTktOT1dOIgogICAgYXNzZXJ0IGNoZWNrX2V4dGVybmFsX3ByZXNlbmNlKCIwNTgyNjA5Njk5Iiwgbm93PW5vdywgcXVlcnk9bGFtYmRhIGJhZGdlOiAoXyBmb3IgXyBpbiAoKSkudGhyb3coT1NFcnJvcigpKSlbInN0YXR1cyJdID09ICJFUlJPUiIKCgpkZWYgdGVzdF9wcmVzZW5jZV9jbGFzc2lmaWVzX3NlY3JldF9hbmRfcXVlcnlfZmFpbHVyZXMobW9ua2V5cGF0Y2gsIHRtcF9wYXRoKToKICAgIGZyb20gYXBwLmNvcmUuY29uZmlnIGltcG9ydCBzZXR0aW5ncwogICAgZnJvbSBhcHAuc2VydmljZXMgaW1wb3J0IGV4dGVybmFsX3BlcmltZXRlciBhcyBleHRlcm5hbAogICAgbW9ua2V5cGF0Y2guc2V0YXR0cihzZXR0aW5ncywgInBlcmltZXRlcl9zcWxzZXJ2ZXJfY3JlZGVudGlhbHNfZmlsZSIsIHN0cih0bXBfcGF0aCAvICJtaXNzaW5nLmpzb24iKSkKICAgIHJlc3VsdCA9IGV4dGVybmFsLmNoZWNrX2V4dGVybmFsX3ByZXNlbmNlKCIxIikKICAgIGFzc2VydCAocmVzdWx0WyJzdGF0dXMiXSwgcmVzdWx0WyJlcnJvcl9jYXRlZ29yeSJdKSA9PSAoIkVSUk9SIiwgIkNSRURFTlRJQUxTX1VOQVZBSUxBQkxFIikKICAgIGFzc2VydCBleHRlcm5hbC5jaGVja19leHRlcm5hbF9wcmVzZW5jZSgiMSIsIHF1ZXJ5PWxhbWJkYSBfOiAoXyBmb3IgXyBpbiAoKSkudGhyb3coUnVudGltZUVycm9yKCJwcml2YXRlIikpKVsiZXJyb3JfY2F0ZWdvcnkiXSA9PSAiUVVFUllfRkFJTEVEIgoKCmRlZiB0ZXN0X2Nvbm5lY3Rvcl9zdGF0dXNfYW5kX2ZhaWx1cmVfY2F0ZWdvcmllcyhtb25rZXlwYXRjaCwgdG1wX3BhdGgpOgogICAgaW1wb3J0IGpzb24KICAgIGZyb20gYXBwLmNvcmUuY29uZmlnIGltcG9ydCBzZXR0aW5ncwogICAgZnJvbSBhcHAuc2VydmljZXMgaW1wb3J0IGV4dGVybmFsX3BlcmltZXRlciBhcyBleHRlcm5hbAogICAgc2VjcmV0ID0gdG1wX3BhdGggLyAiY3JlZGVudGlhbHMuanNvbiIKICAgIG1vbmtleXBhdGNoLnNldGF0dHIoc2V0dGluZ3MsICJwZXJpbWV0ZXJfc3Fsc2VydmVyX2NyZWRlbnRpYWxzX2ZpbGUiLCBzdHIoc2VjcmV0KSkKICAgIGFzc2VydCBleHRlcm5hbC5jb25uZWN0b3Jfc3RhdHVzKClbImVycm9yX2NhdGVnb3J5Il0gPT0gIkNSRURFTlRJQUxTX1VOQVZBSUxBQkxFIgogICAgc2VjcmV0LndyaXRlX3RleHQoanNvbi5kdW1wcyh7InNlcnZlciI6ICJzcWwuZXhhbXBsZToxNDMzIiwgImRhdGFiYXNlIjogIlNFQ1VSSVRZX0RCIiwgInVzZXJuYW1lIjogInJlYWRvbmx5IiwgInBhc3N3b3JkIjogIm5ldmVyLXJldHVybiJ9KSkKICAgIGZhaWxlZCA9IGV4dGVybmFsLnRlc3RfZXh0ZXJuYWxfY29ubmVjdGlvbihjb25uZWN0PWxhbWJkYSAqYSwgKiprOiAoXyBmb3IgXyBpbiAoKSkudGhyb3coRXhjZXB0aW9uKCIyODAwMCBsb2dpbiBmYWlsZWQgc2VjcmV0IikpKQogICAgYXNzZXJ0IGZhaWxlZFsiZXJyb3JfY2F0ZWdvcnkiXSA9PSAiQVVUSF9GQUlMRUQiCiAgICBhc3NlcnQgInBhc3N3b3JkIiBub3QgaW4gc3RyKGZhaWxlZCkubG93ZXIoKSBhbmQgIm5ldmVyLXJldHVybiIgbm90IGluIHN0cihmYWlsZWQpCiAgICB1bmF2YWlsYWJsZSA9IGV4dGVybmFsLnRlc3RfZXh0ZXJuYWxfY29ubmVjdGlvbihjb25uZWN0PWxhbWJkYSAqYSwgKiprOiAoXyBmb3IgXyBpbiAoKSkudGhyb3coVGltZW91dEVycm9yKCJjb25uZWN0IHRpbWVkIG91dCIpKSkKICAgIGFzc2VydCB1bmF2YWlsYWJsZVsiZXJyb3JfY2F0ZWdvcnkiXSA9PSAiQ09OTkVDVElPTl9GQUlMRUQiCiAgICBjbGFzcyBDdXJzb3I6CiAgICAgICAgZGVmIGV4ZWN1dGUoc2VsZiwgKl8pOiByZXR1cm4gc2VsZgogICAgICAgIGRlZiBmZXRjaG9uZShzZWxmKTogcmV0dXJuICgxLCkKICAgIGNsYXNzIENvbm5lY3Rpb246CiAgICAgICAgZGVmIGN1cnNvcihzZWxmKTogcmV0dXJuIEN1cnNvcigpCiAgICAgICAgZGVmIGNsb3NlKHNlbGYpOiBwYXNzCiAgICBvayA9IGV4dGVybmFsLnRlc3RfZXh0ZXJuYWxfY29ubmVjdGlvbihjb25uZWN0PWxhbWJkYSAqYSwgKiprOiBDb25uZWN0aW9uKCkpCiAgICBhc3NlcnQgb2tbInJlYWNoYWJsZSJdIGlzIFRydWUgYW5kIG9rWyJzdGF0dXMiXSA9PSAiQ09OTkVDVEVEIgogICAgYXNzZXJ0IG9rWyJkYXRhYmFzZSJdID09ICJTRUNVUklUWV9EQiIgYW5kIG9rWyJzZXJ2ZXIiXSA9PSAic3FsLmV4YW1wbGU6MTQzMyIKCgpkZWYgdGVzdF9iYWRnZV9yZXNwb25zZV92YWxpZGF0aW9uX2FuZF96b25lX2NvZGUobW9ua2V5cGF0Y2gpOgogICAgbm93ID0gZGF0ZXRpbWUoMjAyNiwgMTAsIDIxLCAxMiwgdHppbmZvPXRpbWV6b25lLnV0YykKICAgIHJlc3BvbnNlID0gY2hlY2tfZXh0ZXJuYWxfcHJlc2VuY2UoIjA1ODI2MDk2OTkiLCBub3c9bm93LCBxdWVyeT1sYW1iZGEgYmFkZ2U6IChub3csICJtYWxmb3JtZWQiKSkKICAgIGFzc2VydCByZXNwb25zZVsic3RhdHVzIl0gPT0gIlVOS05PV04iIGFuZCByZXNwb25zZVsiZXJyb3JfY2F0ZWdvcnkiXSA9PSAiSU5WQUxJRF9SRVNQT05TRSIKCgpkZWYgdGVzdF9hZG1pbl9leHRlcm5hbF9zdGF0dXNfYW5kX2JhZGdlX3Rlc3RfaGF2ZV9ub19ic3Nfc2lkZV9lZmZlY3RzKG1vbml0b3IsIG1vbmtleXBhdGNoKToKICAgIGZyb20gc3FsYWxjaGVteSBpbXBvcnQgZnVuYywgc2VsZWN0CiAgICBmcm9tIGFwcC5jb3JlIGltcG9ydCBjb25maWcKICAgIGZyb20gYXBwLm1vZGVscy5wZXJpbWV0ZXIgaW1wb3J0IEZhY3RvcnlQZXJpbWV0ZXJFdmVudAogICAgZnJvbSBhcHAubW9kZWxzLnRpbWVfZXZlbnQgaW1wb3J0IFRpbWVFdmVudAogICAgZnJvbSBhcHAucm91dGVycyBpbXBvcnQgcGVyaW1ldGVyCiAgICBjbGllbnQsIGRiID0gbW9uaXRvcgogICAgc3RhdHVzID0gY2xpZW50LmdldCgiL2FwaS92MS9hZG1pbi9wZXJpbWV0ZXIvQVJHQU5EQS9leHRlcm5hbC9zdGF0dXMiKQogICAgYXNzZXJ0IHN0YXR1cy5zdGF0dXNfY29kZSA9PSAyMDAKICAgIGFzc2VydCBzdGF0dXMuanNvbigpWyJwcm92aWRlciJdID09ICJTUUxTRVJWRVJfU0VDVVJJVFlfREIiCiAgICBtb25rZXlwYXRjaC5zZXRhdHRyKHBlcmltZXRlciwgImNoZWNrX2V4dGVybmFsX3ByZXNlbmNlIiwgbGFtYmRhIGJhZGdlOiB7CiAgICAgICAgInN0YXR1cyI6ICJJTlNJREUiLCAiZXZlbnRfdGltZSI6ICIyMDI2LTEwLTIyVDEwOjAwOjAwKzAwOjAwIiwgInpvbmVfY29kZSI6IDIsICJlcnJvcl9jYXRlZ29yeSI6IE5vbmUKICAgIH0pCiAgICByZXN1bHQgPSBjbGllbnQucG9zdCgiL2FwaS92MS9hZG1pbi9wZXJpbWV0ZXIvQVJHQU5EQS9leHRlcm5hbC90ZXN0LWJhZGdlIiwganNvbj17ImJhZGdlIjogIjEyMzQifSkKICAgIGFzc2VydCByZXN1bHQuc3RhdHVzX2NvZGUgPT0gMjAwIGFuZCByZXN1bHQuanNvbigpWyJzdGF0dXMiXSA9PSAiSU5TSURFIgogICAgYXNzZXJ0IGRiLnNjYWxhcihzZWxlY3QoZnVuYy5jb3VudCgpKS5zZWxlY3RfZnJvbShUaW1lRXZlbnQpKSA9PSAwCiAgICBhc3NlcnQgZGIuc2NhbGFyKHNlbGVjdChmdW5jLmNvdW50KCkpLnNlbGVjdF9mcm9tKEZhY3RvcnlQZXJpbWV0ZXJFdmVudCkpID09IDAK
+"""External Arganda SQL Server adapter contract and failure handling."""
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
+from app.services.external_perimeter import reader_number_to_attr_value, check_external_presence
+from test_monitoring import monitor
+
+
+def test_reader_byte_swap():
+    assert reader_number_to_attr_value("0582609699") == "602650914"
+    assert reader_number_to_attr_value("0000000000") == "0"
+    assert reader_number_to_attr_value("0000000001") == "16777216"
+    assert reader_number_to_attr_value("4294967295") == "4294967295"
+
+
+def test_reader_invalid():
+    for value in ("", "-1", "12A", "4294967296", "１２３", "0x10"):
+        try:
+            reader_number_to_attr_value(value)
+            assert False, value
+        except ValueError:
+            pass
+
+
+def test_presence_states(monkeypatch):
+    from app.core.config import settings
+    monkeypatch.setattr(settings, "perimeter_external_max_age_hours", 12)
+    now = datetime(2026, 10, 21, 12, tzinfo=timezone.utc)
+    tz = ZoneInfo(settings.event_timezone)
+    inside = (now - timedelta(hours=11)).astimezone(tz).replace(tzinfo=None)
+    stale = (now - timedelta(hours=13)).astimezone(tz).replace(tzinfo=None)
+    assert check_external_presence("0582609699", now=now, query=lambda badge: (inside, "2"))["status"] == "INSIDE"
+    assert check_external_presence("0582609699", now=now, query=lambda badge: (stale, "2"))["status"] == "STALE"
+    assert check_external_presence("0582609699", now=now, query=lambda badge: (stale, "1"))["status"] == "OUTSIDE"
+    exactly_twelve = (now - timedelta(hours=12)).astimezone(tz).replace(tzinfo=None)
+    assert check_external_presence("0582609699", now=now, query=lambda badge: (exactly_twelve, "2"))["status"] == "INSIDE"
+    assert check_external_presence("0582609699", now=now, query=lambda badge: (inside, "invalid"))["status"] == "UNKNOWN"
+    future = (now + timedelta(minutes=2)).astimezone(tz).replace(tzinfo=None)
+    assert check_external_presence("0582609699", now=now, query=lambda badge: (future, "2"))["status"] == "ERROR"
+    assert check_external_presence("0582609699", now=now, query=lambda badge: None)["status"] == "UNKNOWN"
+    assert check_external_presence("0582609699", now=now, query=lambda badge: (_ for _ in ()).throw(OSError()))["status"] == "ERROR"
+
+
+def test_presence_classifies_secret_and_query_failures(monkeypatch, tmp_path):
+    from app.core.config import settings
+    from app.services import external_perimeter as external
+    monkeypatch.setattr(settings, "perimeter_sqlserver_credentials_file", str(tmp_path / "missing.json"))
+    result = external.check_external_presence("1")
+    assert (result["status"], result["error_category"]) == ("ERROR", "CREDENTIALS_UNAVAILABLE")
+    assert external.check_external_presence("1", query=lambda _: (_ for _ in ()).throw(RuntimeError("private")))["error_category"] == "QUERY_FAILED"
+
+
+def test_connector_status_and_failure_categories(monkeypatch, tmp_path):
+    import json
+    from app.core.config import settings
+    from app.services import external_perimeter as external
+    secret = tmp_path / "credentials.json"
+    monkeypatch.setattr(settings, "perimeter_sqlserver_credentials_file", str(secret))
+    assert external.connector_status()["error_category"] == "CREDENTIALS_UNAVAILABLE"
+    secret.write_text(json.dumps({"server": "sql.example:1433", "database": "SECURITY_DB", "username": "readonly", "password": "never-return"}))
+    failed = external.test_external_connection(connect=lambda *a, **k: (_ for _ in ()).throw(Exception("28000 login failed secret")))
+    assert failed["error_category"] == "AUTH_FAILED"
+    assert "password" not in str(failed).lower() and "never-return" not in str(failed)
+    unavailable = external.test_external_connection(connect=lambda *a, **k: (_ for _ in ()).throw(TimeoutError("connect timed out")))
+    assert unavailable["error_category"] == "CONNECTION_FAILED"
+    class Cursor:
+        def execute(self, *_): return self
+        def fetchone(self): return (1,)
+    class Connection:
+        def cursor(self): return Cursor()
+        def close(self): pass
+    ok = external.test_external_connection(connect=lambda *a, **k: Connection())
+    assert ok["reachable"] is True and ok["status"] == "CONNECTED"
+    assert ok["database"] == "SECURITY_DB" and ok["server"] == "sql.example:1433"
+
+
+def test_badge_response_validation_and_zone_code(monkeypatch):
+    now = datetime(2026, 10, 21, 12, tzinfo=timezone.utc)
+    response = check_external_presence("0582609699", now=now, query=lambda badge: (now, "malformed"))
+    assert response["status"] == "UNKNOWN" and response["error_category"] == "INVALID_RESPONSE"
+
+
+def test_admin_external_status_and_badge_test_have_no_bss_side_effects(monitor, monkeypatch):
+    from sqlalchemy import func, select
+    from app.core import config
+    from app.models.perimeter import FactoryPerimeterEvent
+    from app.models.time_event import TimeEvent
+    from app.routers import perimeter
+    client, db = monitor
+    status = client.get("/api/v1/admin/perimeter/ARGANDA/external/status")
+    assert status.status_code == 200
+    assert status.json()["provider"] == "SQLSERVER_SECURITY_DB"
+    monkeypatch.setattr(perimeter, "check_external_presence", lambda badge: {
+        "status": "INSIDE", "event_time": "2026-10-22T10:00:00+00:00", "zone_code": 2, "error_category": None
+    })
+    result = client.post("/api/v1/admin/perimeter/ARGANDA/external/test-badge", json={"badge": "1234"})
+    assert result.status_code == 200 and result.json()["status"] == "INSIDE"
+    assert db.scalar(select(func.count()).select_from(TimeEvent)) == 0
+    assert db.scalar(select(func.count()).select_from(FactoryPerimeterEvent)) == 0

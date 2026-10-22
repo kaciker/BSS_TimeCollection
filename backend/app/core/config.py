@@ -1,1 +1,46 @@
-ZnJvbSBweWRhbnRpY19zZXR0aW5ncyBpbXBvcnQgQmFzZVNldHRpbmdzLCBTZXR0aW5nc0NvbmZpZ0RpY3QKCgpjbGFzcyBTZXR0aW5ncyhCYXNlU2V0dGluZ3MpOgogICAgYXBwX2Vudjogc3RyID0gImRldmVsb3BtZW50IgogICAgYXBwX3NlZWRfZGVmYXVsdHM6IGJvb2wgPSBGYWxzZQogICAgZXZlbnRfdGltZXpvbmU6IHN0ciA9ICJFdXJvcGUvTWFkcmlkIgoKICAgIGRhdGFiYXNlX3VybDogc3RyID0gInBvc3RncmVzcWwrcHN5Y29wZzovL2Jzc190aW1lY29sbGVjdGlvbjpjaGFuZ2UtbWVAZGI6NTQzMi9ic3NfdGltZWNvbGxlY3Rpb24iCiAgICBkYXRhYmFzZV9hZG1pbl90ZXN0X2VuYWJsZWQ6IGJvb2wgPSBGYWxzZQoKICAgIG9yYWNsZV9lbmFibGVkOiBib29sID0gRmFsc2UKICAgIG9yYWNsZV9iYXNlX3VybDogc3RyID0gIiIKICAgIG9yYWNsZV9hcGlfcGF0aDogc3RyID0gIi9oY21SZXN0QXBpL3Jlc291cmNlcy8xMS4xMy4xOC4wNS90aW1lRXZlbnRSZXF1ZXN0cyIKICAgIG9yYWNsZV9zb3VyY2VfaWQ6IHN0ciA9ICJIV01fQ0xPQ0tfVElNRSIKICAgIG9yYWNsZV9yZXBvcnRlcl9pZF90eXBlOiBzdHIgPSAiQkFER0UiCiAgICBvcmFjbGVfYXV0aF9tb2RlOiBzdHIgPSAibm9uZSIKICAgIG9yYWNsZV91c2VybmFtZTogc3RyID0gIiIKICAgIG9yYWNsZV9wYXNzd29yZDogc3RyID0gIiIKICAgIG9yYWNsZV9iZWFyZXJfdG9rZW46IHN0ciA9ICIiCiAgICBvcmFjbGVfdGltZW91dF9zZWNvbmRzOiBmbG9hdCA9IDE1LjAKCiAgICB0ZXJtaW5hbF9jb29raWVfc2VjdXJlOiBib29sID0gRmFsc2UKICAgIHRlcm1pbmFsX3Nlc3Npb25fZGF5czogaW50ID0gMzY1CiAgICB0ZXJtaW5hbF9wYWlyaW5nX21pbnV0ZXM6IGludCA9IDEwCgogICAgYWRtaW5fdXNlcm5hbWU6IHN0ciA9ICJhZG1pbiIKICAgIGFkbWluX3Bhc3N3b3JkX2hhc2g6IHN0ciA9ICIiCiAgICBhZG1pbl9zZXNzaW9uX3NlY3JldDogc3RyID0gIiIKICAgIGFkbWluX3Nlc3Npb25faG91cnM6IGludCA9IDgKICAgIGFkbWluX2Nvb2tpZV9zZWN1cmU6IGJvb2wgPSBGYWxzZQogICAgYWRtaW5fbG9naW5fbWF4X2F0dGVtcHRzOiBpbnQgPSA1CiAgICBhZG1pbl9sb2dpbl93aW5kb3dfc2Vjb25kczogaW50ID0gMzAwCgogICAgcGVyaW1ldGVyX3NxbHNlcnZlcl9jcmVkZW50aWFsc19maWxlOiBzdHIgPSAiL3J1bi9zZWNyZXRzL3BlcmltZXRlcl9zcWxzZXJ2ZXIuanNvbiIKICAgIHBlcmltZXRlcl9leHRlcm5hbF9tYXhfYWdlX2hvdXJzOiBpbnQgPSAxMgogICAgcGVyaW1ldGVyX2V4dGVybmFsX3N5bmNfc2Vjb25kczogZmxvYXQgPSAzMC4wCiAgICBwZXJpbWV0ZXJfZXh0ZXJuYWxfc3luY19iYXRjaF9zaXplOiBpbnQgPSA1MDAKCiAgICB3b3JrZXJfcG9sbF9zZWNvbmRzOiBmbG9hdCA9IDMuMAogICAgd29ya2VyX3N0YWxlX3NlbmRpbmdfc2Vjb25kczogaW50ID0gMzAwCgogICAgbW9kZWxfY29uZmlnID0gU2V0dGluZ3NDb25maWdEaWN0KGVudl9maWxlPSIuZW52IiwgZXh0cmE9Imlnbm9yZSIpCgoKc2V0dGluZ3MgPSBTZXR0aW5ncygpCg==
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    app_env: str = "development"
+    app_seed_defaults: bool = False
+    event_timezone: str = "Europe/Madrid"
+
+    database_url: str = "postgresql+psycopg://bss_timecollection:change-me@db:5432/bss_timecollection"
+    database_admin_test_enabled: bool = False
+
+    oracle_enabled: bool = False
+    oracle_base_url: str = ""
+    oracle_api_path: str = "/hcmRestApi/resources/11.13.18.05/timeEventRequests"
+    oracle_source_id: str = "HWM_CLOCK_TIME"
+    oracle_reporter_id_type: str = "BADGE"
+    oracle_auth_mode: str = "none"
+    oracle_username: str = ""
+    oracle_password: str = ""
+    oracle_bearer_token: str = ""
+    oracle_timeout_seconds: float = 15.0
+
+    terminal_cookie_secure: bool = False
+    terminal_session_days: int = 365
+    terminal_pairing_minutes: int = 10
+
+    admin_username: str = "admin"
+    admin_password_hash: str = ""
+    admin_session_secret: str = ""
+    admin_session_hours: int = 8
+    admin_cookie_secure: bool = False
+    admin_login_max_attempts: int = 5
+    admin_login_window_seconds: int = 300
+
+    perimeter_sqlserver_credentials_file: str = "/run/secrets/perimeter_sqlserver.json"
+    perimeter_external_max_age_hours: int = 12
+    perimeter_external_sync_seconds: float = 30.0
+    perimeter_external_sync_batch_size: int = 500
+
+    worker_poll_seconds: float = 3.0
+    worker_stale_sending_seconds: int = 300
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+
+settings = Settings()

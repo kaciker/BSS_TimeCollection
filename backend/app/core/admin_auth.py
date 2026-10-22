@@ -1,1 +1,169 @@
-aW1wb3J0IGJhc2U2NAppbXBvcnQgaGFzaGxpYgppbXBvcnQgaG1hYwppbXBvcnQgdGltZQpmcm9tIGNvbGxlY3Rpb25zIGltcG9ydCBkZWZhdWx0ZGljdCwgZGVxdWUKZnJvbSB0aHJlYWRpbmcgaW1wb3J0IExvY2sKCmZyb20gZmFzdGFwaSBpbXBvcnQgQVBJUm91dGVyLCBIVFRQRXhjZXB0aW9uLCBSZXF1ZXN0LCBSZXNwb25zZSwgc3RhdHVzCmZyb20gcHlkYW50aWMgaW1wb3J0IEJhc2VNb2RlbAoKZnJvbSBhcHAuY29yZS5jb25maWcgaW1wb3J0IHNldHRpbmdzCmZyb20gYXBwLmNvcmUuYWRtaW5fc2VjdXJpdHkgaW1wb3J0IEFkbWluQXV0aGVudGljYXRpb25Qcm92aWRlcgoKQ09PS0lFX05BTUUgPSAiYnNzX2FkbWluX3Nlc3Npb24iCl9IQVNIX1NDSEVNRSA9ICJwYmtkZjJfc2hhMjU2IgpfZmFpbGVkX2xvZ2luczogZGljdFtzdHIsIGRlcXVlW2Zsb2F0XV0gPSBkZWZhdWx0ZGljdChkZXF1ZSkKX2ZhaWxlZF9sb2dpbnNfbG9jayA9IExvY2soKQoKCmNsYXNzIExvZ2luUmVxdWVzdChCYXNlTW9kZWwpOgogICAgdXNlcm5hbWU6IHN0cgogICAgcGFzc3dvcmQ6IHN0cgoKCmRlZiBfYjY0ZW5jb2RlKHZhbHVlOiBieXRlcykgLT4gc3RyOgogICAgcmV0dXJuIGJhc2U2NC51cmxzYWZlX2I2NGVuY29kZSh2YWx1ZSkuZGVjb2RlKCJhc2NpaSIpLnJzdHJpcCgiPSIpCgoKZGVmIF9iNjRkZWNvZGUodmFsdWU6IHN0cikgLT4gYnl0ZXM6CiAgICBwYWRkaW5nID0gIj0iICogKC1sZW4odmFsdWUpICUgNCkKICAgIHJldHVybiBiYXNlNjQudXJsc2FmZV9iNjRkZWNvZGUodmFsdWUgKyBwYWRkaW5nKQoKCmRlZiB2ZXJpZnlfcGFzc3dvcmQocGFzc3dvcmQ6IHN0ciwgZW5jb2RlZF9oYXNoOiBzdHIpIC0+IGJvb2w6CiAgICB0cnk6CiAgICAgICAgc2NoZW1lLCBpdGVyYXRpb25zX3RleHQsIHNhbHRfdGV4dCwgZXhwZWN0ZWRfdGV4dCA9IGVuY29kZWRfaGFzaC5zcGxpdCgiJCIsIDMpCiAgICAgICAgaWYgc2NoZW1lICE9IF9IQVNIX1NDSEVNRToKICAgICAgICAgICAgcmV0dXJuIEZhbHNlCiAgICAgICAgaXRlcmF0aW9ucyA9IGludChpdGVyYXRpb25zX3RleHQpCiAgICAgICAgc2FsdCA9IF9iNjRkZWNvZGUoc2FsdF90ZXh0KQogICAgICAgIGV4cGVjdGVkID0gX2I2NGRlY29kZShleHBlY3RlZF90ZXh0KQogICAgZXhjZXB0IChWYWx1ZUVycm9yLCBUeXBlRXJyb3IpOgogICAgICAgIHJldHVybiBGYWxzZQogICAgYWN0dWFsID0gaGFzaGxpYi5wYmtkZjJfaG1hYygic2hhMjU2IiwgcGFzc3dvcmQuZW5jb2RlKCJ1dGYtOCIpLCBzYWx0LCBpdGVyYXRpb25zKQogICAgcmV0dXJuIGhtYWMuY29tcGFyZV9kaWdlc3QoYWN0dWFsLCBleHBlY3RlZCkKCgpkZWYgbWFrZV9zZXNzaW9uX3Rva2VuKHVzZXJuYW1lOiBzdHIpIC0+IHN0cjoKICAgIGV4cGlyZXNfYXQgPSBpbnQodGltZS50aW1lKCkpICsgaW50KHNldHRpbmdzLmFkbWluX3Nlc3Npb25faG91cnMgKiAzNjAwKQogICAgcGF5bG9hZCA9IGYie3VzZXJuYW1lfXx7ZXhwaXJlc19hdH0iLmVuY29kZSgidXRmLTgiKQogICAgc2lnbmF0dXJlID0gaG1hYy5uZXcoc2V0dGluZ3MuYWRtaW5fc2Vzc2lvbl9zZWNyZXQuZW5jb2RlKCJ1dGYtOCIpLCBwYXlsb2FkLCBoYXNobGliLnNoYTI1NikuZGlnZXN0KCkKICAgIHJldHVybiBmIntfYjY0ZW5jb2RlKHBheWxvYWQpfS57X2I2NGVuY29kZShzaWduYXR1cmUpfSIKCgpkZWYgdmFsaWRhdGVfc2Vzc2lvbl90b2tlbih0b2tlbjogc3RyIHwgTm9uZSkgLT4gc3RyIHwgTm9uZToKICAgIGlmIG5vdCB0b2tlbiBvciBub3Qgc2V0dGluZ3MuYWRtaW5fc2Vzc2lvbl9zZWNyZXQ6CiAgICAgICAgcmV0dXJuIE5vbmUKICAgIHRyeToKICAgICAgICBwYXlsb2FkX3RleHQsIHNpZ25hdHVyZV90ZXh0ID0gdG9rZW4uc3BsaXQoIi4iLCAxKQogICAgICAgIHBheWxvYWQgPSBfYjY0ZGVjb2RlKHBheWxvYWRfdGV4dCkKICAgICAgICBzaWduYXR1cmUgPSBfYjY0ZGVjb2RlKHNpZ25hdHVyZV90ZXh0KQogICAgICAgIGV4cGVjdGVkID0gaG1hYy5uZXcoc2V0dGluZ3MuYWRtaW5fc2Vzc2lvbl9zZWNyZXQuZW5jb2RlKCJ1dGYtOCIpLCBwYXlsb2FkLCBoYXNobGliLnNoYTI1NikuZGlnZXN0KCkKICAgICAgICBpZiBub3QgaG1hYy5jb21wYXJlX2RpZ2VzdChzaWduYXR1cmUsIGV4cGVjdGVkKToKICAgICAgICAgICAgcmV0dXJuIE5vbmUKICAgICAgICB1c2VybmFtZSwgZXhwaXJlc190ZXh0ID0gcGF5bG9hZC5kZWNvZGUoInV0Zi04IikucnNwbGl0KCJ8IiwgMSkKICAgICAgICBpZiBpbnQoZXhwaXJlc190ZXh0KSA8PSBpbnQodGltZS50aW1lKCkpOgogICAgICAgICAgICByZXR1cm4gTm9uZQogICAgICAgIGlmIG5vdCBobWFjLmNvbXBhcmVfZGlnZXN0KHVzZXJuYW1lLCBzZXR0aW5ncy5hZG1pbl91c2VybmFtZSk6CiAgICAgICAgICAgIHJldHVybiBOb25lCiAgICAgICAgcmV0dXJuIHVzZXJuYW1lCiAgICBleGNlcHQgKFZhbHVlRXJyb3IsIFVuaWNvZGVEZWNvZGVFcnJvcik6CiAgICAgICAgcmV0dXJuIE5vbmUKCgpkZWYgYXV0aGVudGljYXRlZF9hZG1pbihyZXF1ZXN0OiBSZXF1ZXN0KSAtPiBzdHIgfCBOb25lOgogICAgcmV0dXJuIHZhbGlkYXRlX3Nlc3Npb25fdG9rZW4ocmVxdWVzdC5jb29raWVzLmdldChDT09LSUVfTkFNRSkpCgoKZGVmIF9yYXRlX2xpbWl0X2tleShyZXF1ZXN0OiBSZXF1ZXN0LCB1c2VybmFtZTogc3RyKSAtPiBzdHI6CiAgICBob3N0ID0gcmVxdWVzdC5jbGllbnQuaG9zdCBpZiByZXF1ZXN0LmNsaWVudCBlbHNlICJ1bmtub3duIgogICAgcmV0dXJuIGYie2hvc3R9Ont1c2VybmFtZS5zdHJpcCgpLmxvd2VyKCl9IgoKCmRlZiBfY2hlY2tfcmF0ZV9saW1pdChrZXk6IHN0cikgLT4gTm9uZToKICAgIG5vdyA9IHRpbWUubW9ub3RvbmljKCkKICAgIHdpbmRvdyA9IGZsb2F0KHNldHRpbmdzLmFkbWluX2xvZ2luX3dpbmRvd19zZWNvbmRzKQogICAgd2l0aCBfZmFpbGVkX2xvZ2luc19sb2NrOgogICAgICAgIGF0dGVtcHRzID0gX2ZhaWxlZF9sb2dpbnNba2V5XQogICAgICAgIHdoaWxlIGF0dGVtcHRzIGFuZCBub3cgLSBhdHRlbXB0c1swXSA+IHdpbmRvdzoKICAgICAgICAgICAgYXR0ZW1wdHMucG9wbGVmdCgpCiAgICAgICAgaWYgbGVuKGF0dGVtcHRzKSA+PSBzZXR0aW5ncy5hZG1pbl9sb2dpbl9tYXhfYXR0ZW1wdHM6CiAgICAgICAgICAgIHJhaXNlIEhUVFBFeGNlcHRpb24oc3RhdHVzLkhUVFBfNDI5X1RPT19NQU5ZX1JFUVVFU1RTLCAiVG9vIG1hbnkgbG9naW4gYXR0ZW1wdHMuIFRyeSBhZ2FpbiBsYXRlci4iKQoKCmRlZiBfcmVjb3JkX2ZhaWxlZF9sb2dpbihrZXk6IHN0cikgLT4gTm9uZToKICAgIHdpdGggX2ZhaWxlZF9sb2dpbnNfbG9jazoKICAgICAgICBfZmFpbGVkX2xvZ2luc1trZXldLmFwcGVuZCh0aW1lLm1vbm90b25pYygpKQoKCmRlZiBfY2xlYXJfZmFpbGVkX2xvZ2lucyhrZXk6IHN0cikgLT4gTm9uZToKICAgIHdpdGggX2ZhaWxlZF9sb2dpbnNfbG9jazoKICAgICAgICBfZmFpbGVkX2xvZ2lucy5wb3Aoa2V5LCBOb25lKQoKCmRlZiBlbnN1cmVfYXV0aF9jb25maWd1cmVkKCkgLT4gTm9uZToKICAgIGlmIG5vdCBzZXR0aW5ncy5hZG1pbl91c2VybmFtZSBvciBub3Qgc2V0dGluZ3MuYWRtaW5fcGFzc3dvcmRfaGFzaCBvciBub3Qgc2V0dGluZ3MuYWRtaW5fc2Vzc2lvbl9zZWNyZXQ6CiAgICAgICAgcmFpc2UgSFRUUEV4Y2VwdGlvbihzdGF0dXMuSFRUUF81MDNfU0VSVklDRV9VTkFWQUlMQUJMRSwgIlRlbXBvcmFyeSBhZG1pbiBhdXRoZW50aWNhdGlvbiBpcyBub3QgY29uZmlndXJlZC4iKQoKCmNsYXNzIFRlbXBvcmFyeUFkbWluQXV0aGVudGljYXRpb25Qcm92aWRlcjoKICAgICIiIlRlbXBvcmFyeSB1c2VybmFtZS9wYXNzd29yZCBwcm92aWRlciBpbXBsZW1lbnRpbmcgdGhlIHNoYXJlZCBBZG1pbiBjb250cmFjdC4iIiIKCiAgICBAcHJvcGVydHkKICAgIGRlZiBjb25maWd1cmVkKHNlbGYpIC0+IGJvb2w6CiAgICAgICAgcmV0dXJuIGJvb2woCiAgICAgICAgICAgIHNldHRpbmdzLmFkbWluX3VzZXJuYW1lCiAgICAgICAgICAgIGFuZCBzZXR0aW5ncy5hZG1pbl9wYXNzd29yZF9oYXNoCiAgICAgICAgICAgIGFuZCBzZXR0aW5ncy5hZG1pbl9zZXNzaW9uX3NlY3JldAogICAgICAgICkKCiAgICBkZWYgYXV0aGVudGljYXRlKHNlbGYsIHJlcXVlc3Q6IFJlcXVlc3QpIC0+IHN0ciB8IE5vbmU6CiAgICAgICAgZW5zdXJlX2F1dGhfY29uZmlndXJlZCgpCiAgICAgICAgcmV0dXJuIGF1dGhlbnRpY2F0ZWRfYWRtaW4ocmVxdWVzdCkKCiAgICBkZWYgaXNfYXV0aGVudGljYXRpb25fZW5kcG9pbnQoc2VsZiwgcmVxdWVzdDogUmVxdWVzdCkgLT4gYm9vbDoKICAgICAgICByZXR1cm4gKAogICAgICAgICAgICByZXF1ZXN0Lm1ldGhvZCA9PSAiUE9TVCIKICAgICAgICAgICAgYW5kIHJlcXVlc3QudXJsLnBhdGggPT0gIi9hcGkvdjEvYWRtaW4vYXV0aC9sb2dpbiIKICAgICAgICApCgoKcHJvdmlkZXIgPSBUZW1wb3JhcnlBZG1pbkF1dGhlbnRpY2F0aW9uUHJvdmlkZXIoKQpyb3V0ZXIgPSBBUElSb3V0ZXIocHJlZml4PSIvYXBpL3YxL2FkbWluL2F1dGgiLCB0YWdzPVsiYWRtaW4tYXV0aCJdKQoKCkByb3V0ZXIucG9zdCgiL2xvZ2luIikKZGVmIGxvZ2luKHBheWxvYWQ6IExvZ2luUmVxdWVzdCwgcmVxdWVzdDogUmVxdWVzdCwgcmVzcG9uc2U6IFJlc3BvbnNlKToKICAgIGVuc3VyZV9hdXRoX2NvbmZpZ3VyZWQoKQogICAga2V5ID0gX3JhdGVfbGltaXRfa2V5KHJlcXVlc3QsIHBheWxvYWQudXNlcm5hbWUpCiAgICBfY2hlY2tfcmF0ZV9saW1pdChrZXkpCiAgICB1c2VybmFtZV9vayA9IGhtYWMuY29tcGFyZV9kaWdlc3QocGF5bG9hZC51c2VybmFtZSwgc2V0dGluZ3MuYWRtaW5fdXNlcm5hbWUpCiAgICBwYXNzd29yZF9vayA9IHZlcmlmeV9wYXNzd29yZChwYXlsb2FkLnBhc3N3b3JkLCBzZXR0aW5ncy5hZG1pbl9wYXNzd29yZF9oYXNoKQogICAgaWYgbm90IHVzZXJuYW1lX29rIG9yIG5vdCBwYXNzd29yZF9vazoKICAgICAgICBfcmVjb3JkX2ZhaWxlZF9sb2dpbihrZXkpCiAgICAgICAgcmFpc2UgSFRUUEV4Y2VwdGlvbihzdGF0dXMuSFRUUF80MDFfVU5BVVRIT1JJWkVELCAiSW52YWxpZCBjcmVkZW50aWFscy4iKQogICAgX2NsZWFyX2ZhaWxlZF9sb2dpbnMoa2V5KQogICAgbWF4X2FnZSA9IGludChzZXR0aW5ncy5hZG1pbl9zZXNzaW9uX2hvdXJzICogMzYwMCkKICAgIHJlc3BvbnNlLnNldF9jb29raWUoCiAgICAgICAgQ09PS0lFX05BTUUsCiAgICAgICAgbWFrZV9zZXNzaW9uX3Rva2VuKHNldHRpbmdzLmFkbWluX3VzZXJuYW1lKSwKICAgICAgICBtYXhfYWdlPW1heF9hZ2UsCiAgICAgICAgaHR0cG9ubHk9VHJ1ZSwKICAgICAgICBzZWN1cmU9c2V0dGluZ3MuYWRtaW5fY29va2llX3NlY3VyZSwKICAgICAgICBzYW1lc2l0ZT0ic3RyaWN0IiwKICAgICAgICBwYXRoPSIvIiwKICAgICkKICAgIHJldHVybiB7ImF1dGhlbnRpY2F0ZWQiOiBUcnVlLCAidXNlcm5hbWUiOiBzZXR0aW5ncy5hZG1pbl91c2VybmFtZX0KCgpAcm91dGVyLmdldCgiL21lIikKZGVmIG1lKHJlcXVlc3Q6IFJlcXVlc3QpOgogICAgdXNlcm5hbWUgPSBhdXRoZW50aWNhdGVkX2FkbWluKHJlcXVlc3QpCiAgICByZXR1cm4geyJhdXRoZW50aWNhdGVkIjogdXNlcm5hbWUgaXMgbm90IE5vbmUsICJ1c2VybmFtZSI6IHVzZXJuYW1lfQoKCkByb3V0ZXIucG9zdCgiL2xvZ291dCIpCmRlZiBsb2dvdXQocmVzcG9uc2U6IFJlc3BvbnNlKToKICAgIHJlc3BvbnNlLmRlbGV0ZV9jb29raWUoQ09PS0lFX05BTUUsIHBhdGg9Ii8iKQogICAgcmV0dXJuIHsiYXV0aGVudGljYXRlZCI6IEZhbHNlfQo=
+import base64
+import hashlib
+import hmac
+import time
+from collections import defaultdict, deque
+from threading import Lock
+
+from fastapi import APIRouter, HTTPException, Request, Response, status
+from pydantic import BaseModel
+
+from app.core.config import settings
+from app.core.admin_security import AdminAuthenticationProvider
+
+COOKIE_NAME = "bss_admin_session"
+_HASH_SCHEME = "pbkdf2_sha256"
+_failed_logins: dict[str, deque[float]] = defaultdict(deque)
+_failed_logins_lock = Lock()
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+def _b64encode(value: bytes) -> str:
+    return base64.urlsafe_b64encode(value).decode("ascii").rstrip("=")
+
+
+def _b64decode(value: str) -> bytes:
+    padding = "=" * (-len(value) % 4)
+    return base64.urlsafe_b64decode(value + padding)
+
+
+def verify_password(password: str, encoded_hash: str) -> bool:
+    try:
+        scheme, iterations_text, salt_text, expected_text = encoded_hash.split("$", 3)
+        if scheme != _HASH_SCHEME:
+            return False
+        iterations = int(iterations_text)
+        salt = _b64decode(salt_text)
+        expected = _b64decode(expected_text)
+    except (ValueError, TypeError):
+        return False
+    actual = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+    return hmac.compare_digest(actual, expected)
+
+
+def make_session_token(username: str) -> str:
+    expires_at = int(time.time()) + int(settings.admin_session_hours * 3600)
+    payload = f"{username}|{expires_at}".encode("utf-8")
+    signature = hmac.new(settings.admin_session_secret.encode("utf-8"), payload, hashlib.sha256).digest()
+    return f"{_b64encode(payload)}.{_b64encode(signature)}"
+
+
+def validate_session_token(token: str | None) -> str | None:
+    if not token or not settings.admin_session_secret:
+        return None
+    try:
+        payload_text, signature_text = token.split(".", 1)
+        payload = _b64decode(payload_text)
+        signature = _b64decode(signature_text)
+        expected = hmac.new(settings.admin_session_secret.encode("utf-8"), payload, hashlib.sha256).digest()
+        if not hmac.compare_digest(signature, expected):
+            return None
+        username, expires_text = payload.decode("utf-8").rsplit("|", 1)
+        if int(expires_text) <= int(time.time()):
+            return None
+        if not hmac.compare_digest(username, settings.admin_username):
+            return None
+        return username
+    except (ValueError, UnicodeDecodeError):
+        return None
+
+
+def authenticated_admin(request: Request) -> str | None:
+    return validate_session_token(request.cookies.get(COOKIE_NAME))
+
+
+def _rate_limit_key(request: Request, username: str) -> str:
+    host = request.client.host if request.client else "unknown"
+    return f"{host}:{username.strip().lower()}"
+
+
+def _check_rate_limit(key: str) -> None:
+    now = time.monotonic()
+    window = float(settings.admin_login_window_seconds)
+    with _failed_logins_lock:
+        attempts = _failed_logins[key]
+        while attempts and now - attempts[0] > window:
+            attempts.popleft()
+        if len(attempts) >= settings.admin_login_max_attempts:
+            raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many login attempts. Try again later.")
+
+
+def _record_failed_login(key: str) -> None:
+    with _failed_logins_lock:
+        _failed_logins[key].append(time.monotonic())
+
+
+def _clear_failed_logins(key: str) -> None:
+    with _failed_logins_lock:
+        _failed_logins.pop(key, None)
+
+
+def ensure_auth_configured() -> None:
+    if not settings.admin_username or not settings.admin_password_hash or not settings.admin_session_secret:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Temporary admin authentication is not configured.")
+
+
+class TemporaryAdminAuthenticationProvider:
+    """Temporary username/password provider implementing the shared Admin contract."""
+
+    @property
+    def configured(self) -> bool:
+        return bool(
+            settings.admin_username
+            and settings.admin_password_hash
+            and settings.admin_session_secret
+        )
+
+    def authenticate(self, request: Request) -> str | None:
+        ensure_auth_configured()
+        return authenticated_admin(request)
+
+    def is_authentication_endpoint(self, request: Request) -> bool:
+        return (
+            request.method == "POST"
+            and request.url.path == "/api/v1/admin/auth/login"
+        )
+
+
+provider = TemporaryAdminAuthenticationProvider()
+router = APIRouter(prefix="/api/v1/admin/auth", tags=["admin-auth"])
+
+
+@router.post("/login")
+def login(payload: LoginRequest, request: Request, response: Response):
+    ensure_auth_configured()
+    key = _rate_limit_key(request, payload.username)
+    _check_rate_limit(key)
+    username_ok = hmac.compare_digest(payload.username, settings.admin_username)
+    password_ok = verify_password(payload.password, settings.admin_password_hash)
+    if not username_ok or not password_ok:
+        _record_failed_login(key)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials.")
+    _clear_failed_logins(key)
+    max_age = int(settings.admin_session_hours * 3600)
+    response.set_cookie(
+        COOKIE_NAME,
+        make_session_token(settings.admin_username),
+        max_age=max_age,
+        httponly=True,
+        secure=settings.admin_cookie_secure,
+        samesite="strict",
+        path="/",
+    )
+    return {"authenticated": True, "username": settings.admin_username}
+
+
+@router.get("/me")
+def me(request: Request):
+    username = authenticated_admin(request)
+    return {"authenticated": username is not None, "username": username}
+
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(COOKIE_NAME, path="/")
+    return {"authenticated": False}

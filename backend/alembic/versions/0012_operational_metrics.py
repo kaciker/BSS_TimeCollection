@@ -1,1 +1,28 @@
-IiIiQWRkIGJvdW5kZWQgd29ya2VyIHJ1bnRpbWUgdGVsZW1ldHJ5IGZvciB0aGUgb3BlcmF0aW9uYWwgbWV0cmljcyBBUEkuCgpSZXZpc2lvbiBJRDogMDAxMl9vcGVyYXRpb25hbF9tZXRyaWNzClJldmlzZXM6IDAwMTFfYWN0aW9uX3Zpc2liaWxpdHkKIiIiCmZyb20gYWxlbWJpYyBpbXBvcnQgb3AKaW1wb3J0IHNxbGFsY2hlbXkgYXMgc2EKCnJldmlzaW9uID0gIjAwMTJfb3BlcmF0aW9uYWxfbWV0cmljcyIKZG93bl9yZXZpc2lvbiA9ICIwMDExX2FjdGlvbl92aXNpYmlsaXR5IgpicmFuY2hfbGFiZWxzID0gTm9uZQpkZXBlbmRzX29uID0gTm9uZQoKCmRlZiB1cGdyYWRlKCk6CiAgICBvcC5jcmVhdGVfdGFibGUoCiAgICAgICAgIndvcmtlcl9ydW50aW1lX21ldHJpY3MiLAogICAgICAgIHNhLkNvbHVtbigiaWQiLCBzYS5JbnRlZ2VyKCksIHByaW1hcnlfa2V5PVRydWUpLAogICAgICAgIHNhLkNvbHVtbigicHJvY2Vzc19zdGFydGVkX2F0Iiwgc2EuRGF0ZVRpbWUodGltZXpvbmU9VHJ1ZSksIG51bGxhYmxlPUZhbHNlKSwKICAgICAgICBzYS5Db2x1bW4oImhlYXJ0YmVhdF9hdCIsIHNhLkRhdGVUaW1lKHRpbWV6b25lPVRydWUpLCBudWxsYWJsZT1UcnVlKSwKICAgICAgICBzYS5Db2x1bW4oImxhc3Rfc3VjY2Vzc2Z1bF9jeWNsZV9hdCIsIHNhLkRhdGVUaW1lKHRpbWV6b25lPVRydWUpLCBudWxsYWJsZT1UcnVlKSwKICAgICAgICBzYS5Db2x1bW4oImxhc3Rfc3VjY2Vzc2Z1bF9kZWxpdmVyeV9hdCIsIHNhLkRhdGVUaW1lKHRpbWV6b25lPVRydWUpLCBudWxsYWJsZT1UcnVlKSwKICAgICAgICBzYS5DaGVja0NvbnN0cmFpbnQoImlkID0gMSIsIG5hbWU9ImNrX3dvcmtlcl9ydW50aW1lX21ldHJpY3Nfc2luZ2xldG9uIiksCiAgICApCgoKZGVmIGRvd25ncmFkZSgpOgogICAgb3AuZHJvcF90YWJsZSgid29ya2VyX3J1bnRpbWVfbWV0cmljcyIpCg==
+"""Add bounded worker runtime telemetry for the operational metrics API.
+
+Revision ID: 0012_operational_metrics
+Revises: 0011_action_visibility
+"""
+from alembic import op
+import sqlalchemy as sa
+
+revision = "0012_operational_metrics"
+down_revision = "0011_action_visibility"
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    op.create_table(
+        "worker_runtime_metrics",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("process_started_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("heartbeat_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("last_successful_cycle_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("last_successful_delivery_at", sa.DateTime(timezone=True), nullable=True),
+        sa.CheckConstraint("id = 1", name="ck_worker_runtime_metrics_singleton"),
+    )
+
+
+def downgrade():
+    op.drop_table("worker_runtime_metrics")

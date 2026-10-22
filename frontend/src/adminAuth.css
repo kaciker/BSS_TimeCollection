@@ -1,1 +1,91 @@
-LmFkbWluLWF1dGgtc2hlbGwgewogIG1pbi1oZWlnaHQ6IDEwMHZoOwogIGRpc3BsYXk6IGdyaWQ7CiAgcGxhY2UtaXRlbXM6IGNlbnRlcjsKICBwYWRkaW5nOiAyNHB4OwogIGJhY2tncm91bmQ6ICNlZWYyZjc7Cn0KCi5hZG1pbi1hdXRoLWNhcmQgewogIHdpZHRoOiBtaW4oNDIwcHgsIDEwMCUpOwogIHBhZGRpbmc6IDI4cHg7CiAgYm9yZGVyLXJhZGl1czogMTZweDsKICBiYWNrZ3JvdW5kOiAjZmZmOwogIGJveC1zaGFkb3c6IDAgMThweCA1MHB4IHJnYmEoMTUsIDIzLCA0MiwgMC4xMik7Cn0KCi5hZG1pbi1hdXRoLWNhcmQgaDEgewogIG1hcmdpbjogNnB4IDAgOHB4OwogIGZvbnQtc2l6ZTogMjhweDsKfQoKLmFkbWluLWF1dGgtY2FyZCBwIHsKICBtYXJnaW46IDAgMCAyMnB4OwogIGNvbG9yOiAjNjQ3NDhiOwp9CgouYWRtaW4tYXV0aC1raWNrZXIgewogIGZvbnQtc2l6ZTogMTJweDsKICBmb250LXdlaWdodDogNzAwOwogIGxldHRlci1zcGFjaW5nOiAwLjA4ZW07CiAgdGV4dC10cmFuc2Zvcm06IHVwcGVyY2FzZTsKICBjb2xvcjogIzQ3NTU2OTsKfQoKLmFkbWluLWF1dGgtY2FyZCBsYWJlbCB7CiAgZGlzcGxheTogZ3JpZDsKICBnYXA6IDdweDsKICBtYXJnaW4tdG9wOiAxNHB4OwogIGZvbnQtd2VpZ2h0OiA2MDA7Cn0KCi5hZG1pbi1hdXRoLWNhcmQgaW5wdXQgewogIHdpZHRoOiAxMDAlOwogIGJveC1zaXppbmc6IGJvcmRlci1ib3g7CiAgcGFkZGluZzogMTFweCAxMnB4OwogIGJvcmRlcjogMXB4IHNvbGlkICNjYmQ1ZTE7CiAgYm9yZGVyLXJhZGl1czogOHB4OwogIGZvbnQ6IGluaGVyaXQ7Cn0KCi5hZG1pbi1hdXRoLWNhcmQgYnV0dG9uLAouYWRtaW4tYXV0aC1sb2dvdXQgewogIGJvcmRlcjogMDsKICBib3JkZXItcmFkaXVzOiA4cHg7CiAgY3Vyc29yOiBwb2ludGVyOwogIGZvbnQ6IGluaGVyaXQ7CiAgZm9udC13ZWlnaHQ6IDcwMDsKfQoKLmFkbWluLWF1dGgtY2FyZCBidXR0b24gewogIHdpZHRoOiAxMDAlOwogIG1hcmdpbi10b3A6IDIwcHg7CiAgcGFkZGluZzogMTJweCAxNnB4OwogIGJhY2tncm91bmQ6ICMwZjE3MmE7CiAgY29sb3I6ICNmZmY7Cn0KCi5hZG1pbi1hdXRoLWNhcmQgYnV0dG9uOmRpc2FibGVkIHsKICBjdXJzb3I6IHdhaXQ7CiAgb3BhY2l0eTogMC42NTsKfQoKLmFkbWluLWF1dGgtZXJyb3IgewogIG1hcmdpbi10b3A6IDE0cHg7CiAgcGFkZGluZzogMTBweCAxMnB4OwogIGJvcmRlci1yYWRpdXM6IDhweDsKICBiYWNrZ3JvdW5kOiAjZmVlMmUyOwogIGNvbG9yOiAjOTkxYjFiOwp9CgouYWRtaW4tYXV0aC1sb2dvdXQgewogIHBvc2l0aW9uOiBmaXhlZDsKICB6LWluZGV4OiAxMDAwOwogIHRvcDogMTRweDsKICByaWdodDogMThweDsKICBwYWRkaW5nOiA4cHggMTJweDsKICBiYWNrZ3JvdW5kOiAjZmZmOwogIGNvbG9yOiAjMzM0MTU1OwogIGJvcmRlcjogMXB4IHNvbGlkICNjYmQ1ZTE7CiAgYm94LXNoYWRvdzogMCAycHggOHB4IHJnYmEoMTUsIDIzLCA0MiwgMC4wOCk7Cn0K
+.admin-auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #eef2f7;
+}
+
+.admin-auth-card {
+  width: min(420px, 100%);
+  padding: 28px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
+}
+
+.admin-auth-card h1 {
+  margin: 6px 0 8px;
+  font-size: 28px;
+}
+
+.admin-auth-card p {
+  margin: 0 0 22px;
+  color: #64748b;
+}
+
+.admin-auth-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.admin-auth-card label {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+  font-weight: 600;
+}
+
+.admin-auth-card input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.admin-auth-card button,
+.admin-auth-logout {
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.admin-auth-card button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #0f172a;
+  color: #fff;
+}
+
+.admin-auth-card button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.admin-auth-error {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-auth-logout {
+  position: fixed;
+  z-index: 1000;
+  top: 14px;
+  right: 18px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}

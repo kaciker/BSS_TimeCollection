@@ -1,1 +1,38 @@
-IiIiVHJhY2sgZXh0ZXJuYWwgcGVyaW1ldGVyIHJlcGxpY2F0aW9uIGN1cnNvciBhbmQgaGVhbHRoLgoKUmV2aXNpb24gSUQ6IDAwMTNfZXh0ZXJuYWxfcGVyaW1ldGVyX3JlcGxpY2EKUmV2aXNlczogMDAxMl9vcGVyYXRpb25hbF9tZXRyaWNzCiIiIgpmcm9tIGFsZW1iaWMgaW1wb3J0IG9wCmltcG9ydCBzcWxhbGNoZW15IGFzIHNhCgpyZXZpc2lvbiA9ICIwMDEzX2V4dGVybmFsX3BlcmltZXRlcl9yZXBsaWNhIgpkb3duX3JldmlzaW9uID0gIjAwMTJfb3BlcmF0aW9uYWxfbWV0cmljcyIKYnJhbmNoX2xhYmVscyA9IE5vbmUKZGVwZW5kc19vbiA9IE5vbmUKCgpkZWYgdXBncmFkZSgpOgogICAgb3AuYWRkX2NvbHVtbigKICAgICAgICAiZmFjdG9yeV9wZXJpbWV0ZXJfc2V0dGluZ3MiLAogICAgICAgIHNhLkNvbHVtbigiZXh0ZXJuYWxfbGFzdF9sb2dfaWQiLCBzYS5CaWdJbnRlZ2VyKCksIG51bGxhYmxlPVRydWUpLAogICAgKQogICAgb3AuYWRkX2NvbHVtbigKICAgICAgICAiZmFjdG9yeV9wZXJpbWV0ZXJfc2V0dGluZ3MiLAogICAgICAgIHNhLkNvbHVtbigiZXh0ZXJuYWxfc3luY19pbml0aWFsaXplZF9hdCIsIHNhLkRhdGVUaW1lKHRpbWV6b25lPVRydWUpLCBudWxsYWJsZT1UcnVlKSwKICAgICkKICAgIG9wLmFkZF9jb2x1bW4oCiAgICAgICAgImZhY3RvcnlfcGVyaW1ldGVyX3NldHRpbmdzIiwKICAgICAgICBzYS5Db2x1bW4oImV4dGVybmFsX2xhc3Rfc3luY19hdCIsIHNhLkRhdGVUaW1lKHRpbWV6b25lPVRydWUpLCBudWxsYWJsZT1UcnVlKSwKICAgICkKICAgIG9wLmFkZF9jb2x1bW4oCiAgICAgICAgImZhY3RvcnlfcGVyaW1ldGVyX3NldHRpbmdzIiwKICAgICAgICBzYS5Db2x1bW4oImV4dGVybmFsX3N5bmNfZXJyb3IiLCBzYS5TdHJpbmcoNjQpLCBudWxsYWJsZT1UcnVlKSwKICAgICkKCgpkZWYgZG93bmdyYWRlKCk6CiAgICBvcC5kcm9wX2NvbHVtbigiZmFjdG9yeV9wZXJpbWV0ZXJfc2V0dGluZ3MiLCAiZXh0ZXJuYWxfc3luY19lcnJvciIpCiAgICBvcC5kcm9wX2NvbHVtbigiZmFjdG9yeV9wZXJpbWV0ZXJfc2V0dGluZ3MiLCAiZXh0ZXJuYWxfbGFzdF9zeW5jX2F0IikKICAgIG9wLmRyb3BfY29sdW1uKCJmYWN0b3J5X3BlcmltZXRlcl9zZXR0aW5ncyIsICJleHRlcm5hbF9zeW5jX2luaXRpYWxpemVkX2F0IikKICAgIG9wLmRyb3BfY29sdW1uKCJmYWN0b3J5X3BlcmltZXRlcl9zZXR0aW5ncyIsICJleHRlcm5hbF9sYXN0X2xvZ19pZCIpCg==
+"""Track external perimeter replication cursor and health.
+
+Revision ID: 0013_external_perimeter_replica
+Revises: 0012_operational_metrics
+"""
+from alembic import op
+import sqlalchemy as sa
+
+revision = "0013_external_perimeter_replica"
+down_revision = "0012_operational_metrics"
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    op.add_column(
+        "factory_perimeter_settings",
+        sa.Column("external_last_log_id", sa.BigInteger(), nullable=True),
+    )
+    op.add_column(
+        "factory_perimeter_settings",
+        sa.Column("external_sync_initialized_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.add_column(
+        "factory_perimeter_settings",
+        sa.Column("external_last_sync_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.add_column(
+        "factory_perimeter_settings",
+        sa.Column("external_sync_error", sa.String(64), nullable=True),
+    )
+
+
+def downgrade():
+    op.drop_column("factory_perimeter_settings", "external_sync_error")
+    op.drop_column("factory_perimeter_settings", "external_last_sync_at")
+    op.drop_column("factory_perimeter_settings", "external_sync_initialized_at")
+    op.drop_column("factory_perimeter_settings", "external_last_log_id")

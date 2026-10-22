@@ -1,1 +1,91 @@
-IiIiUHJvdmlkZXItaW5kZXBlbmRlbnQgZW5mb3JjZW1lbnQgY29udHJhY3QgZm9yIGFkbWluaXN0cmF0aXZlIEFQSSBhY2Nlc3MuIiIiCgpmcm9tIHR5cGluZyBpbXBvcnQgUHJvdG9jb2wKCmZyb20gZmFzdGFwaSBpbXBvcnQgRmFzdEFQSSwgSFRUUEV4Y2VwdGlvbiwgUmVxdWVzdCwgc3RhdHVzCmZyb20gZmFzdGFwaS5yZXNwb25zZXMgaW1wb3J0IEpTT05SZXNwb25zZQoKCmNsYXNzIEFkbWluQXV0aGVudGljYXRpb25Qcm92aWRlcihQcm90b2NvbCk6CiAgICAiIiJQcm92aWRlciByZXBvcnRzIGNvbmZpZ3VyYXRpb24gYW5kIHZhbGlkYXRlcyBwcmluY2lwYWxzIGZvciBBZG1pbiByZXF1ZXN0cy4iIiIKCiAgICBAcHJvcGVydHkKICAgIGRlZiBjb25maWd1cmVkKHNlbGYpIC0+IGJvb2w6IC4uLgoKICAgIGRlZiBhdXRoZW50aWNhdGUoc2VsZiwgcmVxdWVzdDogUmVxdWVzdCkgLT4gc3RyIHwgTm9uZTogLi4uCgogICAgZGVmIGlzX2F1dGhlbnRpY2F0aW9uX2VuZHBvaW50KHNlbGYsIHJlcXVlc3Q6IFJlcXVlc3QpIC0+IGJvb2w6IC4uLgoKCmRlZiByZXF1aXJlX2FkbWluX3ByaW5jaXBhbCgKICAgIHJlcXVlc3Q6IFJlcXVlc3QsCiAgICBwcm92aWRlcjogQWRtaW5BdXRoZW50aWNhdGlvblByb3ZpZGVyIHwgTm9uZSwKKSAtPiBzdHI6CiAgICAiIiJGYWlsIGNsb3NlZCB3aGVuIHRoZSBwcm92aWRlciBpcyBhYnNlbnQsIHVuYXZhaWxhYmxlLCBvciByZWplY3RzIGFjY2Vzcy4iIiIKICAgIGlmIHByb3ZpZGVyIGlzIE5vbmU6CiAgICAgICAgcmFpc2UgSFRUUEV4Y2VwdGlvbigKICAgICAgICAgICAgc3RhdHVzX2NvZGU9c3RhdHVzLkhUVFBfNTAzX1NFUlZJQ0VfVU5BVkFJTEFCTEUsCiAgICAgICAgICAgIGRldGFpbD0iQWRtaW4gYXV0aGVudGljYXRpb24gcHJvdmlkZXIgaXMgbm90IGNvbmZpZ3VyZWQuIiwKICAgICAgICApCgogICAgdHJ5OgogICAgICAgIGlmIG5vdCBwcm92aWRlci5jb25maWd1cmVkOgogICAgICAgICAgICByYWlzZSBIVFRQRXhjZXB0aW9uKAogICAgICAgICAgICAgICAgc3RhdHVzX2NvZGU9c3RhdHVzLkhUVFBfNTAzX1NFUlZJQ0VfVU5BVkFJTEFCTEUsCiAgICAgICAgICAgICAgICBkZXRhaWw9IkFkbWluIGF1dGhlbnRpY2F0aW9uIHByb3ZpZGVyIGlzIG5vdCBjb25maWd1cmVkLiIsCiAgICAgICAgICAgICkKICAgICAgICBwcmluY2lwYWwgPSBwcm92aWRlci5hdXRoZW50aWNhdGUocmVxdWVzdCkKICAgIGV4Y2VwdCBIVFRQRXhjZXB0aW9uOgogICAgICAgIHJhaXNlCiAgICBleGNlcHQgRXhjZXB0aW9uOgogICAgICAgIHJhaXNlIEhUVFBFeGNlcHRpb24oCiAgICAgICAgICAgIHN0YXR1c19jb2RlPXN0YXR1cy5IVFRQXzUwM19TRVJWSUNFX1VOQVZBSUxBQkxFLAogICAgICAgICAgICBkZXRhaWw9IkFkbWluIGF1dGhlbnRpY2F0aW9uIHByb3ZpZGVyIGlzIHVuYXZhaWxhYmxlLiIsCiAgICAgICAgKQoKICAgIGlmIG5vdCBwcmluY2lwYWw6CiAgICAgICAgcmFpc2UgSFRUUEV4Y2VwdGlvbigKICAgICAgICAgICAgc3RhdHVzX2NvZGU9c3RhdHVzLkhUVFBfNDAxX1VOQVVUSE9SSVpFRCwKICAgICAgICAgICAgZGV0YWlsPSJBZG1pbiBhdXRoZW50aWNhdGlvbiByZXF1aXJlZC4iLAogICAgICAgICAgICBoZWFkZXJzPXsiV1dXLUF1dGhlbnRpY2F0ZSI6ICJCZWFyZXIifSwKICAgICAgICApCiAgICByZXR1cm4gcHJpbmNpcGFsCgoKZGVmIGVuZm9yY2VfYWRtaW5fYXV0aGVudGljYXRpb24oCiAgICByZXF1ZXN0OiBSZXF1ZXN0LAogICAgcHJvdmlkZXI6IEFkbWluQXV0aGVudGljYXRpb25Qcm92aWRlciB8IE5vbmUsCikgLT4gTm9uZToKICAgICIiIlByb3RlY3QgZXZlcnkgQWRtaW4gcGF0aDsgb25seSBhIGNvbmZpZ3VyZWQgcHJvdmlkZXIgbWF5IG9wZW4gaXRzIGxvZ2luIHJvdXRlLiIiIgogICAgcGF0aCA9IHJlcXVlc3QudXJsLnBhdGgKICAgIGlmIHBhdGggPT0gIi9hcGkvdjEvYWRtaW4iIG9yIHBhdGguc3RhcnRzd2l0aCgiL2FwaS92MS9hZG1pbi8iKToKICAgICAgICBpZiBwcm92aWRlciBpcyBub3QgTm9uZToKICAgICAgICAgICAgdHJ5OgogICAgICAgICAgICAgICAgaWYgcHJvdmlkZXIuY29uZmlndXJlZCBhbmQgcHJvdmlkZXIuaXNfYXV0aGVudGljYXRpb25fZW5kcG9pbnQocmVxdWVzdCk6CiAgICAgICAgICAgICAgICAgICAgcmV0dXJuCiAgICAgICAgICAgIGV4Y2VwdCBFeGNlcHRpb246CiAgICAgICAgICAgICAgICBwYXNzCiAgICAgICAgcmVxdWlyZV9hZG1pbl9wcmluY2lwYWwocmVxdWVzdCwgcHJvdmlkZXIpCgoKZGVmIGluc3RhbGxfYWRtaW5fYXV0aGVudGljYXRpb24oCiAgICBhcHA6IEZhc3RBUEksCiAgICBwcm92aWRlcjogQWRtaW5BdXRoZW50aWNhdGlvblByb3ZpZGVyIHwgTm9uZSA9IE5vbmUsCikgLT4gTm9uZToKICAgICIiIkluc3RhbGwgZmFpbC1jbG9zZWQgZW5mb3JjZW1lbnQ7IGRlcGxveW1lbnQgY29kZSBzdXBwbGllcyBpdHMgcHJvdmlkZXIuIiIiCiAgICBhcHAuc3RhdGUuYWRtaW5fYXV0aGVudGljYXRpb25fcHJvdmlkZXIgPSBwcm92aWRlcgoKICAgIEBhcHAubWlkZGxld2FyZSgiaHR0cCIpCiAgICBhc3luYyBkZWYgYWRtaW5fYXV0aGVudGljYXRpb25fbWlkZGxld2FyZShyZXF1ZXN0OiBSZXF1ZXN0LCBjYWxsX25leHQpOgogICAgICAgIHRyeToKICAgICAgICAgICAgZW5mb3JjZV9hZG1pbl9hdXRoZW50aWNhdGlvbigKICAgICAgICAgICAgICAgIHJlcXVlc3QsCiAgICAgICAgICAgICAgICBnZXRhdHRyKHJlcXVlc3QuYXBwLnN0YXRlLCAiYWRtaW5fYXV0aGVudGljYXRpb25fcHJvdmlkZXIiLCBOb25lKSwKICAgICAgICAgICAgKQogICAgICAgIGV4Y2VwdCBIVFRQRXhjZXB0aW9uIGFzIGV4YzoKICAgICAgICAgICAgcmV0dXJuIEpTT05SZXNwb25zZSgKICAgICAgICAgICAgICAgIHN0YXR1c19jb2RlPWV4Yy5zdGF0dXNfY29kZSwKICAgICAgICAgICAgICAgIGNvbnRlbnQ9eyJkZXRhaWwiOiBleGMuZGV0YWlsfSwKICAgICAgICAgICAgICAgIGhlYWRlcnM9ZXhjLmhlYWRlcnMsCiAgICAgICAgICAgICkKICAgICAgICByZXR1cm4gYXdhaXQgY2FsbF9uZXh0KHJlcXVlc3QpCg==
+"""Provider-independent enforcement contract for administrative API access."""
+
+from typing import Protocol
+
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+
+
+class AdminAuthenticationProvider(Protocol):
+    """Provider reports configuration and validates principals for Admin requests."""
+
+    @property
+    def configured(self) -> bool: ...
+
+    def authenticate(self, request: Request) -> str | None: ...
+
+    def is_authentication_endpoint(self, request: Request) -> bool: ...
+
+
+def require_admin_principal(
+    request: Request,
+    provider: AdminAuthenticationProvider | None,
+) -> str:
+    """Fail closed when the provider is absent, unavailable, or rejects access."""
+    if provider is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin authentication provider is not configured.",
+        )
+
+    try:
+        if not provider.configured:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Admin authentication provider is not configured.",
+            )
+        principal = provider.authenticate(request)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin authentication provider is unavailable.",
+        )
+
+    if not principal:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Admin authentication required.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return principal
+
+
+def enforce_admin_authentication(
+    request: Request,
+    provider: AdminAuthenticationProvider | None,
+) -> None:
+    """Protect every Admin path; only a configured provider may open its login route."""
+    path = request.url.path
+    if path == "/api/v1/admin" or path.startswith("/api/v1/admin/"):
+        if provider is not None:
+            try:
+                if provider.configured and provider.is_authentication_endpoint(request):
+                    return
+            except Exception:
+                pass
+        require_admin_principal(request, provider)
+
+
+def install_admin_authentication(
+    app: FastAPI,
+    provider: AdminAuthenticationProvider | None = None,
+) -> None:
+    """Install fail-closed enforcement; deployment code supplies its provider."""
+    app.state.admin_authentication_provider = provider
+
+    @app.middleware("http")
+    async def admin_authentication_middleware(request: Request, call_next):
+        try:
+            enforce_admin_authentication(
+                request,
+                getattr(request.app.state, "admin_authentication_provider", None),
+            )
+        except HTTPException as exc:
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": exc.detail},
+                headers=exc.headers,
+            )
+        return await call_next(request)

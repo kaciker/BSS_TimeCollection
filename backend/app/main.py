@@ -1,1 +1,36 @@
-ZnJvbSBmYXN0YXBpIGltcG9ydCBGYXN0QVBJCgpmcm9tIGFwcC5jb3JlLmFkbWluX2F1dGggaW1wb3J0IHByb3ZpZGVyIGFzIGFkbWluX2F1dGhfcHJvdmlkZXIsIHJvdXRlciBhcyBhZG1pbl9hdXRoX3JvdXRlcgpmcm9tIGFwcC5jb3JlLmFkbWluX3NlY3VyaXR5IGltcG9ydCBpbnN0YWxsX2FkbWluX2F1dGhlbnRpY2F0aW9uCmZyb20gYXBwLnJvdXRlcnMgaW1wb3J0IGFjdGlvbl9saWZlY3ljbGUsIGFkbWluLCBkYXRhYmFzZV9hZG1pbiwgaGVhbHRoLCBtb25pdG9yaW5nLCB0ZXJtaW5hbCwgcG9saWNpZXMsIHN0cnVjdHVyZSwgcGVyaW1ldGVyCgoKYXBwID0gRmFzdEFQSSgKICAgIHRpdGxlPSJCU1MgVGltZSBDb2xsZWN0aW9uIiwKICAgIHZlcnNpb249IjAuMS4wIiwKICAgIGRlc2NyaXB0aW9uPSJFeHRlcm5hbCBUaW1lIENvbGxlY3Rpb24gRGV2aWNlIGV2ZW50IGNvbGxlY3RvciBmb3IgT3JhY2xlIEhDTSBUaW1lIGFuZCBMYWJvci4iLAopCgoKaW5zdGFsbF9hZG1pbl9hdXRoZW50aWNhdGlvbihhcHAsIGFkbWluX2F1dGhfcHJvdmlkZXIpCgphcHAuaW5jbHVkZV9yb3V0ZXIoaGVhbHRoLnJvdXRlcikKYXBwLmluY2x1ZGVfcm91dGVyKHRlcm1pbmFsLnJvdXRlcikKYXBwLmluY2x1ZGVfcm91dGVyKGFkbWluX2F1dGhfcm91dGVyKQphcHAuaW5jbHVkZV9yb3V0ZXIoYWRtaW4ucm91dGVyKQphcHAuaW5jbHVkZV9yb3V0ZXIoYWN0aW9uX2xpZmVjeWNsZS5yb3V0ZXIpCmFwcC5pbmNsdWRlX3JvdXRlcihzdHJ1Y3R1cmUucm91dGVyKQphcHAuaW5jbHVkZV9yb3V0ZXIocG9saWNpZXMucm91dGVyKQphcHAuaW5jbHVkZV9yb3V0ZXIocGVyaW1ldGVyLnJvdXRlcikKYXBwLmluY2x1ZGVfcm91dGVyKGRhdGFiYXNlX2FkbWluLnJvdXRlcikKYXBwLmluY2x1ZGVfcm91dGVyKG1vbml0b3Jpbmcucm91dGVyKQoKCkBhcHAuZ2V0KCIvYXBpL3YxL21ldGEiKQpkZWYgbWV0YSgpOgogICAgcmV0dXJuIHsKICAgICAgICAibmFtZSI6ICJCU1MgVGltZSBDb2xsZWN0aW9uIiwKICAgICAgICAidmVyc2lvbiI6ICIwLjEuMCIsCiAgICAgICAgImF1dGhlbnRpY2F0aW9uIjogInRlbXBvcmFyeS1hZG1pbi1zZXNzaW9uIiwKICAgICAgICAic2NvcGUiOiAiZXh0ZXJuYWwtdGltZS1jb2xsZWN0aW9uLWRldmljZSIsCiAgICB9Cg==
+from fastapi import FastAPI
+
+from app.core.admin_auth import provider as admin_auth_provider, router as admin_auth_router
+from app.core.admin_security import install_admin_authentication
+from app.routers import action_lifecycle, admin, database_admin, health, monitoring, terminal, policies, structure, perimeter
+
+
+app = FastAPI(
+    title="BSS Time Collection",
+    version="0.1.0",
+    description="External Time Collection Device event collector for Oracle HCM Time and Labor.",
+)
+
+
+install_admin_authentication(app, admin_auth_provider)
+
+app.include_router(health.router)
+app.include_router(terminal.router)
+app.include_router(admin_auth_router)
+app.include_router(admin.router)
+app.include_router(action_lifecycle.router)
+app.include_router(structure.router)
+app.include_router(policies.router)
+app.include_router(perimeter.router)
+app.include_router(database_admin.router)
+app.include_router(monitoring.router)
+
+
+@app.get("/api/v1/meta")
+def meta():
+    return {
+        "name": "BSS Time Collection",
+        "version": "0.1.0",
+        "authentication": "temporary-admin-session",
+        "scope": "external-time-collection-device",
+    }

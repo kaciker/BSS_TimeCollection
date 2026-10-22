@@ -1,1 +1,211 @@
-IiIiUmVhZC1vbmx5IEFyZ2FuZGEgU0VDVVJJVFlfREIgcHJlc2VuY2UgYWRhcHRlci4KClRoZSBTUUwgU2VydmVyIGNvbm5lY3Rpb24gaXMgY29uZmlndXJlZCBleGNsdXNpdmVseSB0aHJvdWdoIGEgbG9jYWwgc2VjcmV0IGZpbGUuCk5ldmVyIGluY2x1ZGUgZW1wbG95ZWUgbmFtZXMsIFBJTnMgb3IgZGF0YWJhc2UgY3JlZGVudGlhbHMgaW4gQVBJIHJlc3BvbnNlcy4KIiIiCmltcG9ydCBqc29uCmltcG9ydCBsb2dnaW5nCmltcG9ydCByZQpmcm9tIGRhdGV0aW1lIGltcG9ydCBkYXRldGltZSwgdGltZWRlbHRhLCB0aW1lem9uZQpmcm9tIHBhdGhsaWIgaW1wb3J0IFBhdGgKZnJvbSB6b25laW5mbyBpbXBvcnQgWm9uZUluZm8KCmZyb20gYXBwLmNvcmUuY29uZmlnIGltcG9ydCBzZXR0aW5ncwoKU1FMID0gIiIiClNFTEVDVCBUT1AgKDEpIHQuZXZlbnRfdGltZSwgdC5hY2Nfem9uZV9jb2RlCkZST00gZGJvLnBlcnNfYXR0cmlidXRlX2V4dCBBUyBwYWUKSk9JTiBkYm8ucGVyc19wZXJzb24gQVMgcCBPTiBwLmlkID0gcGFlLnBlcnNvbl9pZApKT0lOIGRiby5wZXJzX2NhcmQgQVMgcGMgT04gcGMucGVyc29uX2lkID0gcC5pZApKT0lOIGRiby5hY2NfdHJhbnNhY3Rpb24gQVMgdCBPTiB0LmNhcmRfbm8gPSBwYy5jYXJkX25vCldIRVJFIHBhZS5hdHRyX3ZhbHVlNCA9ID8gQU5EIHQuYWNjX3pvbmVfY29kZSBJTiAoMSwgMikKT1JERVIgQlkgdC5ldmVudF90aW1lIERFU0MsIHQubG9nX2lkIERFU0MKIiIiCgpsb2dnZXIgPSBsb2dnaW5nLmdldExvZ2dlcihfX25hbWVfXykKUFJPVklERVIgPSAiU1FMU0VSVkVSX1NFQ1VSSVRZX0RCIgpEUklWRVIgPSAiT0RCQyBEcml2ZXIgMTggZm9yIFNRTCBTZXJ2ZXIiCl9sYXN0X2NoZWNrOiBkaWN0ID0geyJsYXN0X2NoZWNrX2F0IjogTm9uZSwgInN0YXR1cyI6ICJOT1RfQ0hFQ0tFRCIsICJyZWFjaGFibGUiOiBGYWxzZSwgImVycm9yX2NhdGVnb3J5IjogTm9uZX0KCgpkZWYgcmVhZGVyX251bWJlcl90b19hdHRyX3ZhbHVlKGNhcmQ6IHN0cikgLT4gc3RyOgogICAgZGlnaXRzID0gY2FyZC5zdHJpcCgpCiAgICBpZiBub3QgZGlnaXRzIG9yIG5vdCBkaWdpdHMuaXNhc2NpaSgpIG9yIG5vdCBkaWdpdHMuaXNkZWNpbWFsKCk6CiAgICAgICAgcmFpc2UgVmFsdWVFcnJvcigiQmFkZ2UgbXVzdCBjb250YWluIEFTQ0lJIGRlY2ltYWwgZGlnaXRzIikKICAgIG51bWJlciA9IGludChkaWdpdHMpCiAgICBpZiBudW1iZXIgPj0gMiAqKiAzMjoKICAgICAgICByYWlzZSBWYWx1ZUVycm9yKCJCYWRnZSBleGNlZWRzIHRoZSB2YWxpZGF0ZWQgMzItYml0IHJlYWRlciBmb3JtYXQiKQogICAgcmV0dXJuIHN0cihpbnQuZnJvbV9ieXRlcyhudW1iZXIudG9fYnl0ZXMoNCwgImJpZyIpLCAibGl0dGxlIikpCgoKY2xhc3MgRXh0ZXJuYWxQZXJpbWV0ZXJFcnJvcihSdW50aW1lRXJyb3IpOgogICAgZGVmIF9faW5pdF9fKHNlbGYsIGNhdGVnb3J5OiBzdHIpOgogICAgICAgIHN1cGVyKCkuX19pbml0X18oY2F0ZWdvcnkpCiAgICAgICAgc2VsZi5jYXRlZ29yeSA9IGNhdGVnb3J5CgoKZGVmIF9jcmVkZW50aWFscygpIC0+IGRpY3Q6CiAgICBwYXRoID0gUGF0aChzZXR0aW5ncy5wZXJpbWV0ZXJfc3Fsc2VydmVyX2NyZWRlbnRpYWxzX2ZpbGUpCiAgICBpZiBub3QgcGF0aC5pc19maWxlKCk6CiAgICAgICAgcmFpc2UgRXh0ZXJuYWxQZXJpbWV0ZXJFcnJvcigiQ1JFREVOVElBTFNfVU5BVkFJTEFCTEUiKQogICAgdHJ5OgogICAgICAgIGRhdGEgPSBqc29uLmxvYWRzKHBhdGgucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpKQogICAgZXhjZXB0IChPU0Vycm9yLCBVbmljb2RlRXJyb3IsIGpzb24uSlNPTkRlY29kZUVycm9yKToKICAgICAgICByYWlzZSBFeHRlcm5hbFBlcmltZXRlckVycm9yKCJDUkVERU5USUFMU19VTkFWQUlMQUJMRSIpIGZyb20gTm9uZQogICAgaWYgbm90IGlzaW5zdGFuY2UoZGF0YSwgZGljdCk6CiAgICAgICAgcmFpc2UgRXh0ZXJuYWxQZXJpbWV0ZXJFcnJvcigiQ1JFREVOVElBTFNfVU5BVkFJTEFCTEUiKQogICAgIyBBY2NlcHQgdGhlIGxvY2FsIE9EQkMgY29uZmlndXJhdGlvbiB3aXRob3V0IGV2ZXIgbG9nZ2luZyBpdHMgdmFsdWVzLgogICAgaWYgImNvbm5lY3Rpb25fc3RyaW5nIiBpbiBkYXRhOgogICAgICAgIHJhaXNlIEV4dGVybmFsUGVyaW1ldGVyRXJyb3IoIkNSRURFTlRJQUxTX1VOQVZBSUxBQkxFIikKICAgIHNlcnZlciA9IGRhdGEuZ2V0KCJzZXJ2ZXIiKSBvciBkYXRhLmdldCgiaG9zdCIpCiAgICBkYXRhYmFzZSA9IGRhdGEuZ2V0KCJkYXRhYmFzZSIsICJTRUNVUklUWV9EQiIpCiAgICB1c2VybmFtZSA9IGRhdGEuZ2V0KCJ1c2VybmFtZSIpIG9yIGRhdGEuZ2V0KCJ1c2VyIikgb3IgZGF0YS5nZXQoInVpZCIpCiAgICBwYXNzd29yZCA9IGRhdGEuZ2V0KCJwYXNzd29yZCIpIG9yIGRhdGEuZ2V0KCJwd2QiKQogICAgaWYgbm90IGFsbCgoc2VydmVyLCBkYXRhYmFzZSwgdXNlcm5hbWUsIHBhc3N3b3JkKSk6CiAgICAgICAgcmFpc2UgRXh0ZXJuYWxQZXJpbWV0ZXJFcnJvcigiQ1JFREVOVElBTFNfVU5BVkFJTEFCTEUiKQogICAgcmV0dXJuIHsic2VydmVyIjogc3RyKHNlcnZlciksICJkYXRhYmFzZSI6IHN0cihkYXRhYmFzZSksICJ1c2VybmFtZSI6IHN0cih1c2VybmFtZSksICJwYXNzd29yZCI6IHN0cihwYXNzd29yZCl9CgoKZGVmIF9jb25uZWN0aW9uX3N0cmluZyhkYXRhOiBkaWN0IHwgTm9uZSA9IE5vbmUpIC0+IHN0cjoKICAgIGRhdGEgPSBkYXRhIG9yIF9jcmVkZW50aWFscygpCiAgICBzZXJ2ZXIgPSBkYXRhWyJzZXJ2ZXIiXQogICAgZGF0YWJhc2UgPSBkYXRhWyJkYXRhYmFzZSJdCiAgICB1c2VybmFtZSA9IGRhdGFbInVzZXJuYW1lIl0KICAgIHBhc3N3b3JkID0gZGF0YVsicGFzc3dvcmQiXQogICAgIyBFc2NhcGUgT0RCQyB2YWx1ZXMgdG8gcHJldmVudCBzZW1pY29sb24gaW5qZWN0aW9uIGluIGNyZWRlbnRpYWxzLgogICAgZGVmIHF1b3RlKHZhbHVlOiBzdHIpIC0+IHN0cjoKICAgICAgICByZXR1cm4gInsiICsgc3RyKHZhbHVlKS5yZXBsYWNlKCJ9IiwgIn19IikgKyAifSIKICAgIHJldHVybiAoZiJEUklWRVI9e3t7RFJJVkVSfX19O1NFUlZFUj17cXVvdGUoc2VydmVyKX07IgogICAgICAgICAgICBmIkRBVEFCQVNFPXtxdW90ZShkYXRhYmFzZSl9O1VJRD17cXVvdGUodXNlcm5hbWUpfTtQV0Q9e3F1b3RlKHBhc3N3b3JkKX07IgogICAgICAgICAgICBmIkVuY3J5cHQ9eWVzO1RydXN0U2VydmVyQ2VydGlmaWNhdGU9eWVzO0Nvbm5lY3Rpb24gVGltZW91dD0zO0FwcGxpY2F0aW9uSW50ZW50PVJlYWRPbmx5IikKCgpkZWYgX3NhZmVfb2RiY19jYXRlZ29yeShleGM6IEV4Y2VwdGlvbiwgKiwgcGhhc2U6IHN0cikgLT4gc3RyOgogICAgIyBJbnNwZWN0IG9ubHkgZW5vdWdoIG9mIHRoZSBkcml2ZXIgZGlhZ25vc3RpYyB0byBjbGFzc2lmeSBpdC4gTmV2ZXIgcmV0dXJuIG9yIGxvZwogICAgIyB0aGUgb3JpZ2luYWwgbWVzc2FnZSBiZWNhdXNlIE9EQkMgZXJyb3JzIG1heSBjb250YWluIHNlcnZlciBvciBsb2dpbiBkZXRhaWxzLgogICAgZGlhZ25vc3RpYyA9ICIgIi5qb2luKHN0cihwYXJ0KSBmb3IgcGFydCBpbiBnZXRhdHRyKGV4YywgImFyZ3MiLCAoKSkpLmxvd2VyKCkKICAgIGlmICJpbTAwMiIgaW4gZGlhZ25vc3RpYyBvciAiZHJpdmVyIiBpbiBkaWFnbm9zdGljIGFuZCAoIm5vdCBmb3VuZCIgaW4gZGlhZ25vc3RpYyBvciAibm90IGV4aXN0IiBpbiBkaWFnbm9zdGljIG9yICJjYW4ndCBvcGVuIGxpYiIgaW4gZGlhZ25vc3RpYyBvciAiY2Fubm90IG9wZW4gbGliIiBpbiBkaWFnbm9zdGljKToKICAgICAgICByZXR1cm4gIk9EQkNfRFJJVkVSX1VOQVZBSUxBQkxFIgogICAgaWYgYW55KGNvZGUgaW4gZGlhZ25vc3RpYyBmb3IgY29kZSBpbiAoIjI4MDAwIiwgIjE4NDU2IiwgImxvZ2luIGZhaWxlZCIsICJhdXRoZW50aWNhdGlvbiBmYWlsZWQiKSk6CiAgICAgICAgcmV0dXJuICJBVVRIX0ZBSUxFRCIKICAgIHJldHVybiAiQ09OTkVDVElPTl9GQUlMRUQiIGlmIHBoYXNlID09ICJjb25uZWN0IiBlbHNlICJRVUVSWV9GQUlMRUQiCgoKZGVmIGNvbm5lY3Rvcl9zdGF0dXMoKiwgY2hlY2s6IGJvb2wgPSBGYWxzZSwgY29ubmVjdD1Ob25lKSAtPiBkaWN0OgogICAgIiIiUmV0dXJuIGEgY3JlZGVudGlhbC1mcmVlIGNvbm5lY3RvciBzdGF0dXM7IG9wdGlvbmFsbHkgcGVyZm9ybSByZWFkLW9ubHkgU0VMRUNUIDEuIiIiCiAgICB0cnk6CiAgICAgICAgY29uZmlnID0gX2NyZWRlbnRpYWxzKCkKICAgIGV4Y2VwdCBFeHRlcm5hbFBlcmltZXRlckVycm9yOgogICAgICAgIHJlc3VsdCA9IHsicHJvdmlkZXIiOiBQUk9WSURFUiwgImNvbmZpZ3VyZWQiOiBGYWxzZSwgInJlYWNoYWJsZSI6IEZhbHNlLAogICAgICAgICAgICAgICAgICAiZGF0YWJhc2UiOiAiU0VDVVJJVFlfREIiLCAic2VydmVyIjogTm9uZSwgImRyaXZlciI6IERSSVZFUiwKICAgICAgICAgICAgICAgICAgImxhc3RfY2hlY2tfYXQiOiBfbGFzdF9jaGVja1sibGFzdF9jaGVja19hdCJdLCAic3RhdHVzIjogIk5PVF9DT05GSUdVUkVEIiwKICAgICAgICAgICAgICAgICAgImVycm9yX2NhdGVnb3J5IjogIkNSRURFTlRJQUxTX1VOQVZBSUxBQkxFIn0KICAgICAgICBpZiBjaGVjazoKICAgICAgICAgICAgX2xhc3RfY2hlY2sudXBkYXRlKHsibGFzdF9jaGVja19hdCI6IGRhdGV0aW1lLm5vdyh0aW1lem9uZS51dGMpLmlzb2Zvcm1hdCgpLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJzdGF0dXMiOiByZXN1bHRbInN0YXR1cyJdLCAicmVhY2hhYmxlIjogRmFsc2UsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgImVycm9yX2NhdGVnb3J5IjogcmVzdWx0WyJlcnJvcl9jYXRlZ29yeSJdfSkKICAgICAgICAgICAgcmVzdWx0LnVwZGF0ZShfbGFzdF9jaGVjaykKICAgICAgICByZXR1cm4gcmVzdWx0CiAgICBzZXJ2ZXIgPSBjb25maWdbInNlcnZlciJdCiAgICAjIE9ubHkgZXhwb3NlIGNvbnZlbnRpb25hbCBob3N0L3BvcnQgdmFsdWVzLCBuZXZlciBhcmJpdHJhcnkgY29ubmVjdGlvbiBmcmFnbWVudHMuCiAgICBzYWZlX3NlcnZlciA9IHNlcnZlciBpZiByZS5mdWxsbWF0Y2gociJbQS1aYS16MC05Ll86XFtcXS1dezEsMjU1fSIsIHNlcnZlcikgZWxzZSBOb25lCiAgICBzYWZlX2RhdGFiYXNlID0gY29uZmlnWyJkYXRhYmFzZSJdIGlmIHJlLmZ1bGxtYXRjaChyIltBLVphLXowLTlfLi1dezEsMTI4fSIsIGNvbmZpZ1siZGF0YWJhc2UiXSkgZWxzZSBOb25lCiAgICByZXN1bHQgPSB7InByb3ZpZGVyIjogUFJPVklERVIsICJjb25maWd1cmVkIjogVHJ1ZSwgInJlYWNoYWJsZSI6IEZhbHNlLAogICAgICAgICAgICAgICJkYXRhYmFzZSI6IHNhZmVfZGF0YWJhc2UsICJzZXJ2ZXIiOiBzYWZlX3NlcnZlciwgImRyaXZlciI6IERSSVZFUiwKICAgICAgICAgICAgICAibGFzdF9jaGVja19hdCI6IF9sYXN0X2NoZWNrWyJsYXN0X2NoZWNrX2F0Il0sICJzdGF0dXMiOiBfbGFzdF9jaGVja1sic3RhdHVzIl0sCiAgICAgICAgICAgICAgImVycm9yX2NhdGVnb3J5IjogX2xhc3RfY2hlY2tbImVycm9yX2NhdGVnb3J5Il19CiAgICBpZiBub3QgY2hlY2s6CiAgICAgICAgcmVzdWx0LnVwZGF0ZShfbGFzdF9jaGVjaykKICAgICAgICByZXR1cm4gcmVzdWx0CiAgICBub3cgPSBkYXRldGltZS5ub3codGltZXpvbmUudXRjKS5pc29mb3JtYXQoKQogICAgcGhhc2UgPSAiY29ubmVjdCIKICAgIGNvbm5lY3Rpb24gPSBOb25lCiAgICB0cnk6CiAgICAgICAgaWYgY29ubmVjdCBpcyBOb25lOgogICAgICAgICAgICB0cnk6CiAgICAgICAgICAgICAgICBpbXBvcnQgcHlvZGJjCiAgICAgICAgICAgIGV4Y2VwdCBJbXBvcnRFcnJvcjoKICAgICAgICAgICAgICAgIHJhaXNlIEV4dGVybmFsUGVyaW1ldGVyRXJyb3IoIk9EQkNfRFJJVkVSX1VOQVZBSUxBQkxFIikgZnJvbSBOb25lCiAgICAgICAgICAgIGNvbm5lY3QgPSBweW9kYmMuY29ubmVjdAogICAgICAgIGNvbm5lY3Rpb24gPSBjb25uZWN0KF9jb25uZWN0aW9uX3N0cmluZyhjb25maWcpLCB0aW1lb3V0PTMsIGF1dG9jb21taXQ9VHJ1ZSkKICAgICAgICBwaGFzZSA9ICJxdWVyeSIKICAgICAgICB0cnk6CiAgICAgICAgICAgIGNvbm5lY3Rpb24uY3Vyc29yKCkuZXhlY3V0ZSgiU0VMRUNUIDEiKS5mZXRjaG9uZSgpCiAgICAgICAgZmluYWxseToKICAgICAgICAgICAgY29ubmVjdGlvbi5jbG9zZSgpCiAgICAgICAgX2xhc3RfY2hlY2sudXBkYXRlKHsibGFzdF9jaGVja19hdCI6IG5vdywgInN0YXR1cyI6ICJDT05ORUNURUQiLCAicmVhY2hhYmxlIjogVHJ1ZSwgImVycm9yX2NhdGVnb3J5IjogTm9uZX0pCiAgICBleGNlcHQgRXh0ZXJuYWxQZXJpbWV0ZXJFcnJvciBhcyBleGM6CiAgICAgICAgX2xhc3RfY2hlY2sudXBkYXRlKHsibGFzdF9jaGVja19hdCI6IG5vdywgInN0YXR1cyI6ICJFUlJPUiIsICJyZWFjaGFibGUiOiBGYWxzZSwgImVycm9yX2NhdGVnb3J5IjogZXhjLmNhdGVnb3J5fSkKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZXhjOgogICAgICAgIGNhdGVnb3J5ID0gX3NhZmVfb2RiY19jYXRlZ29yeShleGMsIHBoYXNlPXBoYXNlKQogICAgICAgIGxvZ2dlci53YXJuaW5nKCJBcmdhbmRhIGV4dGVybmFsIHBlcmltZXRlciBjb25uZWN0aW9uIGNoZWNrIGZhaWxlZCAoJXMpIiwgY2F0ZWdvcnkpCiAgICAgICAgX2xhc3RfY2hlY2sudXBkYXRlKHsibGFzdF9jaGVja19hdCI6IG5vdywgInN0YXR1cyI6ICJFUlJPUiIsICJyZWFjaGFibGUiOiBGYWxzZSwgImVycm9yX2NhdGVnb3J5IjogY2F0ZWdvcnl9KQogICAgcmVzdWx0LnVwZGF0ZShfbGFzdF9jaGVjaykKICAgIHJldHVybiByZXN1bHQKCgpkZWYgdGVzdF9leHRlcm5hbF9jb25uZWN0aW9uKCosIGNvbm5lY3Q9Tm9uZSkgLT4gZGljdDoKICAgICIiIkV4cGxpY2l0IHRlc3Qgb3BlcmF0aW9uOyByZWNvcmRzIGxhc3QgY2hlY2sgZXZlbiB3aGVuIGNyZWRlbnRpYWxzIGFyZSBhYnNlbnQuIiIiCiAgICByZXN1bHQgPSBjb25uZWN0b3Jfc3RhdHVzKGNoZWNrPVRydWUsIGNvbm5lY3Q9Y29ubmVjdCkKICAgIF9sYXN0X2NoZWNrLnVwZGF0ZSh7Imxhc3RfY2hlY2tfYXQiOiBkYXRldGltZS5ub3codGltZXpvbmUudXRjKS5pc29mb3JtYXQoKSwKICAgICAgICAgICAgICAgICAgICAgICAgInN0YXR1cyI6ICJOT1RfQ09ORklHVVJFRCIsICJyZWFjaGFibGUiOiBGYWxzZSwKICAgICAgICAgICAgICAgICAgICAgICAgImVycm9yX2NhdGVnb3J5IjogIkNSRURFTlRJQUxTX1VOQVZBSUxBQkxFIn0pIGlmIG5vdCByZXN1bHRbImNvbmZpZ3VyZWQiXSBlbHNlIE5vbmUKICAgIHJlc3VsdC51cGRhdGUoX2xhc3RfY2hlY2spCiAgICByZXR1cm4gcmVzdWx0CgoKZGVmIGNoZWNrX2V4dGVybmFsX3ByZXNlbmNlKGJhZGdlOiBzdHIsICosIG5vdzogZGF0ZXRpbWUgfCBOb25lID0gTm9uZSwgcXVlcnk9Tm9uZSkgLT4gZGljdDoKICAgICIiIlJldHVybiBJTlNJREUsIE9VVFNJREUsIFNUQUxFLCBVTktOT1dOIG9yIEVSUk9SOyBmYWlsIGNsb3NlZCB1cHN0cmVhbS4iIiIKICAgIHRyeToKICAgICAgICBjb252ZXJ0ZWQgPSByZWFkZXJfbnVtYmVyX3RvX2F0dHJfdmFsdWUoYmFkZ2UpCiAgICBleGNlcHQgVmFsdWVFcnJvcjoKICAgICAgICByZXR1cm4geyJzdGF0dXMiOiAiVU5LTk9XTiIsICJldmVudF90aW1lIjogTm9uZSwgInpvbmVfY29kZSI6IE5vbmUsICJlcnJvcl9jYXRlZ29yeSI6ICJJTlZBTElEX1JFU1BPTlNFIn0KICAgIGlmIHF1ZXJ5IGlzIE5vbmU6CiAgICAgICAgY29ubmVjdGlvbiA9IE5vbmUKICAgICAgICB0cnk6CiAgICAgICAgICAgIGNvbmZpZyA9IF9jcmVkZW50aWFscygpCiAgICAgICAgICAgIGltcG9ydCBweW9kYmMKICAgICAgICAgICAgY29ubmVjdGlvbiA9IHB5b2RiYy5jb25uZWN0KF9jb25uZWN0aW9uX3N0cmluZyhjb25maWcpLCB0aW1lb3V0PTMsIGF1dG9jb21taXQ9VHJ1ZSkKICAgICAgICAgICAgdHJ5OgogICAgICAgICAgICAgICAgY3Vyc29yID0gY29ubmVjdGlvbi5jdXJzb3IoKQogICAgICAgICAgICAgICAgY3Vyc29yLmV4ZWN1dGUoU1FMLCBjb252ZXJ0ZWQpCiAgICAgICAgICAgICAgICByb3cgPSBjdXJzb3IuZmV0Y2hvbmUoKQogICAgICAgICAgICBmaW5hbGx5OgogICAgICAgICAgICAgICAgY29ubmVjdGlvbi5jbG9zZSgpCiAgICAgICAgZXhjZXB0IEV4dGVybmFsUGVyaW1ldGVyRXJyb3IgYXMgZXhjOgogICAgICAgICAgICByZXR1cm4geyJzdGF0dXMiOiAiRVJST1IiLCAiZXZlbnRfdGltZSI6IE5vbmUsICJ6b25lX2NvZGUiOiBOb25lLCAiZXJyb3JfY2F0ZWdvcnkiOiBleGMuY2F0ZWdvcnl9CiAgICAgICAgZXhjZXB0IEltcG9ydEVycm9yOgogICAgICAgICAgICByZXR1cm4geyJzdGF0dXMiOiAiRVJST1IiLCAiZXZlbnRfdGltZSI6IE5vbmUsICJ6b25lX2NvZGUiOiBOb25lLCAiZXJyb3JfY2F0ZWdvcnkiOiAiT0RCQ19EUklWRVJfVU5BVkFJTEFCTEUifQogICAgICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZXhjOgogICAgICAgICAgICBjYXRlZ29yeSA9IF9zYWZlX29kYmNfY2F0ZWdvcnkoZXhjLCBwaGFzZT0iY29ubmVjdCIgaWYgY29ubmVjdGlvbiBpcyBOb25lIGVsc2UgInF1ZXJ5IikKICAgICAgICAgICAgbG9nZ2VyLndhcm5pbmcoIkFyZ2FuZGEgZXh0ZXJuYWwgcHJlc2VuY2UgbG9va3VwIGZhaWxlZCAoJXMpIiwgY2F0ZWdvcnkpCiAgICAgICAgICAgIHJldHVybiB7InN0YXR1cyI6ICJFUlJPUiIsICJldmVudF90aW1lIjogTm9uZSwgInpvbmVfY29kZSI6IE5vbmUsICJlcnJvcl9jYXRlZ29yeSI6IGNhdGVnb3J5fQogICAgZWxzZToKICAgICAgICB0cnk6CiAgICAgICAgICAgIHJvdyA9IHF1ZXJ5KGNvbnZlcnRlZCkKICAgICAgICBleGNlcHQgRXhjZXB0aW9uOgogICAgICAgICAgICByZXR1cm4geyJzdGF0dXMiOiAiRVJST1IiLCAiZXZlbnRfdGltZSI6IE5vbmUsICJ6b25lX2NvZGUiOiBOb25lLCAiZXJyb3JfY2F0ZWdvcnkiOiAiUVVFUllfRkFJTEVEIn0KICAgIGlmIHJvdyBpcyBOb25lOgogICAgICAgIHJldHVybiB7InN0YXR1cyI6ICJVTktOT1dOIiwgImV2ZW50X3RpbWUiOiBOb25lLCAiem9uZV9jb2RlIjogTm9uZSwgImVycm9yX2NhdGVnb3J5IjogTm9uZX0KICAgIHRyeToKICAgICAgICBldmVudF90aW1lLCByYXdfem9uZV9jb2RlID0gcm93WzBdLCByb3dbMV0KICAgIGV4Y2VwdCAoVHlwZUVycm9yLCBJbmRleEVycm9yLCBLZXlFcnJvcik6CiAgICAgICAgcmV0dXJuIHsic3RhdHVzIjogIlVOS05PV04iLCAiZXZlbnRfdGltZSI6IE5vbmUsICJ6b25lX2NvZGUiOiBOb25lLCAiZXJyb3JfY2F0ZWdvcnkiOiAiSU5WQUxJRF9SRVNQT05TRSJ9CiAgICAjIFNFQ1VSSVRZX0RCIHN0b3JlcyBhY2Nfem9uZV9jb2RlIGFzIG52YXJjaGFyOyBPREJDIHRoZXJlZm9yZSByZXR1cm5zCiAgICAjICIxIi8iMiIgcmF0aGVyIHRoYW4gaW50ZWdlcnMuIFJlamVjdCBtYWxmb3JtZWQgdmFsdWVzIGFzIFVOS05PV04uCiAgICB0cnk6CiAgICAgICAgem9uZV9jb2RlID0gaW50KHJhd196b25lX2NvZGUpCiAgICBleGNlcHQgKFR5cGVFcnJvciwgVmFsdWVFcnJvcik6CiAgICAgICAgcmV0dXJuIHsic3RhdHVzIjogIlVOS05PV04iLCAiZXZlbnRfdGltZSI6IE5vbmUsICJ6b25lX2NvZGUiOiBOb25lLCAiZXJyb3JfY2F0ZWdvcnkiOiAiSU5WQUxJRF9SRVNQT05TRSJ9CiAgICBpZiBldmVudF90aW1lIGlzIE5vbmUgb3Igem9uZV9jb2RlIG5vdCBpbiAoMSwgMik6CiAgICAgICAgcmV0dXJuIHsic3RhdHVzIjogIlVOS05PV04iLCAiZXZlbnRfdGltZSI6IE5vbmUsICJ6b25lX2NvZGUiOiB6b25lX2NvZGUgaWYgem9uZV9jb2RlIGluICgxLCAyKSBlbHNlIE5vbmUsICJlcnJvcl9jYXRlZ29yeSI6ICJJTlZBTElEX1JFU1BPTlNFIn0KICAgIGlmIG5vdCBpc2luc3RhbmNlKGV2ZW50X3RpbWUsIGRhdGV0aW1lKToKICAgICAgICByZXR1cm4geyJzdGF0dXMiOiAiVU5LTk9XTiIsICJldmVudF90aW1lIjogTm9uZSwgInpvbmVfY29kZSI6IHpvbmVfY29kZSwgImVycm9yX2NhdGVnb3J5IjogIklOVkFMSURfUkVTUE9OU0UifQogICAgaWYgZXZlbnRfdGltZS50emluZm8gaXMgTm9uZToKICAgICAgICBldmVudF90aW1lID0gZXZlbnRfdGltZS5yZXBsYWNlKHR6aW5mbz1ab25lSW5mbyhzZXR0aW5ncy5ldmVudF90aW1lem9uZSkpCiAgICBjdXJyZW50ID0gbm93IG9yIGRhdGV0aW1lLm5vdyh0aW1lem9uZS51dGMpCiAgICBhZ2UgPSBjdXJyZW50LmFzdGltZXpvbmUodGltZXpvbmUudXRjKSAtIGV2ZW50X3RpbWUuYXN0aW1lem9uZSh0aW1lem9uZS51dGMpCiAgICBpZiBhZ2UgPCB0aW1lZGVsdGEoc2Vjb25kcz0tNjApOgogICAgICAgIHJldHVybiB7InN0YXR1cyI6ICJFUlJPUiIsICJldmVudF90aW1lIjogTm9uZSwgInpvbmVfY29kZSI6IHpvbmVfY29kZSwgImVycm9yX2NhdGVnb3J5IjogIklOVkFMSURfUkVTUE9OU0UifQogICAgc3RhdHVzID0gIk9VVFNJREUiIGlmIHpvbmVfY29kZSA9PSAxIGVsc2UgKCJTVEFMRSIgaWYgYWdlID4gdGltZWRlbHRhKGhvdXJzPXNldHRpbmdzLnBlcmltZXRlcl9leHRlcm5hbF9tYXhfYWdlX2hvdXJzKSBlbHNlICJJTlNJREUiKQogICAgcmV0dXJuIHsic3RhdHVzIjogc3RhdHVzLCAiZXZlbnRfdGltZSI6IGV2ZW50X3RpbWUuaXNvZm9ybWF0KCksICJ6b25lX2NvZGUiOiB6b25lX2NvZGUsICJlcnJvcl9jYXRlZ29yeSI6IE5vbmV9Cg==
+"""Read-only Arganda SECURITY_DB presence adapter.
+
+The SQL Server connection is configured exclusively through a local secret file.
+Never include employee names, PINs or database credentials in API responses.
+"""
+import json
+import logging
+import re
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+from app.core.config import settings
+
+SQL = """
+SELECT TOP (1) t.event_time, t.acc_zone_code
+FROM dbo.pers_attribute_ext AS pae
+JOIN dbo.pers_person AS p ON p.id = pae.person_id
+JOIN dbo.pers_card AS pc ON pc.person_id = p.id
+JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no
+WHERE pae.attr_value4 = ? AND t.acc_zone_code IN (1, 2)
+ORDER BY t.event_time DESC, t.log_id DESC
+"""
+
+logger = logging.getLogger(__name__)
+PROVIDER = "SQLSERVER_SECURITY_DB"
+DRIVER = "ODBC Driver 18 for SQL Server"
+_last_check: dict = {"last_check_at": None, "status": "NOT_CHECKED", "reachable": False, "error_category": None}
+
+
+def reader_number_to_attr_value(card: str) -> str:
+    digits = card.strip()
+    if not digits or not digits.isascii() or not digits.isdecimal():
+        raise ValueError("Badge must contain ASCII decimal digits")
+    number = int(digits)
+    if number >= 2 ** 32:
+        raise ValueError("Badge exceeds the validated 32-bit reader format")
+    return str(int.from_bytes(number.to_bytes(4, "big"), "little"))
+
+
+class ExternalPerimeterError(RuntimeError):
+    def __init__(self, category: str):
+        super().__init__(category)
+        self.category = category
+
+
+def _credentials() -> dict:
+    path = Path(settings.perimeter_sqlserver_credentials_file)
+    if not path.is_file():
+        raise ExternalPerimeterError("CREDENTIALS_UNAVAILABLE")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        raise ExternalPerimeterError("CREDENTIALS_UNAVAILABLE") from None
+    if not isinstance(data, dict):
+        raise ExternalPerimeterError("CREDENTIALS_UNAVAILABLE")
+    # Accept the local ODBC configuration without ever logging its values.
+    if "connection_string" in data:
+        raise ExternalPerimeterError("CREDENTIALS_UNAVAILABLE")
+    server = data.get("server") or data.get("host")
+    database = data.get("database", "SECURITY_DB")
+    username = data.get("username") or data.get("user") or data.get("uid")
+    password = data.get("password") or data.get("pwd")
+    if not all((server, database, username, password)):
+        raise ExternalPerimeterError("CREDENTIALS_UNAVAILABLE")
+    return {"server": str(server), "database": str(database), "username": str(username), "password": str(password)}
+
+
+def _connection_string(data: dict | None = None) -> str:
+    data = data or _credentials()
+    server = data["server"]
+    database = data["database"]
+    username = data["username"]
+    password = data["password"]
+    # Escape ODBC values to prevent semicolon injection in credentials.
+    def quote(value: str) -> str:
+        return "{" + str(value).replace("}", "}}") + "}"
+    return (f"DRIVER={{{DRIVER}}};SERVER={quote(server)};"
+            f"DATABASE={quote(database)};UID={quote(username)};PWD={quote(password)};"
+            f"Encrypt=yes;TrustServerCertificate=yes;Connection Timeout=3;ApplicationIntent=ReadOnly")
+
+
+def _safe_odbc_category(exc: Exception, *, phase: str) -> str:
+    # Inspect only enough of the driver diagnostic to classify it. Never return or log
+    # the original message because ODBC errors may contain server or login details.
+    diagnostic = " ".join(str(part) for part in getattr(exc, "args", ())).lower()
+    if "im002" in diagnostic or "driver" in diagnostic and ("not found" in diagnostic or "not exist" in diagnostic or "can't open lib" in diagnostic or "cannot open lib" in diagnostic):
+        return "ODBC_DRIVER_UNAVAILABLE"
+    if any(code in diagnostic for code in ("28000", "18456", "login failed", "authentication failed")):
+        return "AUTH_FAILED"
+    return "CONNECTION_FAILED" if phase == "connect" else "QUERY_FAILED"
+
+
+def connector_status(*, check: bool = False, connect=None) -> dict:
+    """Return a credential-free connector status; optionally perform read-only SELECT 1."""
+    try:
+        config = _credentials()
+    except ExternalPerimeterError:
+        result = {"provider": PROVIDER, "configured": False, "reachable": False,
+                  "database": "SECURITY_DB", "server": None, "driver": DRIVER,
+                  "last_check_at": _last_check["last_check_at"], "status": "NOT_CONFIGURED",
+                  "error_category": "CREDENTIALS_UNAVAILABLE"}
+        if check:
+            _last_check.update({"last_check_at": datetime.now(timezone.utc).isoformat(),
+                                "status": result["status"], "reachable": False,
+                                "error_category": result["error_category"]})
+            result.update(_last_check)
+        return result
+    server = config["server"]
+    # Only expose conventional host/port values, never arbitrary connection fragments.
+    safe_server = server if re.fullmatch(r"[A-Za-z0-9._:\[\]-]{1,255}", server) else None
+    safe_database = config["database"] if re.fullmatch(r"[A-Za-z0-9_.-]{1,128}", config["database"]) else None
+    result = {"provider": PROVIDER, "configured": True, "reachable": False,
+              "database": safe_database, "server": safe_server, "driver": DRIVER,
+              "last_check_at": _last_check["last_check_at"], "status": _last_check["status"],
+              "error_category": _last_check["error_category"]}
+    if not check:
+        result.update(_last_check)
+        return result
+    now = datetime.now(timezone.utc).isoformat()
+    phase = "connect"
+    connection = None
+    try:
+        if connect is None:
+            try:
+                import pyodbc
+            except ImportError:
+                raise ExternalPerimeterError("ODBC_DRIVER_UNAVAILABLE") from None
+            connect = pyodbc.connect
+        connection = connect(_connection_string(config), timeout=3, autocommit=True)
+        phase = "query"
+        try:
+            connection.cursor().execute("SELECT 1").fetchone()
+        finally:
+            connection.close()
+        _last_check.update({"last_check_at": now, "status": "CONNECTED", "reachable": True, "error_category": None})
+    except ExternalPerimeterError as exc:
+        _last_check.update({"last_check_at": now, "status": "ERROR", "reachable": False, "error_category": exc.category})
+    except Exception as exc:
+        category = _safe_odbc_category(exc, phase=phase)
+        logger.warning("Arganda external perimeter connection check failed (%s)", category)
+        _last_check.update({"last_check_at": now, "status": "ERROR", "reachable": False, "error_category": category})
+    result.update(_last_check)
+    return result
+
+
+def test_external_connection(*, connect=None) -> dict:
+    """Explicit test operation; records last check even when credentials are absent."""
+    result = connector_status(check=True, connect=connect)
+    _last_check.update({"last_check_at": datetime.now(timezone.utc).isoformat(),
+                        "status": "NOT_CONFIGURED", "reachable": False,
+                        "error_category": "CREDENTIALS_UNAVAILABLE"}) if not result["configured"] else None
+    result.update(_last_check)
+    return result
+
+
+def check_external_presence(badge: str, *, now: datetime | None = None, query=None) -> dict:
+    """Return INSIDE, OUTSIDE, STALE, UNKNOWN or ERROR; fail closed upstream."""
+    try:
+        converted = reader_number_to_attr_value(badge)
+    except ValueError:
+        return {"status": "UNKNOWN", "event_time": None, "zone_code": None, "error_category": "INVALID_RESPONSE"}
+    if query is None:
+        connection = None
+        try:
+            config = _credentials()
+            import pyodbc
+            connection = pyodbc.connect(_connection_string(config), timeout=3, autocommit=True)
+            try:
+                cursor = connection.cursor()
+                cursor.execute(SQL, converted)
+                row = cursor.fetchone()
+            finally:
+                connection.close()
+        except ExternalPerimeterError as exc:
+            return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": exc.category}
+        except ImportError:
+            return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": "ODBC_DRIVER_UNAVAILABLE"}
+        except Exception as exc:
+            category = _safe_odbc_category(exc, phase="connect" if connection is None else "query")
+            logger.warning("Arganda external presence lookup failed (%s)", category)
+            return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": category}
+    else:
+        try:
+            row = query(converted)
+        except Exception:
+            return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": "QUERY_FAILED"}
+    if row is None:
+        return {"status": "UNKNOWN", "event_time": None, "zone_code": None, "error_category": None}
+    try:
+        event_time, raw_zone_code = row[0], row[1]
+    except (TypeError, IndexError, KeyError):
+        return {"status": "UNKNOWN", "event_time": None, "zone_code": None, "error_category": "INVALID_RESPONSE"}
+    # SECURITY_DB stores acc_zone_code as nvarchar; ODBC therefore returns
+    # "1"/"2" rather than integers. Reject malformed values as UNKNOWN.
+    try:
+        zone_code = int(raw_zone_code)
+    except (TypeError, ValueError):
+        return {"status": "UNKNOWN", "event_time": None, "zone_code": None, "error_category": "INVALID_RESPONSE"}
+    if event_time is None or zone_code not in (1, 2):
+        return {"status": "UNKNOWN", "event_time": None, "zone_code": zone_code if zone_code in (1, 2) else None, "error_category": "INVALID_RESPONSE"}
+    if not isinstance(event_time, datetime):
+        return {"status": "UNKNOWN", "event_time": None, "zone_code": zone_code, "error_category": "INVALID_RESPONSE"}
+    if event_time.tzinfo is None:
+        event_time = event_time.replace(tzinfo=ZoneInfo(settings.event_timezone))
+    current = now or datetime.now(timezone.utc)
+    age = current.astimezone(timezone.utc) - event_time.astimezone(timezone.utc)
+    if age < timedelta(seconds=-60):
+        return {"status": "ERROR", "event_time": None, "zone_code": zone_code, "error_category": "INVALID_RESPONSE"}
+    status = "OUTSIDE" if zone_code == 1 else ("STALE" if age > timedelta(hours=settings.perimeter_external_max_age_hours) else "INSIDE")
+    return {"status": status, "event_time": event_time.isoformat(), "zone_code": zone_code, "error_category": None}

@@ -1,1 +1,187 @@
-Ly8gQHZpdGVzdC1lbnZpcm9ubWVudCBqc2RvbQppbXBvcnQgeyBhZnRlckVhY2gsIGJlZm9yZUVhY2gsIGRlc2NyaWJlLCBleHBlY3QsIGl0LCB2aSB9IGZyb20gInZpdGVzdCI7CmltcG9ydCB7IGFjdCwgY2xlYW51cCwgZmlyZUV2ZW50LCByZW5kZXIsIHNjcmVlbiB9IGZyb20gIkB0ZXN0aW5nLWxpYnJhcnkvcmVhY3QiOwppbXBvcnQgeyBLZXlib2FyZFdlZGdlIH0gZnJvbSAiLi4vc3JjL2tleWJvYXJkV2VkZ2UiOwppbXBvcnQgeyBUZXJtaW5hbFBhZ2UgfSBmcm9tICIuLi9zcmMvcGFnZXMvVGVybWluYWxQYWdlIjsKaW1wb3J0IHsgYXBpIH0gZnJvbSAiLi4vc3JjL2FwaSI7CnZpLm1vY2soIi4uL3NyYy9hcGkiLCAoKSA9PiAoeyBhcGk6IHsgZ2V0OiB2aS5mbigpLCBwb3N0OiB2aS5mbigpIH0gfSkpOwpjb25zdCBjYXJkID0gIjAwMDk4NzY1QUIiOwpjb25zdCBrZXkgPSAodmFsdWU6IHN0cmluZywgdGFyZ2V0OiBFdmVudFRhcmdldCA9IHdpbmRvdywgb3B0aW9ucyA9IHt9KSA9PgogIHRhcmdldC5kaXNwYXRjaEV2ZW50KG5ldyBLZXlib2FyZEV2ZW50KCJrZXlkb3duIiwgeyBrZXk6IHZhbHVlLCBidWJibGVzOiB0cnVlLCBjYW5jZWxhYmxlOiB0cnVlLCAuLi5vcHRpb25zIH0pKTsKY29uc3QgYnVyc3QgPSAodmFsdWUgPSBjYXJkLCBlbnRlciA9IHRydWUsIGRlbGF5ID0gOCkgPT4gewogIGZvciAoY29uc3QgY2hhcmFjdGVyIG9mIHZhbHVlKSB7IGtleShjaGFyYWN0ZXIpOyB2aS5hZHZhbmNlVGltZXJzQnlUaW1lKGRlbGF5KTsgfQogIGlmIChlbnRlcikga2V5KCJFbnRlciIpOwp9OwpiZWZvcmVFYWNoKCgpID0+IHsKICB2aS51c2VGYWtlVGltZXJzKHsgdG9GYWtlOiBbInNldFRpbWVvdXQiLCAiY2xlYXJUaW1lb3V0IiwgIkRhdGUiLCAicGVyZm9ybWFuY2UiXSB9KTsKICB2aS5zcHlPbihkb2N1bWVudCwgImhhc0ZvY3VzIikubW9ja1JldHVyblZhbHVlKHRydWUpOwogIGxvY2FsU3RvcmFnZS5zZXRJdGVtKCJic3MtdGltZWNvbGxlY3Rpb24tbGFuZ3VhZ2UiLCAiZW4iKTsKfSk7CmFmdGVyRWFjaCgoKSA9PiB7IGNsZWFudXAoKTsgdmkudXNlUmVhbFRpbWVycygpOyB2aS5yZXN0b3JlQWxsTW9ja3MoKTsgdmkuY2xlYXJBbGxNb2NrcygpOyB9KTsKZGVzY3JpYmUoImtleWJvYXJkIHdlZGdlIiwgKCkgPT4gewogIGxldCByZWFkZXI6IEtleWJvYXJkV2VkZ2U7CiAgbGV0IHN1Ym1pdDogUmV0dXJuVHlwZTx0eXBlb2YgdmkuZm4+OwogIGJlZm9yZUVhY2goKCkgPT4geyBzdWJtaXQgPSB2aS5mbigpOyByZWFkZXIgPSBuZXcgS2V5Ym9hcmRXZWRnZShzdWJtaXQpOyB3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcigia2V5ZG93biIsIHJlYWRlci5rZXlkb3duKTsgfSk7CiAgYWZ0ZXJFYWNoKCgpID0+IHsgcmVhZGVyLnJlc2V0KCk7IHdpbmRvdy5yZW1vdmVFdmVudExpc3RlbmVyKCJrZXlkb3duIiwgcmVhZGVyLmtleWRvd24pOyB9KTsKICBpdCgicmFwaWQgRW50ZXIgc2NhbiBwcmVzZXJ2ZXMgc3RyaW5nIGFuZCBjb21wbGV0ZXMgb25jZSBkZXNwaXRlIHRpbWVvdXQiLCAoKSA9PiB7CiAgICBidXJzdCgpOyB2aS5hZHZhbmNlVGltZXJzQnlUaW1lKDMwMCk7IGV4cGVjdChzdWJtaXQpLnRvSGF2ZUJlZW5DYWxsZWRFeGFjdGx5T25jZVdpdGgoY2FyZCk7CiAgfSk7CiAgaXQoImlnbm9yZXMgc3BhY2VzIGFuZCBUYWIgc2VwYXJhdG9ycyBpbnNlcnRlZCBiZXR3ZWVuIGJhZGdlIGNoYXJhY3RlcnMiLCAoKSA9PiB7CiAgICBmb3IgKGNvbnN0IGNoYXJhY3RlciBvZiAiMDU4MjYwOTY5OSIpIHsKICAgICAga2V5KGNoYXJhY3Rlcik7IHZpLmFkdmFuY2VUaW1lcnNCeVRpbWUoOCk7CiAgICAgIGtleSgiICIpOyB2aS5hZHZhbmNlVGltZXJzQnlUaW1lKDgpOwogICAgfQogICAgY29uc3QgdGFiID0gbmV3IEtleWJvYXJkRXZlbnQoImtleWRvd24iLCB7IGtleTogIlRhYiIsIGJ1YmJsZXM6IHRydWUsIGNhbmNlbGFibGU6IHRydWUgfSk7CiAgICB3aW5kb3cuZGlzcGF0Y2hFdmVudCh0YWIpOyB2aS5hZHZhbmNlVGltZXJzQnlUaW1lKDgpOyBrZXkoIkVudGVyIik7CiAgICBleHBlY3QodGFiLmRlZmF1bHRQcmV2ZW50ZWQpLnRvQmUodHJ1ZSk7CiAgICBleHBlY3Qoc3VibWl0KS50b0hhdmVCZWVuQ2FsbGVkRXhhY3RseU9uY2VXaXRoKCIwNTgyNjA5Njk5Iik7CiAgfSk7CiAgaXQoInRpbWVvdXQgZmFsbGJhY2sgY29tcGxldGVzIG9uY2UiLCAoKSA9PiB7CiAgICBidXJzdChjYXJkLCBmYWxzZSk7IHZpLmFkdmFuY2VUaW1lcnNCeVRpbWUoMTAwKTsga2V5KCJFbnRlciIpOyBleHBlY3Qoc3VibWl0KS50b0hhdmVCZWVuQ2FsbGVkRXhhY3RseU9uY2VXaXRoKGNhcmQpOwogIH0pOwogIGl0KCJzbG93IHR5cGluZyBhbmQgc2hvcnQgYnVyc3RzIGRvIG5vdCBzY2FuIiwgKCkgPT4gewogICAgYnVyc3QoY2FyZCwgdHJ1ZSwgMTUwKTsgYnVyc3QoIjEyMyIpOyB2aS5hZHZhbmNlVGltZXJzQnlUaW1lKDIwMCk7IGV4cGVjdChzdWJtaXQpLm5vdC50b0hhdmVCZWVuQ2FsbGVkKCk7CiAgfSk7CiAgaXQoImFjY2VwdHMgYSBzbGlnaHRseSBkZWxheWVkIEVudGVyIGFuZCBzdXBwcmVzc2VzIGl0cyBkZWZhdWx0IGJ1dHRvbiBhY3RpdmF0aW9uIiwgKCkgPT4gewogICAgYnVyc3QoY2FyZCwgZmFsc2UpOyB2aS5hZHZhbmNlVGltZXJzQnlUaW1lKDYwKTsKICAgIGNvbnN0IGV2ZW50ID0gbmV3IEtleWJvYXJkRXZlbnQoImtleWRvd24iLCB7IGtleTogIkVudGVyIiwgY2FuY2VsYWJsZTogdHJ1ZSB9KTsKICAgIHdpbmRvdy5kaXNwYXRjaEV2ZW50KGV2ZW50KTsgZXhwZWN0KGV2ZW50LmRlZmF1bHRQcmV2ZW50ZWQpLnRvQmUodHJ1ZSk7CiAgICBleHBlY3Qoc3VibWl0KS50b0hhdmVCZWVuQ2FsbGVkRXhhY3RseU9uY2VXaXRoKGNhcmQpOwogIH0pOwogIGl0KCJsYXRlIEVudGVyIGFmdGVyIHRpbWVvdXQgY2Fubm90IGFjdGl2YXRlIHRoZSBmb2N1c2VkIGJ1dHRvbiIsICgpID0+IHsKICAgIGJ1cnN0KGNhcmQsIGZhbHNlKTsgdmkuYWR2YW5jZVRpbWVyc0J5VGltZSgxMDApOwogICAgY29uc3QgZXZlbnQgPSBuZXcgS2V5Ym9hcmRFdmVudCgia2V5ZG93biIsIHsga2V5OiAiRW50ZXIiLCBjYW5jZWxhYmxlOiB0cnVlIH0pOwogICAgd2luZG93LmRpc3BhdGNoRXZlbnQoZXZlbnQpOyBleHBlY3QoZXZlbnQuZGVmYXVsdFByZXZlbnRlZCkudG9CZSh0cnVlKTsKICAgIGV4cGVjdChzdWJtaXQpLnRvSGF2ZUJlZW5DYWxsZWRUaW1lcygxKTsKICB9KTsKICBpdCgic2FtZSBwaHlzaWNhbCBzY2FuIGlzIGRlYm91bmNlZCIsICgpID0+IHsgYnVyc3QoKTsgYnVyc3QoKTsgZXhwZWN0KHN1Ym1pdCkudG9IYXZlQmVlbkNhbGxlZFRpbWVzKDEpOyB9KTsKICBpdCgicmVqZWN0cyBvdmVyc2l6ZWQgaWRlbnRpZmllcnMiLCAoKSA9PiB7IGJ1cnN0KCJYIi5yZXBlYXQoMTYxKSk7IGV4cGVjdChzdWJtaXQpLm5vdC50b0hhdmVCZWVuQ2FsbGVkKCk7IH0pOwogIGl0LmVhY2goWyJpbnB1dCIsICJ0ZXh0YXJlYSIsICJkaXYiXSkoImlnbm9yZXMgdHlwaW5nIGluIGVkaXRhYmxlICVzIiwgdGFnID0+IHsKICAgIGNvbnN0IGVsZW1lbnQgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KHRhZyk7IGlmICh0YWcgPT09ICJkaXYiKSBlbGVtZW50LmNvbnRlbnRFZGl0YWJsZSA9ICJ0cnVlIjsKICAgIGlmICh0YWcgPT09ICJkaXYiKSBlbGVtZW50LnNldEF0dHJpYnV0ZSgiY29udGVudGVkaXRhYmxlIiwgInRydWUiKTsKICAgIGRvY3VtZW50LmJvZHkuYXBwZW5kKGVsZW1lbnQpOwogICAgZm9yIChjb25zdCBjIG9mIGNhcmQpIHsga2V5KGMsIGVsZW1lbnQpOyB2aS5hZHZhbmNlVGltZXJzQnlUaW1lKDgpOyB9CiAgICBrZXkoIkVudGVyIiwgZWxlbWVudCk7IGV4cGVjdChzdWJtaXQpLm5vdC50b0hhdmVCZWVuQ2FsbGVkKCk7IGVsZW1lbnQucmVtb3ZlKCk7CiAgfSk7CiAgaXQoImlnbm9yZXMgc2hvcnRjdXRzL3JlcGVhdHMvbmF2aWdhdGlvbiBhbmQgcmVzZXRzIGluY29tcGxldGUgc2NhbnMiLCAoKSA9PiB7CiAgICBmb3IgKGNvbnN0IG9wdGlvbnMgb2YgW3sgY3RybEtleTogdHJ1ZSB9LCB7IGFsdEtleTogdHJ1ZSB9LCB7IG1ldGFLZXk6IHRydWUgfSwgeyByZXBlYXQ6IHRydWUgfV0pIHsKICAgICAgZm9yIChjb25zdCBjIG9mIGNhcmQpIGtleShjLCB3aW5kb3csIG9wdGlvbnMpOyBrZXkoIkVudGVyIik7CiAgICB9CiAgICBidXJzdCgiMTIzIiwgZmFsc2UpOyBrZXkoIkFycm93TGVmdCIpOyBidXJzdCgiNDU2IiwgdHJ1ZSk7CiAgICBleHBlY3Qoc3VibWl0KS5ub3QudG9IYXZlQmVlbkNhbGxlZCgpOwogIH0pOwp9KTsKYXN5bmMgZnVuY3Rpb24gdGVybWluYWwobW9kZTogc3RyaW5nKSB7CiAgdmkubW9ja2VkKGFwaS5nZXQpLm1vY2tSZXNvbHZlZFZhbHVlKHsgY29kZTogIlRFU1QiLCBuYW1lOiAiVGVzdCBjbG9jayIsIGlkZW50aWZpY2F0aW9uX21vZGU6IG1vZGUsIGV4aXRfbWVudV90aW1lb3V0X3NlY29uZHM6IDUsIGFjdGlvbnM6IFtdIH0pOwogIGF3YWl0IGFjdChhc3luYyAoKSA9PiB7IHJlbmRlcig8VGVybWluYWxQYWdlIC8+KTsgfSk7Cn0KYXN5bmMgZnVuY3Rpb24gc2Nhbih2YWx1ZSA9IGNhcmQpIHsgYXdhaXQgYWN0KGFzeW5jICgpID0+IHsgYnVyc3QodmFsdWUpOyB9KTsgfQpkZXNjcmliZSgidGVybWluYWwgUkZJRCBmbG93IiwgKCkgPT4gewogIGl0LmVhY2goWyJSRklEIiwgIkJPVEgiXSkoIiVzIHNjYW4gdXNlcyBleHBsaWNpdCBSRklEIHJlcG9ydGVyIGFuZCBsb2NrcyBwZW5kaW5nIHJlcXVlc3QiLCBhc3luYyBtb2RlID0+IHsKICAgIHZpLm1vY2tlZChhcGkucG9zdCkubW9ja0ltcGxlbWVudGF0aW9uKCgpID0+IG5ldyBQcm9taXNlKCgpID0+IHt9KSk7CiAgICBhd2FpdCB0ZXJtaW5hbChtb2RlKTsgYXdhaXQgc2NhbigpOyBhd2FpdCBzY2FuKCI5OTk5OTk5OSIpOwogICAgZXhwZWN0KGFwaS5wb3N0KS50b0hhdmVCZWVuQ2FsbGVkRXhhY3RseU9uY2VXaXRoKCIvYXBpL3YxL3Rlcm1pbmFsL3NjYW4iLCB7IHJlcG9ydGVyX2lkOiBjYXJkLCBpZGVudGlmaWNhdGlvbl9tZXRob2Q6ICJSRklEIiB9KTsKICAgIGV4cGVjdChzY3JlZW4uZ2V0QnlUZXh0KCJSZWFkaW5nIGNhcmTigKYiKSkudG9CZVRydXRoeSgpOwogIH0pOwogIGl0KCJLRVlQQUQgZG9lcyBub3QgbGlzdGVuIHRvIHJlYWRlciBpbnB1dCIsIGFzeW5jICgpID0+IHsgYXdhaXQgdGVybWluYWwoIktFWVBBRCIpOyBhd2FpdCBzY2FuKCk7IGV4cGVjdChhcGkucG9zdCkubm90LnRvSGF2ZUJlZW5DYWxsZWQoKTsgfSk7CiAgaXQoIktFWVBBRCBhY2NlcHRzIHR5cGVkIGFuZCBwYXN0ZWQgZGlnaXRzIGFuZCBzdWJtaXRzIHdpdGggRW50ZXIiLCBhc3luYyAoKSA9PiB7CiAgICB2aS5tb2NrZWQoYXBpLnBvc3QpLm1vY2tSZXNvbHZlZFZhbHVlKHsgZmxvdzogIkVOVFJZX1JFQ09SREVEIiwgZXZlbnQ6IHsgZXZlbnRfZGF0ZXRpbWU6IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKSB9IH0pOwogICAgYXdhaXQgdGVybWluYWwoIktFWVBBRCIpOwogICAgY29uc3QgaW5wdXQgPSBzY3JlZW4uZ2V0QnlSb2xlKCJ0ZXh0Ym94IiwgeyBuYW1lOiAiRW50ZXIgYmFkZ2UgbnVtYmVyIiB9KTsKICAgIGZpcmVFdmVudC5jaGFuZ2UoaW5wdXQsIHsgdGFyZ2V0OiB7IHZhbHVlOiAiMDAwMTIzNDUiIH0gfSk7CiAgICBhd2FpdCBhY3QoYXN5bmMgKCkgPT4geyBmaXJlRXZlbnQua2V5RG93bihpbnB1dCwgeyBrZXk6ICJFbnRlciIgfSk7IH0pOwogICAgZXhwZWN0KGFwaS5wb3N0KS50b0hhdmVCZWVuQ2FsbGVkV2l0aCgiL2FwaS92MS90ZXJtaW5hbC9zY2FuIiwgeyByZXBvcnRlcl9pZDogIjAwMDEyMzQ1IiwgaWRlbnRpZmljYXRpb25fbWV0aG9kOiAiS0VZUEFEIiB9KTsKICB9KTsKICBpdCgibWFudWFsIGtleXBhZCByZW1haW5zIEtFWVBBRCBpbiBCT1RIIiwgYXN5bmMgKCkgPT4gewogICAgdmkubW9ja2VkKGFwaS5wb3N0KS5tb2NrUmVzb2x2ZWRWYWx1ZSh7IGZsb3c6ICJFTlRSWV9SRUNPUkRFRCIsIGV2ZW50OiB7IGV2ZW50X2RhdGV0aW1lOiBuZXcgRGF0ZSgpLnRvSVNPU3RyaW5nKCkgfSB9KTsKICAgIGF3YWl0IHRlcm1pbmFsKCJCT1RIIik7IGZpcmVFdmVudC5jbGljayhzY3JlZW4uZ2V0QnlSb2xlKCJidXR0b24iLCB7IG5hbWU6ICIxIiwgZXhhY3Q6IHRydWUgfSkpOwogICAgYXdhaXQgYWN0KGFzeW5jICgpID0+IHsgZmlyZUV2ZW50LmNsaWNrKHNjcmVlbi5nZXRCeVJvbGUoImJ1dHRvbiIsIHsgbmFtZTogIkNvbnRpbnVlIiB9KSk7IH0pOwogICAgZXhwZWN0KGFwaS5wb3N0KS50b0hhdmVCZWVuQ2FsbGVkV2l0aCgiL2FwaS92MS90ZXJtaW5hbC9zY2FuIiwgeyByZXBvcnRlcl9pZDogIjEiLCBpZGVudGlmaWNhdGlvbl9tZXRob2Q6ICJLRVlQQUQiIH0pOwogIH0pOwogIGl0KCJyZXBvcnRlciBhbmQgUkZJRCBtZXRob2Qgc3Vydml2ZSBleGl0IGFuZCBzdWItYWN0aW9uIHNlbGVjdGlvbjsgb3RoZXIgc2NhbnMgY2Fubm90IHJlcGxhY2UgdGhlbSIsIGFzeW5jICgpID0+IHsKICAgIHZpLm1vY2tlZChhcGkucG9zdCkubW9ja1Jlc29sdmVkVmFsdWVPbmNlKHsgZmxvdzogIkVYSVRfUkVRVUlSRUQiLCBhY3Rpb25zOiBbeyBjb2RlOiAiRkFDVE9SWV9FWElUIiwgbGFiZWw6ICJGYWN0b3J5IGV4aXQiLCBoYXNfc3ViYWN0aW9uczogdHJ1ZSB9XSB9KQogICAgICAubW9ja1Jlc29sdmVkVmFsdWVPbmNlKHsgZmxvdzogIlNVQkFDVElPTl9SRVFVSVJFRCIsIGFjdGlvbnM6IFt7IGNvZGU6ICJNRURJQ0FMIiwgbGFiZWw6ICJNZWRpY2FsIiB9XSB9KQogICAgICAubW9ja1Jlc29sdmVkVmFsdWVPbmNlKHsgZmxvdzogIkVYSVRfUkVDT1JERUQiLCBldmVudDogeyBldmVudF9kYXRldGltZTogbmV3IERhdGUoKS50b0lTT1N0cmluZygpIH0gfSk7CiAgICBhd2FpdCB0ZXJtaW5hbCgiQk9USCIpOyBhd2FpdCBzY2FuKCk7IGF3YWl0IHNjYW4oIjc3Nzc3Nzc3Iik7CiAgICBhd2FpdCBhY3QoYXN5bmMgKCkgPT4geyBmaXJlRXZlbnQuY2xpY2soc2NyZWVuLmdldEJ5Um9sZSgiYnV0dG9uIiwgeyBuYW1lOiAiRmFjdG9yeSBleGl0IOKAuiIgfSkpOyB9KTsKICAgIGV4cGVjdChhcGkucG9zdCkudG9IYXZlQmVlbkxhc3RDYWxsZWRXaXRoKCIvYXBpL3YxL3Rlcm1pbmFsL2V4aXQiLCB7IHJlcG9ydGVyX2lkOiBjYXJkLCBpZGVudGlmaWNhdGlvbl9tZXRob2Q6ICJSRklEIiwgYWN0aW9uX2NvZGU6ICJGQUNUT1JZX0VYSVQiIH0pOwogICAgYXdhaXQgYWN0KGFzeW5jICgpID0+IHsgZmlyZUV2ZW50LmNsaWNrKHNjcmVlbi5nZXRCeVJvbGUoImJ1dHRvbiIsIHsgbmFtZTogIk1lZGljYWwiIH0pKTsgfSk7CiAgICBleHBlY3QoYXBpLnBvc3QpLnRvSGF2ZUJlZW5MYXN0Q2FsbGVkV2l0aCgiL2FwaS92MS90ZXJtaW5hbC9leGl0IiwgeyByZXBvcnRlcl9pZDogY2FyZCwgaWRlbnRpZmljYXRpb25fbWV0aG9kOiAiUkZJRCIsIGFjdGlvbl9jb2RlOiAiTUVESUNBTCIgfSk7CiAgICBleHBlY3QoYXBpLnBvc3QpLnRvSGF2ZUJlZW5DYWxsZWRUaW1lcygzKTsKICB9KTsKICBpdC5lYWNoKFswLCA1LCAxMjBdKSggImV4aXQgbWVudSB0aW1lb3V0ICVpIHNlY29uZHMiLCBhc3luYyB0aW1lb3V0ID0+IHsKICAgIHZpLm1vY2tlZChhcGkuZ2V0KS5tb2NrUmVzb2x2ZWRWYWx1ZSh7IGNvZGU6ICJURVNUIiwgbmFtZTogIlRlc3QgY2xvY2siLCBpZGVudGlmaWNhdGlvbl9tb2RlOiAiS0VZUEFEIiwgZXhpdF9tZW51X3RpbWVvdXRfc2Vjb25kczogdGltZW91dCwgYWN0aW9uczogW10gfSk7CiAgICB2aS5tb2NrZWQoYXBpLnBvc3QpLm1vY2tSZXNvbHZlZFZhbHVlKHsgZmxvdzogIkVYSVRfUkVRVUlSRUQiLCB3b3JrZXJfc3RhdGU6ICJJTlNJREUiLCBhY3Rpb25zOiBbeyBjb2RlOiAiU1RPUCIsIGxhYmVsOiAiU3RvcCIgfV0gfSk7CiAgICBhd2FpdCBhY3QoYXN5bmMgKCkgPT4geyByZW5kZXIoPFRlcm1pbmFsUGFnZSAvPik7IH0pOwogICAgYXdhaXQgYWN0KGFzeW5jICgpID0+IHsgZmlyZUV2ZW50LmNoYW5nZShzY3JlZW4uZ2V0QnlSb2xlKCJ0ZXh0Ym94IiwgeyBuYW1lOiAiRW50ZXIgYmFkZ2UgbnVtYmVyIiB9KSwgeyB0YXJnZXQ6IHsgdmFsdWU6ICIwMDEyMyIgfSB9KTsgZmlyZUV2ZW50LmNsaWNrKHNjcmVlbi5nZXRCeVJvbGUoImJ1dHRvbiIsIHsgbmFtZTogIkNvbnRpbnVlIiB9KSk7IH0pOwogICAgZXhwZWN0KHNjcmVlbi5nZXRCeVRleHQoIlNlbGVjdCB0aGUgcmVhc29uIGZvciBsZWF2aW5nIikpLnRvQmVUcnV0aHkoKTsKICAgIGlmICh0aW1lb3V0ID09PSAwKSB7CiAgICAgIGF3YWl0IGFjdChhc3luYyAoKSA9PiB7IHZpLmFkdmFuY2VUaW1lcnNCeVRpbWUoMTIxXzAwMCk7IH0pOwogICAgICBleHBlY3Qoc2NyZWVuLmdldEJ5VGV4dCgiU2VsZWN0IHRoZSByZWFzb24gZm9yIGxlYXZpbmciKSkudG9CZVRydXRoeSgpOwogICAgfSBlbHNlIHsKICAgICAgYXdhaXQgYWN0KGFzeW5jICgpID0+IHsgdmkuYWR2YW5jZVRpbWVyc0J5VGltZSh0aW1lb3V0ICogMTAwMCAtIDEpOyB9KTsKICAgICAgZXhwZWN0KHNjcmVlbi5nZXRCeVRleHQoIlNlbGVjdCB0aGUgcmVhc29uIGZvciBsZWF2aW5nIikpLnRvQmVUcnV0aHkoKTsKICAgICAgYXdhaXQgYWN0KGFzeW5jICgpID0+IHsgdmkuYWR2YW5jZVRpbWVyc0J5VGltZSgxKTsgfSk7CiAgICAgIGV4cGVjdChzY3JlZW4ucXVlcnlCeVRleHQoIlNlbGVjdCB0aGUgcmVhc29uIGZvciBsZWF2aW5nIikpLnRvQmVOdWxsKCk7CiAgICAgIGV4cGVjdChzY3JlZW4uZ2V0QnlSb2xlKCJ0ZXh0Ym94IiwgeyBuYW1lOiAiRW50ZXIgYmFkZ2UgbnVtYmVyIiB9KSkudG9CZVRydXRoeSgpOwogICAgfQogIH0pOwogIGl0KCJyZXN0YXJ0cyB0aGUgZnVsbCBleGl0IG1lbnUgdGltZW91dCBhZnRlciBhbiBhY3Rpb24gZmFpbHMiLCBhc3luYyAoKSA9PiB7CiAgICB2aS5tb2NrZWQoYXBpLnBvc3QpLm1vY2tSZXNvbHZlZFZhbHVlT25jZSh7IGZsb3c6ICJFWElUX1JFUVVJUkVEIiwgYWN0aW9uczogW3sgY29kZTogIlNUT1AiLCBsYWJlbDogIlN0b3AiIH1dIH0pCiAgICAgIC5tb2NrUmVqZWN0ZWRWYWx1ZU9uY2UobmV3IEVycm9yKCJFeGl0IHJlamVjdGVkIGJ5IHBvbGljeSIpKTsKICAgIGF3YWl0IHRlcm1pbmFsKCJLRVlQQUQiKTsKICAgIGF3YWl0IGFjdChhc3luYyAoKSA9PiB7IGZpcmVFdmVudC5jaGFuZ2Uoc2NyZWVuLmdldEJ5Um9sZSgidGV4dGJveCIsIHsgbmFtZTogIkVudGVyIGJhZGdlIG51bWJlciIgfSksIHsgdGFyZ2V0OiB7IHZhbHVlOiAiMDAxMjMiIH0gfSk7IGZpcmVFdmVudC5jbGljayhzY3JlZW4uZ2V0QnlSb2xlKCJidXR0b24iLCB7IG5hbWU6ICJDb250aW51ZSIgfSkpOyB9KTsKICAgIGF3YWl0IGFjdChhc3luYyAoKSA9PiB7IHZpLmFkdmFuY2VUaW1lcnNCeVRpbWUoNDAwMCk7IH0pOwogICAgYXdhaXQgYWN0KGFzeW5jICgpID0+IHsgZmlyZUV2ZW50LmNsaWNrKHNjcmVlbi5nZXRCeVJvbGUoImJ1dHRvbiIsIHsgbmFtZTogIlN0b3AiIH0pKTsgfSk7CiAgICBleHBlY3Qoc2NyZWVuLmdldEJ5VGV4dCgiRXhpdCByZWplY3RlZCBieSBwb2xpY3kiKSkudG9CZVRydXRoeSgpOwogICAgZXhwZWN0KHNjcmVlbi5nZXRCeVRleHQoIlNlbGVjdCB0aGUgcmVhc29uIGZvciBsZWF2aW5nIikpLnRvQmVUcnV0aHkoKTsKICAgIGF3YWl0IGFjdChhc3luYyAoKSA9PiB7IHZpLmFkdmFuY2VUaW1lcnNCeVRpbWUoNDk5OSk7IH0pOwogICAgZXhwZWN0KHNjcmVlbi5nZXRCeVRleHQoIlNlbGVjdCB0aGUgcmVhc29uIGZvciBsZWF2aW5nIikpLnRvQmVUcnV0aHkoKTsKICAgIGF3YWl0IGFjdChhc3luYyAoKSA9PiB7IHZpLmFkdmFuY2VUaW1lcnNCeVRpbWUoMSk7IH0pOwogICAgZXhwZWN0KHNjcmVlbi5xdWVyeUJ5VGV4dCgiU2VsZWN0IHRoZSByZWFzb24gZm9yIGxlYXZpbmciKSkudG9CZU51bGwoKTsKICB9KTsKICBpdCgicmV0dXJucyBBUEkgZXJyb3JzIGFuZCBhbGxvd3MgYSBzdWJzZXF1ZW50IHNjYW4iLCBhc3luYyAoKSA9PiB7CiAgICB2aS5tb2NrZWQoYXBpLnBvc3QpLm1vY2tSZWplY3RlZFZhbHVlT25jZShuZXcgRXJyb3IoIkV4aXQgcmVqZWN0ZWQgYnkgcG9saWN5IikpCiAgICAgIC5tb2NrUmVzb2x2ZWRWYWx1ZU9uY2UoeyBmbG93OiAiRU5UUllfUkVDT1JERUQiLCBldmVudDogeyBldmVudF9kYXRldGltZTogbmV3IERhdGUoKS50b0lTT1N0cmluZygpIH0gfSk7CiAgICBhd2FpdCB0ZXJtaW5hbCgiUkZJRCIpOyBhd2FpdCBzY2FuKCk7IGV4cGVjdChzY3JlZW4uZ2V0QnlUZXh0KCJFeGl0IHJlamVjdGVkIGJ5IHBvbGljeSIpKS50b0JlVHJ1dGh5KCk7CiAgICBhd2FpdCBzY2FuKCI3Nzc3Nzc3NyIpOyBleHBlY3QoYXBpLnBvc3QpLnRvSGF2ZUJlZW5DYWxsZWRUaW1lcygyKTsKICB9KTsKICBpdCgic2hvd3MgZXh0ZXJuYWwgcGVyaW1ldGVyIGVycm9ycyB1bmRlciBDb250aW51ZSBpbiB0aGUgc2VsZWN0ZWQgbGFuZ3VhZ2UiLCBhc3luYyAoKSA9PiB7CiAgICBsb2NhbFN0b3JhZ2Uuc2V0SXRlbSgiYnNzLXRpbWVjb2xsZWN0aW9uLWxhbmd1YWdlIiwgImVzIik7CiAgICB2aS5tb2NrZWQoYXBpLnBvc3QpLm1vY2tSZWplY3RlZFZhbHVlT25jZShuZXcgRXJyb3IoIkV4dGVybmFsIHBlcmltZXRlciBwcmVzZW5jZTogVU5LTk9XTiIpKTsKICAgIHZpLm1vY2tlZChhcGkuZ2V0KS5tb2NrUmVzb2x2ZWRWYWx1ZSh7IGNvZGU6ICJURVNUIiwgbmFtZTogIlRlc3QgY2xvY2siLCBpZGVudGlmaWNhdGlvbl9tb2RlOiAiS0VZUEFEIiwgZXhpdF9tZW51X3RpbWVvdXRfc2Vjb25kczogNSwgYWN0aW9uczogW10gfSk7CiAgICBhd2FpdCBhY3QoYXN5bmMgKCkgPT4geyByZW5kZXIoPFRlcm1pbmFsUGFnZSAvPik7IH0pOwogICAgYXdhaXQgYWN0KGFzeW5jICgpID0+IHsgZmlyZUV2ZW50LmNoYW5nZShzY3JlZW4uZ2V0QnlSb2xlKCJ0ZXh0Ym94IiwgeyBuYW1lOiAiSW50cm9kdWNlIGVsIG7Dum1lcm8gZGUgdGFyamV0YSIgfSksIHsgdGFyZ2V0OiB7IHZhbHVlOiAiMDAxMjMiIH0gfSk7IGZpcmVFdmVudC5jbGljayhzY3JlZW4uZ2V0QnlSb2xlKCJidXR0b24iLCB7IG5hbWU6ICJDb250aW51YXIiIH0pKTsgfSk7CiAgICBjb25zdCBlcnJvciA9IHNjcmVlbi5nZXRCeVJvbGUoImFsZXJ0Iik7CiAgICBleHBlY3QoZXJyb3IudGV4dENvbnRlbnQpLnRvQmUoIkVzdGFkbyBkZSBwcmVzZW5jaWEgZGVsIHBlcsOtbWV0cm8gZXh0ZXJubzogREVTQ09OT0NJRE8iKTsKICAgIGNvbnN0IGtleXBhZCA9IGVycm9yLmNsb3Nlc3QoIi5rZXlwYWQtd3JhcCIpOwogICAgY29uc3QgY29udGludWVCdXR0b24gPSBrZXlwYWQ/LnF1ZXJ5U2VsZWN0b3IoIi5sYXJnZSIpOwogICAgZXhwZWN0KGNvbnRpbnVlQnV0dG9uPy50ZXh0Q29udGVudCkudG9CZSgiQ29udGludWFyIik7CiAgICBleHBlY3QoZXJyb3IucGFyZW50RWxlbWVudCkudG9CZShrZXlwYWQpOwogICAgZXhwZWN0KGVycm9yLnByZXZpb3VzRWxlbWVudFNpYmxpbmcpLnRvQmUoY29udGludWVCdXR0b24pOwogICAgZXhwZWN0KGtleXBhZD8ucXVlcnlTZWxlY3RvckFsbCgnW3JvbGU9ImFsZXJ0Il0nKSkudG9IYXZlTGVuZ3RoKDEpOwogIH0pOwogIGl0KCJ1bnByb3Zpc2lvbmVkIGJyb3dzZXIgZG9lcyBub3QgY2FwdHVyZSBzY2FucyIsIGFzeW5jICgpID0+IHsKICAgIHZpLm1vY2tlZChhcGkuZ2V0KS5tb2NrUmVqZWN0ZWRWYWx1ZShuZXcgRXJyb3IoIk5vdCBwcm92aXNpb25lZCIpKTsKICAgIHZpLm1vY2tlZChhcGkucG9zdCkubW9ja1Jlc29sdmVkVmFsdWUoeyBwYWlyaW5nX2NvZGU6ICJURVNULUNPREUiLCBleHBpcmVzX2F0OiBuZXcgRGF0ZSgpLnRvSVNPU3RyaW5nKCksIHBvbGxfYWZ0ZXJfc2Vjb25kczogMiB9KTsKICAgIGF3YWl0IGFjdChhc3luYyAoKSA9PiB7IHJlbmRlcig8VGVybWluYWxQYWdlIC8+KTsgfSk7IGF3YWl0IHNjYW4oKTsKICAgIGV4cGVjdChhcGkucG9zdCkudG9IYXZlQmVlbkNhbGxlZFRpbWVzKDEpOyBleHBlY3QoYXBpLnBvc3QpLnRvSGF2ZUJlZW5DYWxsZWRXaXRoKCIvYXBpL3YxL3Rlcm1pbmFsL3BhaXJpbmciLCB7fSk7CiAgfSk7Cn0pOwoKZGVzY3JpYmUoInBlcmltZXRlciB0ZXJtaW5hbCBmZWVkYmFjayIsICgpID0+IHsKICBpdC5lYWNoKFsKICAgIFsiRFVQTElDQVRFX0lHTk9SRUQiLCAiU2NhbiBhbHJlYWR5IHJlY29yZGVkIl0sCiAgICBbIkFMUkVBRFlfSU5TSURFIiwgIkJhZGdlIGFscmVhZHkgaW5zaWRlIGZhY3RvcnkiXSwKICAgIFsiQUxSRUFEWV9PVVRTSURFIiwgIkJhZGdlIGFscmVhZHkgb3V0c2lkZSBmYWN0b3J5Il0sCiAgICBbIkZBQ1RPUllfRU5UUllfUkVDT1JERUQiLCAiRW50cnkgcmVnaXN0ZXJlZCJdLAogICAgWyJGQUNUT1JZX0VYSVRfUkVDT1JERUQiLCAiRXhpdCByZWdpc3RlcmVkIl0sCiAgXSkoIiVzIHJldHVybnMgcmVhZGFibGUgZmVlZGJhY2sgYW5kIHJldGFpbnMgdGhlIFJGSUQgVUlEIiwgYXN5bmMgKGZsb3csIGZlZWRiYWNrKSA9PiB7CiAgICB2aS5tb2NrZWQoYXBpLnBvc3QpLm1vY2tSZXNvbHZlZFZhbHVlKHsgZmxvdywgd29ya2VyX3N0YXRlOiAiT1VUU0lERSIsIGFjdGlvbnM6IFtdLCBldmVudDogbnVsbCB9KTsKICAgIGF3YWl0IHRlcm1pbmFsKCJSRklEIik7IGF3YWl0IHNjYW4oKTsKICAgIGV4cGVjdChzY3JlZW4uZ2V0QnlUZXh0KGZlZWRiYWNrKSkudG9CZVRydXRoeSgpOwogICAgZXhwZWN0KGFwaS5wb3N0KS50b0hhdmVCZWVuQ2FsbGVkRXhhY3RseU9uY2VXaXRoKCIvYXBpL3YxL3Rlcm1pbmFsL3NjYW4iLCB7IHJlcG9ydGVyX2lkOiBjYXJkLCBpZGVudGlmaWNhdGlvbl9tZXRob2Q6ICJSRklEIiB9KTsKICAgIGF3YWl0IGFjdChhc3luYyAoKSA9PiB7IHZpLmFkdmFuY2VUaW1lcnNCeVRpbWUoMjIwMCk7IH0pOwogICAgZXhwZWN0KHNjcmVlbi5xdWVyeUJ5VGV4dChmZWVkYmFjaykpLnRvQmVOdWxsKCk7CiAgfSk7Cn0pOwo=
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { KeyboardWedge } from "../src/keyboardWedge";
+import { TerminalPage } from "../src/pages/TerminalPage";
+import { api } from "../src/api";
+vi.mock("../src/api", () => ({ api: { get: vi.fn(), post: vi.fn() } }));
+const card = "00098765AB";
+const key = (value: string, target: EventTarget = window, options = {}) =>
+  target.dispatchEvent(new KeyboardEvent("keydown", { key: value, bubbles: true, cancelable: true, ...options }));
+const burst = (value = card, enter = true, delay = 8) => {
+  for (const character of value) { key(character); vi.advanceTimersByTime(delay); }
+  if (enter) key("Enter");
+};
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date", "performance"] });
+  vi.spyOn(document, "hasFocus").mockReturnValue(true);
+  localStorage.setItem("bss-timecollection-language", "en");
+});
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.clearAllMocks(); });
+describe("keyboard wedge", () => {
+  let reader: KeyboardWedge;
+  let submit: ReturnType<typeof vi.fn>;
+  beforeEach(() => { submit = vi.fn(); reader = new KeyboardWedge(submit); window.addEventListener("keydown", reader.keydown); });
+  afterEach(() => { reader.reset(); window.removeEventListener("keydown", reader.keydown); });
+  it("rapid Enter scan preserves string and completes once despite timeout", () => {
+    burst(); vi.advanceTimersByTime(300); expect(submit).toHaveBeenCalledExactlyOnceWith(card);
+  });
+  it("ignores spaces and Tab separators inserted between badge characters", () => {
+    for (const character of "0582609699") {
+      key(character); vi.advanceTimersByTime(8);
+      key(" "); vi.advanceTimersByTime(8);
+    }
+    const tab = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+    window.dispatchEvent(tab); vi.advanceTimersByTime(8); key("Enter");
+    expect(tab.defaultPrevented).toBe(true);
+    expect(submit).toHaveBeenCalledExactlyOnceWith("0582609699");
+  });
+  it("timeout fallback completes once", () => {
+    burst(card, false); vi.advanceTimersByTime(100); key("Enter"); expect(submit).toHaveBeenCalledExactlyOnceWith(card);
+  });
+  it("slow typing and short bursts do not scan", () => {
+    burst(card, true, 150); burst("123"); vi.advanceTimersByTime(200); expect(submit).not.toHaveBeenCalled();
+  });
+  it("accepts a slightly delayed Enter and suppresses its default button activation", () => {
+    burst(card, false); vi.advanceTimersByTime(60);
+    const event = new KeyboardEvent("keydown", { key: "Enter", cancelable: true });
+    window.dispatchEvent(event); expect(event.defaultPrevented).toBe(true);
+    expect(submit).toHaveBeenCalledExactlyOnceWith(card);
+  });
+  it("late Enter after timeout cannot activate the focused button", () => {
+    burst(card, false); vi.advanceTimersByTime(100);
+    const event = new KeyboardEvent("keydown", { key: "Enter", cancelable: true });
+    window.dispatchEvent(event); expect(event.defaultPrevented).toBe(true);
+    expect(submit).toHaveBeenCalledTimes(1);
+  });
+  it("same physical scan is debounced", () => { burst(); burst(); expect(submit).toHaveBeenCalledTimes(1); });
+  it("rejects oversized identifiers", () => { burst("X".repeat(161)); expect(submit).not.toHaveBeenCalled(); });
+  it.each(["input", "textarea", "div"])("ignores typing in editable %s", tag => {
+    const element = document.createElement(tag); if (tag === "div") element.contentEditable = "true";
+    if (tag === "div") element.setAttribute("contenteditable", "true");
+    document.body.append(element);
+    for (const c of card) { key(c, element); vi.advanceTimersByTime(8); }
+    key("Enter", element); expect(submit).not.toHaveBeenCalled(); element.remove();
+  });
+  it("ignores shortcuts/repeats/navigation and resets incomplete scans", () => {
+    for (const options of [{ ctrlKey: true }, { altKey: true }, { metaKey: true }, { repeat: true }]) {
+      for (const c of card) key(c, window, options); key("Enter");
+    }
+    burst("123", false); key("ArrowLeft"); burst("456", true);
+    expect(submit).not.toHaveBeenCalled();
+  });
+});
+async function terminal(mode: string) {
+  vi.mocked(api.get).mockResolvedValue({ code: "TEST", name: "Test clock", identification_mode: mode, exit_menu_timeout_seconds: 5, actions: [] });
+  await act(async () => { render(<TerminalPage />); });
+}
+async function scan(value = card) { await act(async () => { burst(value); }); }
+describe("terminal RFID flow", () => {
+  it.each(["RFID", "BOTH"])("%s scan uses explicit RFID reporter and locks pending request", async mode => {
+    vi.mocked(api.post).mockImplementation(() => new Promise(() => {}));
+    await terminal(mode); await scan(); await scan("99999999");
+    expect(api.post).toHaveBeenCalledExactlyOnceWith("/api/v1/terminal/scan", { reporter_id: card, identification_method: "RFID" });
+    expect(screen.getByText("Reading card…")).toBeTruthy();
+  });
+  it("KEYPAD does not listen to reader input", async () => { await terminal("KEYPAD"); await scan(); expect(api.post).not.toHaveBeenCalled(); });
+  it("KEYPAD accepts typed and pasted digits and submits with Enter", async () => {
+    vi.mocked(api.post).mockResolvedValue({ flow: "ENTRY_RECORDED", event: { event_datetime: new Date().toISOString() } });
+    await terminal("KEYPAD");
+    const input = screen.getByRole("textbox", { name: "Enter badge number" });
+    fireEvent.change(input, { target: { value: "00012345" } });
+    await act(async () => { fireEvent.keyDown(input, { key: "Enter" }); });
+    expect(api.post).toHaveBeenCalledWith("/api/v1/terminal/scan", { reporter_id: "00012345", identification_method: "KEYPAD" });
+  });
+  it("manual keypad remains KEYPAD in BOTH", async () => {
+    vi.mocked(api.post).mockResolvedValue({ flow: "ENTRY_RECORDED", event: { event_datetime: new Date().toISOString() } });
+    await terminal("BOTH"); fireEvent.click(screen.getByRole("button", { name: "1", exact: true }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Continue" })); });
+    expect(api.post).toHaveBeenCalledWith("/api/v1/terminal/scan", { reporter_id: "1", identification_method: "KEYPAD" });
+  });
+  it("reporter and RFID method survive exit and sub-action selection; other scans cannot replace them", async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({ flow: "EXIT_REQUIRED", actions: [{ code: "FACTORY_EXIT", label: "Factory exit", has_subactions: true }] })
+      .mockResolvedValueOnce({ flow: "SUBACTION_REQUIRED", actions: [{ code: "MEDICAL", label: "Medical" }] })
+      .mockResolvedValueOnce({ flow: "EXIT_RECORDED", event: { event_datetime: new Date().toISOString() } });
+    await terminal("BOTH"); await scan(); await scan("77777777");
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Factory exit ›" })); });
+    expect(api.post).toHaveBeenLastCalledWith("/api/v1/terminal/exit", { reporter_id: card, identification_method: "RFID", action_code: "FACTORY_EXIT" });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Medical" })); });
+    expect(api.post).toHaveBeenLastCalledWith("/api/v1/terminal/exit", { reporter_id: card, identification_method: "RFID", action_code: "MEDICAL" });
+    expect(api.post).toHaveBeenCalledTimes(3);
+  });
+  it.each([0, 5, 120])( "exit menu timeout %i seconds", async timeout => {
+    vi.mocked(api.get).mockResolvedValue({ code: "TEST", name: "Test clock", identification_mode: "KEYPAD", exit_menu_timeout_seconds: timeout, actions: [] });
+    vi.mocked(api.post).mockResolvedValue({ flow: "EXIT_REQUIRED", worker_state: "INSIDE", actions: [{ code: "STOP", label: "Stop" }] });
+    await act(async () => { render(<TerminalPage />); });
+    await act(async () => { fireEvent.change(screen.getByRole("textbox", { name: "Enter badge number" }), { target: { value: "00123" } }); fireEvent.click(screen.getByRole("button", { name: "Continue" })); });
+    expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
+    if (timeout === 0) {
+      await act(async () => { vi.advanceTimersByTime(121_000); });
+      expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
+    } else {
+      await act(async () => { vi.advanceTimersByTime(timeout * 1000 - 1); });
+      expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
+      await act(async () => { vi.advanceTimersByTime(1); });
+      expect(screen.queryByText("Select the reason for leaving")).toBeNull();
+      expect(screen.getByRole("textbox", { name: "Enter badge number" })).toBeTruthy();
+    }
+  });
+  it("restarts the full exit menu timeout after an action fails", async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({ flow: "EXIT_REQUIRED", actions: [{ code: "STOP", label: "Stop" }] })
+      .mockRejectedValueOnce(new Error("Exit rejected by policy"));
+    await terminal("KEYPAD");
+    await act(async () => { fireEvent.change(screen.getByRole("textbox", { name: "Enter badge number" }), { target: { value: "00123" } }); fireEvent.click(screen.getByRole("button", { name: "Continue" })); });
+    await act(async () => { vi.advanceTimersByTime(4000); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Stop" })); });
+    expect(screen.getByText("Exit rejected by policy")).toBeTruthy();
+    expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
+    await act(async () => { vi.advanceTimersByTime(4999); });
+    expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
+    await act(async () => { vi.advanceTimersByTime(1); });
+    expect(screen.queryByText("Select the reason for leaving")).toBeNull();
+  });
+  it("returns API errors and allows a subsequent scan", async () => {
+    vi.mocked(api.post).mockRejectedValueOnce(new Error("Exit rejected by policy"))
+      .mockResolvedValueOnce({ flow: "ENTRY_RECORDED", event: { event_datetime: new Date().toISOString() } });
+    await terminal("RFID"); await scan(); expect(screen.getByText("Exit rejected by policy")).toBeTruthy();
+    await scan("77777777"); expect(api.post).toHaveBeenCalledTimes(2);
+  });
+  it("shows external perimeter errors under Continue in the selected language", async () => {
+    localStorage.setItem("bss-timecollection-language", "es");
+    vi.mocked(api.post).mockRejectedValueOnce(new Error("External perimeter presence: UNKNOWN"));
+    vi.mocked(api.get).mockResolvedValue({ code: "TEST", name: "Test clock", identification_mode: "KEYPAD", exit_menu_timeout_seconds: 5, actions: [] });
+    await act(async () => { render(<TerminalPage />); });
+    await act(async () => { fireEvent.change(screen.getByRole("textbox", { name: "Introduce el número de tarjeta" }), { target: { value: "00123" } }); fireEvent.click(screen.getByRole("button", { name: "Continuar" })); });
+    const error = screen.getByRole("alert");
+    expect(error.textContent).toBe("Estado de presencia del perímetro externo: DESCONOCIDO");
+    const keypad = error.closest(".keypad-wrap");
+    const continueButton = keypad?.querySelector(".large");
+    expect(continueButton?.textContent).toBe("Continuar");
+    expect(error.parentElement).toBe(keypad);
+    expect(error.previousElementSibling).toBe(continueButton);
+    expect(keypad?.querySelectorAll('[role="alert"]')).toHaveLength(1);
+  });
+  it("unprovisioned browser does not capture scans", async () => {
+    vi.mocked(api.get).mockRejectedValue(new Error("Not provisioned"));
+    vi.mocked(api.post).mockResolvedValue({ pairing_code: "TEST-CODE", expires_at: new Date().toISOString(), poll_after_seconds: 2 });
+    await act(async () => { render(<TerminalPage />); }); await scan();
+    expect(api.post).toHaveBeenCalledTimes(1); expect(api.post).toHaveBeenCalledWith("/api/v1/terminal/pairing", {});
+  });
+});
+
+describe("perimeter terminal feedback", () => {
+  it.each([
+    ["DUPLICATE_IGNORED", "Scan already recorded"],
+    ["ALREADY_INSIDE", "Badge already inside factory"],
+    ["ALREADY_OUTSIDE", "Badge already outside factory"],
+    ["FACTORY_ENTRY_RECORDED", "Entry registered"],
+    ["FACTORY_EXIT_RECORDED", "Exit registered"],
+  ])("%s returns readable feedback and retains the RFID UID", async (flow, feedback) => {
+    vi.mocked(api.post).mockResolvedValue({ flow, worker_state: "OUTSIDE", actions: [], event: null });
+    await terminal("RFID"); await scan();
+    expect(screen.getByText(feedback)).toBeTruthy();
+    expect(api.post).toHaveBeenCalledExactlyOnceWith("/api/v1/terminal/scan", { reporter_id: card, identification_method: "RFID" });
+    await act(async () => { vi.advanceTimersByTime(2200); });
+    expect(screen.queryByText(feedback)).toBeNull();
+  });
+});

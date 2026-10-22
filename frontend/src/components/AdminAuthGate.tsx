@@ -1,1 +1,84 @@
-aW1wb3J0IHsgRm9ybUV2ZW50LCBSZWFjdE5vZGUsIHVzZUVmZmVjdCwgdXNlU3RhdGUgfSBmcm9tICJyZWFjdCI7Cgp0eXBlIEF1dGhTdGF0ZSA9ICJsb2FkaW5nIiB8ICJhbm9ueW1vdXMiIHwgImF1dGhlbnRpY2F0ZWQiOwoKZXhwb3J0IGZ1bmN0aW9uIEFkbWluQXV0aEdhdGUoeyBjaGlsZHJlbiB9OiB7IGNoaWxkcmVuOiBSZWFjdE5vZGUgfSkgewogIGNvbnN0IFtzdGF0ZSwgc2V0U3RhdGVdID0gdXNlU3RhdGU8QXV0aFN0YXRlPigibG9hZGluZyIpOwogIGNvbnN0IFt1c2VybmFtZSwgc2V0VXNlcm5hbWVdID0gdXNlU3RhdGUoImFkbWluIik7CiAgY29uc3QgW3Bhc3N3b3JkLCBzZXRQYXNzd29yZF0gPSB1c2VTdGF0ZSgiIik7CiAgY29uc3QgW2Vycm9yLCBzZXRFcnJvcl0gPSB1c2VTdGF0ZSgiIik7CiAgY29uc3QgW3N1Ym1pdHRpbmcsIHNldFN1Ym1pdHRpbmddID0gdXNlU3RhdGUoZmFsc2UpOwoKICBhc3luYyBmdW5jdGlvbiByZWZyZXNoU2Vzc2lvbigpIHsKICAgIGNvbnN0IHJlc3BvbnNlID0gYXdhaXQgZmV0Y2goIi9hcGkvdjEvYWRtaW4vYXV0aC9tZSIsIHsgY3JlZGVudGlhbHM6ICJzYW1lLW9yaWdpbiIgfSk7CiAgICBjb25zdCBib2R5ID0gYXdhaXQgcmVzcG9uc2UuanNvbigpLmNhdGNoKCgpID0+ICh7IGF1dGhlbnRpY2F0ZWQ6IGZhbHNlIH0pKTsKICAgIHNldFN0YXRlKHJlc3BvbnNlLm9rICYmIGJvZHkuYXV0aGVudGljYXRlZCA/ICJhdXRoZW50aWNhdGVkIiA6ICJhbm9ueW1vdXMiKTsKICB9CgogIHVzZUVmZmVjdCgoKSA9PiB7CiAgICB2b2lkIHJlZnJlc2hTZXNzaW9uKCkuY2F0Y2goKCkgPT4gc2V0U3RhdGUoImFub255bW91cyIpKTsKICB9LCBbXSk7CgogIGFzeW5jIGZ1bmN0aW9uIHN1Ym1pdChldmVudDogRm9ybUV2ZW50PEhUTUxGb3JtRWxlbWVudD4pIHsKICAgIGV2ZW50LnByZXZlbnREZWZhdWx0KCk7CiAgICBzZXRTdWJtaXR0aW5nKHRydWUpOwogICAgc2V0RXJyb3IoIiIpOwogICAgdHJ5IHsKICAgICAgY29uc3QgcmVzcG9uc2UgPSBhd2FpdCBmZXRjaCgiL2FwaS92MS9hZG1pbi9hdXRoL2xvZ2luIiwgewogICAgICAgIG1ldGhvZDogIlBPU1QiLAogICAgICAgIGNyZWRlbnRpYWxzOiAic2FtZS1vcmlnaW4iLAogICAgICAgIGhlYWRlcnM6IHsgIkNvbnRlbnQtVHlwZSI6ICJhcHBsaWNhdGlvbi9qc29uIiB9LAogICAgICAgIGJvZHk6IEpTT04uc3RyaW5naWZ5KHsgdXNlcm5hbWUsIHBhc3N3b3JkIH0pLAogICAgICB9KTsKICAgICAgY29uc3QgYm9keSA9IGF3YWl0IHJlc3BvbnNlLmpzb24oKS5jYXRjaCgoKSA9PiAoeyBkZXRhaWw6ICJMb2dpbiBmYWlsZWQuIiB9KSk7CiAgICAgIGlmICghcmVzcG9uc2Uub2spIHsKICAgICAgICB0aHJvdyBuZXcgRXJyb3IodHlwZW9mIGJvZHkuZGV0YWlsID09PSAic3RyaW5nIiA/IGJvZHkuZGV0YWlsIDogIkxvZ2luIGZhaWxlZC4iKTsKICAgICAgfQogICAgICBzZXRQYXNzd29yZCgiIik7CiAgICAgIHNldFN0YXRlKCJhdXRoZW50aWNhdGVkIik7CiAgICB9IGNhdGNoIChlcnIpIHsKICAgICAgc2V0RXJyb3IoZXJyIGluc3RhbmNlb2YgRXJyb3IgPyBlcnIubWVzc2FnZSA6ICJMb2dpbiBmYWlsZWQuIik7CiAgICB9IGZpbmFsbHkgewogICAgICBzZXRTdWJtaXR0aW5nKGZhbHNlKTsKICAgIH0KICB9CgogIGFzeW5jIGZ1bmN0aW9uIGxvZ291dCgpIHsKICAgIGF3YWl0IGZldGNoKCIvYXBpL3YxL2FkbWluL2F1dGgvbG9nb3V0IiwgeyBtZXRob2Q6ICJQT1NUIiwgY3JlZGVudGlhbHM6ICJzYW1lLW9yaWdpbiIgfSk7CiAgICBzZXRQYXNzd29yZCgiIik7CiAgICBzZXRTdGF0ZSgiYW5vbnltb3VzIik7CiAgfQoKICBpZiAoc3RhdGUgPT09ICJsb2FkaW5nIikgewogICAgcmV0dXJuIDxkaXYgY2xhc3NOYW1lPSJhZG1pbi1hdXRoLXNoZWxsIj48ZGl2IGNsYXNzTmFtZT0iYWRtaW4tYXV0aC1jYXJkIj5DaGVja2luZyBhZG1pbiBzZXNzaW9u4oCmPC9kaXY+PC9kaXY+OwogIH0KCiAgaWYgKHN0YXRlID09PSAiYW5vbnltb3VzIikgewogICAgcmV0dXJuICgKICAgICAgPGRpdiBjbGFzc05hbWU9ImFkbWluLWF1dGgtc2hlbGwiPgogICAgICAgIDxmb3JtIGNsYXNzTmFtZT0iYWRtaW4tYXV0aC1jYXJkIiBvblN1Ym1pdD17c3VibWl0fT4KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJhZG1pbi1hdXRoLWtpY2tlciI+QlNTIFRpbWUgQ29sbGVjdGlvbjwvZGl2PgogICAgICAgICAgPGgxPkFkbWluIGFjY2VzczwvaDE+CiAgICAgICAgICA8cD5UZW1wb3JhcnkgYXV0aGVudGljYXRpb24gZm9yIHRoZSBhZG1pbmlzdHJhdGlvbiBhcmVhLjwvcD4KICAgICAgICAgIDxsYWJlbD4KICAgICAgICAgICAgVXNlcm5hbWUKICAgICAgICAgICAgPGlucHV0IHZhbHVlPXt1c2VybmFtZX0gb25DaGFuZ2U9eyhldmVudCkgPT4gc2V0VXNlcm5hbWUoZXZlbnQudGFyZ2V0LnZhbHVlKX0gYXV0b0NvbXBsZXRlPSJ1c2VybmFtZSIgcmVxdWlyZWQgLz4KICAgICAgICAgIDwvbGFiZWw+CiAgICAgICAgICA8bGFiZWw+CiAgICAgICAgICAgIFBhc3N3b3JkCiAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJwYXNzd29yZCIgdmFsdWU9e3Bhc3N3b3JkfSBvbkNoYW5nZT17KGV2ZW50KSA9PiBzZXRQYXNzd29yZChldmVudC50YXJnZXQudmFsdWUpfSBhdXRvQ29tcGxldGU9ImN1cnJlbnQtcGFzc3dvcmQiIHJlcXVpcmVkIGF1dG9Gb2N1cyAvPgogICAgICAgICAgPC9sYWJlbD4KICAgICAgICAgIHtlcnJvciA/IDxkaXYgY2xhc3NOYW1lPSJhZG1pbi1hdXRoLWVycm9yIj57ZXJyb3J9PC9kaXY+IDogbnVsbH0KICAgICAgICAgIDxidXR0b24gdHlwZT0ic3VibWl0IiBkaXNhYmxlZD17c3VibWl0dGluZ30+e3N1Ym1pdHRpbmcgPyAiU2lnbmluZyBpbuKApiIgOiAiU2lnbiBpbiJ9PC9idXR0b24+CiAgICAgICAgPC9mb3JtPgogICAgICA8L2Rpdj4KICAgICk7CiAgfQoKICByZXR1cm4gKAogICAgPD4KICAgICAgPGJ1dHRvbiBjbGFzc05hbWU9ImFkbWluLWF1dGgtbG9nb3V0IiB0eXBlPSJidXR0b24iIG9uQ2xpY2s9eygpID0+IHZvaWQgbG9nb3V0KCl9PlNpZ24gb3V0PC9idXR0b24+CiAgICAgIHtjaGlsZHJlbn0KICAgIDwvPgogICk7Cn0K
+import { FormEvent, ReactNode, useEffect, useState } from "react";
+
+type AuthState = "loading" | "anonymous" | "authenticated";
+
+export function AdminAuthGate({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<AuthState>("loading");
+  const [username, setUsername] = useState("admin");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function refreshSession() {
+    const response = await fetch("/api/v1/admin/auth/me", { credentials: "same-origin" });
+    const body = await response.json().catch(() => ({ authenticated: false }));
+    setState(response.ok && body.authenticated ? "authenticated" : "anonymous");
+  }
+
+  useEffect(() => {
+    void refreshSession().catch(() => setState("anonymous"));
+  }, []);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await fetch("/api/v1/admin/auth/login", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const body = await response.json().catch(() => ({ detail: "Login failed." }));
+      if (!response.ok) {
+        throw new Error(typeof body.detail === "string" ? body.detail : "Login failed.");
+      }
+      setPassword("");
+      setState("authenticated");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/v1/admin/auth/logout", { method: "POST", credentials: "same-origin" });
+    setPassword("");
+    setState("anonymous");
+  }
+
+  if (state === "loading") {
+    return <div className="admin-auth-shell"><div className="admin-auth-card">Checking admin session…</div></div>;
+  }
+
+  if (state === "anonymous") {
+    return (
+      <div className="admin-auth-shell">
+        <form className="admin-auth-card" onSubmit={submit}>
+          <div className="admin-auth-kicker">BSS Time Collection</div>
+          <h1>Admin access</h1>
+          <p>Temporary authentication for the administration area.</p>
+          <label>
+            Username
+            <input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required />
+          </label>
+          <label>
+            Password
+            <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required autoFocus />
+          </label>
+          {error ? <div className="admin-auth-error">{error}</div> : null}
+          <button type="submit" disabled={submitting}>{submitting ? "Signing in…" : "Sign in"}</button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <button className="admin-auth-logout" type="button" onClick={() => void logout()}>Sign out</button>
+      {children}
+    </>
+  );
+}

@@ -1,1 +1,23 @@
-aW1wb3J0IHB5dGVzdAoKZnJvbSBhcHAubWFpbiBpbXBvcnQgYXBwCgoKY2xhc3MgTG9jYWxUZXN0QXV0aGVudGljYXRpb25Qcm92aWRlcjoKICAgIEBwcm9wZXJ0eQogICAgZGVmIGNvbmZpZ3VyZWQoc2VsZik6CiAgICAgICAgcmV0dXJuIFRydWUKCiAgICBkZWYgYXV0aGVudGljYXRlKHNlbGYsIHJlcXVlc3QpOgogICAgICAgIHJldHVybiAidGVzdC1hZG1pbiIKCiAgICBkZWYgaXNfYXV0aGVudGljYXRpb25fZW5kcG9pbnQoc2VsZiwgcmVxdWVzdCk6CiAgICAgICAgcmV0dXJuIEZhbHNlCgoKQHB5dGVzdC5maXh0dXJlKGF1dG91c2U9VHJ1ZSkKZGVmIHByb3ZpZGVfYWRtaW5fYXV0aGVudGljYXRpb25fZm9yX2FwcGxpY2F0aW9uX3Rlc3RzKCk6CiAgICBwcmV2aW91cyA9IGdldGF0dHIoYXBwLnN0YXRlLCAiYWRtaW5fYXV0aGVudGljYXRpb25fcHJvdmlkZXIiLCBOb25lKQogICAgYXBwLnN0YXRlLmFkbWluX2F1dGhlbnRpY2F0aW9uX3Byb3ZpZGVyID0gTG9jYWxUZXN0QXV0aGVudGljYXRpb25Qcm92aWRlcigpCiAgICB5aWVsZAogICAgYXBwLnN0YXRlLmFkbWluX2F1dGhlbnRpY2F0aW9uX3Byb3ZpZGVyID0gcHJldmlvdXMK
+import pytest
+
+from app.main import app
+
+
+class LocalTestAuthenticationProvider:
+    @property
+    def configured(self):
+        return True
+
+    def authenticate(self, request):
+        return "test-admin"
+
+    def is_authentication_endpoint(self, request):
+        return False
+
+
+@pytest.fixture(autouse=True)
+def provide_admin_authentication_for_application_tests():
+    previous = getattr(app.state, "admin_authentication_provider", None)
+    app.state.admin_authentication_provider = LocalTestAuthenticationProvider()
+    yield
+    app.state.admin_authentication_provider = previous
