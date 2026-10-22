@@ -134,6 +134,7 @@ describe("terminal RFID flow", () => {
     await act(async () => { vi.advanceTimersByTime(4000); });
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Stop" })); });
     expect(screen.getByText("Exit rejected by policy")).toBeTruthy();
+    expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
     await act(async () => { vi.advanceTimersByTime(4999); });
     expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
     await act(async () => { vi.advanceTimersByTime(1); });
@@ -144,6 +145,21 @@ describe("terminal RFID flow", () => {
       .mockResolvedValueOnce({ flow: "ENTRY_RECORDED", event: { event_datetime: new Date().toISOString() } });
     await terminal("RFID"); await scan(); expect(screen.getByText("Exit rejected by policy")).toBeTruthy();
     await scan("77777777"); expect(api.post).toHaveBeenCalledTimes(2);
+  });
+  it("shows external perimeter errors under Continue in the selected language", async () => {
+    localStorage.setItem("bss-timecollection-language", "es");
+    vi.mocked(api.post).mockRejectedValueOnce(new Error("External perimeter presence: UNKNOWN"));
+    vi.mocked(api.get).mockResolvedValue({ code: "TEST", name: "Test clock", identification_mode: "KEYPAD", exit_menu_timeout_seconds: 5, actions: [] });
+    await act(async () => { render(<TerminalPage />); });
+    await act(async () => { fireEvent.change(screen.getByRole("textbox", { name: "Introduce el número de tarjeta" }), { target: { value: "00123" } }); fireEvent.click(screen.getByRole("button", { name: "Continuar" })); });
+    const error = screen.getByRole("alert");
+    expect(error.textContent).toBe("Estado de presencia del perímetro externo: DESCONOCIDO");
+    const keypad = error.closest(".keypad-wrap");
+    const continueButton = keypad?.querySelector(".large");
+    expect(continueButton?.textContent).toBe("Continuar");
+    expect(error.parentElement).toBe(keypad);
+    expect(error.previousElementSibling).toBe(continueButton);
+    expect(keypad?.querySelectorAll('[role="alert"]')).toHaveLength(1);
   });
   it("unprovisioned browser does not capture scans", async () => {
     vi.mocked(api.get).mockRejectedValue(new Error("Not provisioned"));
