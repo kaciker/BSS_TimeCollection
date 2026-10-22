@@ -119,3 +119,7 @@ Reference is current functional CORP 37a8e4f, not older 38fb224. Prepared one co
 
 ## 2026-10-21 — RFID HID separators
 User screenshot showed the reader types badge 0582609699 as digits separated by literal spaces (20 text characters). Previous KeyboardWedge reset on whitespace and discarded the scan. Updated frontend parser to ignore inter-key spaces/Tab (prevent Tab focus movement), preserving digit UID; documented and added regression. RFID suite 26 passed; production frontend build succeeded. Backup /opt/BSSTimeCollection-backups/rfid-separator-20261021T093546Z has verified pg_dump custom archive/restore listing, app archive/checksums, prior web image tag. Deployed only CORP web container; API/worker/DB IDs and starts unchanged, DB volume mounts unchanged, ORACLE_ENABLED=false, health and new JS bundle verified. No production scan or Oracle transmission submitted.
+
+
+## 2026-10-22 — Entrada física manual en KEYPAD
+En KEYPAD, el visor numérico acepta escritura y pegado de dígitos y Enter envía el fichaje; conserva ceros iniciales y el límite de 160 caracteres. BOTH mantiene botones táctiles para la entrada manual y la ráfaga RFID. Incluye regresión de terminal que verifica entrada manual y envío KEYPAD.
