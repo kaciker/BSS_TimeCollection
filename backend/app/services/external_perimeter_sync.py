@@ -449,8 +449,6 @@ def external_current_states(*, max_log_id: int | None = None, query=None) -> lis
         if not item.get("reporter_id"):
             direction = "ENTER" if item.get("zone_code") == 2 else "EXIT"
             unresolved[direction] += 1
-            logger.warning("Unresolved external perimeter reconciliation movement log_id=%s direction=%s",
-                           item["log_id"], direction)
             continue
         candidates.append(item)
 
@@ -464,8 +462,6 @@ def external_current_states(*, max_log_id: int | None = None, query=None) -> lis
             ambiguous_ids.add(log_id)
             direction = "ENTER" if items[0]["zone_code"] == 2 else "EXIT"
             unresolved[direction] += 1
-            logger.warning("Ambiguous external perimeter reconciliation mapping log_id=%s mapped_badges=%s",
-                           log_id, len(badges))
 
     latest: dict[str, dict] = {}
     for item in candidates:
