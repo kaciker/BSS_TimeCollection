@@ -52,7 +52,7 @@ JOIN dbo.pers_person AS p ON p.id = pae.person_id
 JOIN dbo.pers_card AS pc ON pc.person_id = p.id
 JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no
 WHERE pae.attr_value4 = ? AND t.acc_zone_code IN (1, 2)
-ORDER BY t.log_id DESC, t.event_time DESC
+ORDER BY t.event_time DESC, t.log_id DESC
 """
 
 _CURRENT_INSIDE_SQL = """
@@ -67,7 +67,7 @@ WITH latest AS (
                 CAST(pae.attr_value4 AS nvarchar(255)),
                 CONCAT(N'#UNRESOLVED#', CAST(t.card_no AS nvarchar(255)))
             )
-            ORDER BY t.log_id DESC, t.event_time DESC
+            ORDER BY t.event_time DESC, t.log_id DESC
         ) AS rn
     FROM dbo.acc_transaction AS t
     LEFT JOIN dbo.pers_card AS pc ON pc.card_no = t.card_no
@@ -77,7 +77,8 @@ WITH latest AS (
       AND t.log_id <= ?
 ), resolved AS (
     SELECT log_id, MAX(event_time) AS event_time, MAX(acc_zone_code) AS acc_zone_code,
-           MAX(attr_value4) AS attr_value4, COUNT(DISTINCT attr_value4) AS mapping_count
+           MAX(attr_value4) AS attr_value4,
+           COUNT(DISTINCT attr_value4) + CASE WHEN COUNT(attr_value4) < COUNT(*) THEN 1 ELSE 0 END AS mapping_count
     FROM latest
     WHERE rn = 1
     GROUP BY log_id
@@ -98,7 +99,7 @@ WITH latest AS (
                 CAST(pae.attr_value4 AS nvarchar(255)),
                 CONCAT(N'#UNRESOLVED#', CAST(t.card_no AS nvarchar(255)))
             )
-            ORDER BY t.log_id DESC, t.event_time DESC
+            ORDER BY t.event_time DESC, t.log_id DESC
         ) AS rn
     FROM dbo.acc_transaction AS t
     LEFT JOIN dbo.pers_card AS pc ON pc.card_no = t.card_no
@@ -111,7 +112,7 @@ WITH latest AS (
         log_id, MAX(event_time) AS event_time,
         MAX(acc_zone_code) AS acc_zone_code,
         MAX(attr_value4) AS attr_value4,
-        COUNT(DISTINCT attr_value4) AS mapping_count
+        COUNT(DISTINCT attr_value4) + CASE WHEN COUNT(attr_value4) < COUNT(*) THEN 1 ELSE 0 END AS mapping_count
     FROM latest
     WHERE rn = 1
     GROUP BY log_id
