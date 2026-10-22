@@ -481,11 +481,16 @@ def external_current_states(*, max_log_id: int | None = None, query=None) -> lis
     return list(latest.values())
 
 
-def reconcile_external_factory(db: Session, config: FactoryPerimeterSettings) -> int:
+def reconcile_external_factory(
+    db: Session,
+    config: FactoryPerimeterSettings,
+    *,
+    max_log_id: int | None = None,
+) -> int:
     """Repair divergent local states from authoritative SECURITY_DB current state."""
     if not config.enabled or config.badge_source != "EXTERNAL":
         return 0
-    high_watermark = external_high_watermark()
+    high_watermark = external_high_watermark() if max_log_id is None else int(max_log_id)
     sql_by_badge = {
         item["reporter_id"]: item
         for item in external_current_states(max_log_id=high_watermark)
