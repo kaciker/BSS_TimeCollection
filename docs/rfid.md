@@ -2,7 +2,10 @@
 
 USB HID readers that type a badge ID as a rapid keyboard burst work on the
 operational terminal page after browser provisioning. Enable `RFID` or `BOTH`
-in the terminal configuration. `KEYPAD` terminals do not listen for scans.
+in the terminal configuration. `KEYPAD` terminals do not listen for reader
+scans; their badge field accepts normal keyboard entry and paste, and Enter
+submits the value. In `BOTH` mode, manual entry uses the on-screen keypad while
+rapid keyboard bursts are treated as RFID reader input.
 
 The active T&A browser/window must have focus. The operating system sends the
 reader's keystrokes to its currently active window, so scanning with another
