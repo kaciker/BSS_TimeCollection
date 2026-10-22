@@ -12,7 +12,6 @@ from app.db.session import SessionLocal
 from app.domain.enums import IdentificationMethod
 from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
 from app.models.terminal import Terminal
-from app.models.time_event import TimeEvent
 from app.services.external_perimeter import (
     ExternalPerimeterError,
     _connection_string,
@@ -49,6 +48,30 @@ JOIN dbo.pers_card AS pc ON pc.person_id = p.id
 JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no
 WHERE pae.attr_value4 = ? AND t.acc_zone_code IN (1, 2)
 ORDER BY t.event_time DESC, t.log_id DESC
+"""
+
+_CURRENT_INSIDE_SQL = """
+WITH latest AS (
+    SELECT
+        t.log_id,
+        t.event_time,
+        t.acc_zone_code,
+        pae.attr_value4,
+        ROW_NUMBER() OVER (
+            PARTITION BY pae.attr_value4
+            ORDER BY t.event_time DESC, t.log_id DESC
+        ) AS rn
+    FROM dbo.pers_attribute_ext AS pae
+    JOIN dbo.pers_person AS p ON p.id = pae.person_id
+    JOIN dbo.pers_card AS pc ON pc.person_id = p.id
+    JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no
+    WHERE pae.attr_value4 IS NOT NULL
+      AND t.acc_zone_code IN (1, 2)
+)
+SELECT log_id, event_time, acc_zone_code, attr_value4
+FROM latest
+WHERE rn = 1 AND acc_zone_code = 2
+ORDER BY log_id ASC
 """
 
 
@@ -150,6 +173,22 @@ def latest_external_event_for_badge(badge: str, *, query=None) -> dict | None:
     return _normalize_external_row(row, reporter_id=badge)
 
 
+def external_inside_snapshot(*, query=None) -> list[dict]:
+    """Return one current INSIDE snapshot per external badge, without importing history."""
+    if query is not None:
+        rows = query()
+    else:
+        connection = _connect()
+        try:
+            rows = connection.cursor().execute(_CURRENT_INSIDE_SQL).fetchall()
+        except Exception as exc:
+            raise ExternalPerimeterError(_safe_odbc_category(exc, phase="query")) from None
+        finally:
+            connection.close()
+    items = [_normalize_external_row(row) for row in rows]
+    return [item for item in items if item.get("zone_code") == 2 and item.get("reporter_id")]
+
+
 def _virtual_terminal_code(factory_code: str) -> str:
     return f"EXT-{factory_code}"[:64]
 
@@ -238,31 +277,12 @@ def mirror_external_event(
     return True
 
 
-def _known_badges(db: Session, factory_code: str) -> list[str]:
-    cell_badges = db.scalars(
-        select(TimeEvent.reporter_id)
-        .join(Terminal, Terminal.id == TimeEvent.terminal_id)
-        .where(Terminal.factory_code == factory_code)
-        .distinct()
-    ).all()
-    perimeter_badges = db.scalars(
-        select(FactoryPerimeterEvent.reporter_id)
-        .where(FactoryPerimeterEvent.factory_code == factory_code)
-        .distinct()
-    ).all()
-    return sorted(set(cell_badges) | set(perimeter_badges))
-
-
 def _bootstrap_external_factory(db: Session, config: FactoryPerimeterSettings, terminal: Terminal) -> int:
     high_watermark = external_high_watermark()
+    snapshots = external_inside_snapshot()
     mirrored = 0
-    for badge in _known_badges(db, config.factory_code):
-        try:
-            item = latest_external_event_for_badge(badge)
-        except (ExternalPerimeterError, ValueError):
-            logger.warning("External perimeter bootstrap lookup failed factory=%s badge=%s", config.factory_code, badge)
-            continue
-        if item is not None and mirror_external_event(db, config, terminal, item):
+    for item in snapshots:
+        if mirror_external_event(db, config, terminal, item):
             mirrored += 1
     now = datetime.now(timezone.utc)
     config.external_last_log_id = high_watermark
@@ -271,7 +291,7 @@ def _bootstrap_external_factory(db: Session, config: FactoryPerimeterSettings, t
     config.external_sync_error = None
     db.commit()
     logger.info(
-        "External perimeter replication initialized factory=%s cursor=%s snapshots=%s",
+        "External perimeter replication initialized factory=%s cursor=%s inside_snapshots=%s",
         config.factory_code,
         high_watermark,
         mirrored,
