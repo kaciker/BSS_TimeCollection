@@ -31,6 +31,8 @@
 .terminal-operational .terminal-panel h2{font-size:clamp(23px,2.8vw,31px);letter-spacing:-.025em;line-height:1.2;margin:8px 0 28px;color:#20334d}
 .terminal-operational .keypad-wrap,.terminal-operational .terminal-clock{width:min(100%,clamp(280px,60vw,620px));max-width:100%}
 .terminal-operational .badge-display{min-height:66px;height:auto;padding:12px 16px;background:#f8fafd;border-color:#d8e2ef;color:#1c3150;font-size:clamp(20px,2.3vw,26px);line-height:1.25;overflow-wrap:anywhere;text-align:center}
+.terminal-operational .badge-display-input{display:block;width:100%;font-weight:700;letter-spacing:.08em;font-family:inherit;outline:none}
+.terminal-operational .badge-display-input:focus{border-color:#668bc0;box-shadow:0 0 0 3px rgba(36,91,221,.14)}
 .terminal-operational .badge-display.is-placeholder{font-size:clamp(15px,1.6vw,18px);font-weight:500;letter-spacing:0;color:#8797aa}
 .terminal-operational .key{min-height:56px;height:clamp(56px,8vh,82px);height:clamp(56px,8dvh,82px);background:#edf3fb;border:2px solid #9aafcb;box-shadow:0 2px 5px rgba(24,52,90,.12);color:#1b3458;transition:background .15s,border-color .15s,transform .15s}
 .terminal-operational .key:hover{background:#dfeafe;border-color:#668bc0}
