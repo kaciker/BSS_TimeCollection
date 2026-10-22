@@ -58,15 +58,17 @@ WITH latest AS (
         t.acc_zone_code,
         pae.attr_value4,
         ROW_NUMBER() OVER (
-            PARTITION BY pae.attr_value4
+            PARTITION BY COALESCE(
+                CAST(pae.attr_value4 AS nvarchar(255)),
+                CONCAT(N'#UNRESOLVED#', CAST(t.card_no AS nvarchar(255)))
+            )
             ORDER BY t.log_id DESC, t.event_time DESC
         ) AS rn
-    FROM dbo.pers_attribute_ext AS pae
-    JOIN dbo.pers_person AS p ON p.id = pae.person_id
-    JOIN dbo.pers_card AS pc ON pc.person_id = p.id
-    JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no
-    WHERE pae.attr_value4 IS NOT NULL
-      AND t.acc_zone_code IN (1, 2)
+    FROM dbo.acc_transaction AS t
+    LEFT JOIN dbo.pers_card AS pc ON pc.card_no = t.card_no
+    LEFT JOIN dbo.pers_person AS p ON p.id = pc.person_id
+    LEFT JOIN dbo.pers_attribute_ext AS pae ON pae.person_id = p.id
+    WHERE t.acc_zone_code IN (1, 2)
       AND t.log_id <= ?
 )
 SELECT log_id, event_time, acc_zone_code, attr_value4
@@ -80,15 +82,17 @@ WITH latest AS (
     SELECT
         t.log_id, t.event_time, t.acc_zone_code, pae.attr_value4,
         ROW_NUMBER() OVER (
-            PARTITION BY pae.attr_value4
+            PARTITION BY COALESCE(
+                CAST(pae.attr_value4 AS nvarchar(255)),
+                CONCAT(N'#UNRESOLVED#', CAST(t.card_no AS nvarchar(255)))
+            )
             ORDER BY t.log_id DESC, t.event_time DESC
         ) AS rn
-    FROM dbo.pers_attribute_ext AS pae
-    JOIN dbo.pers_person AS p ON p.id = pae.person_id
-    JOIN dbo.pers_card AS pc ON pc.person_id = p.id
-    JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no
-    WHERE pae.attr_value4 IS NOT NULL
-      AND t.acc_zone_code IN (1, 2)
+    FROM dbo.acc_transaction AS t
+    LEFT JOIN dbo.pers_card AS pc ON pc.card_no = t.card_no
+    LEFT JOIN dbo.pers_person AS p ON p.id = pc.person_id
+    LEFT JOIN dbo.pers_attribute_ext AS pae ON pae.person_id = p.id
+    WHERE t.acc_zone_code IN (1, 2)
       AND t.log_id <= ?
 )
 SELECT log_id, event_time, acc_zone_code, attr_value4

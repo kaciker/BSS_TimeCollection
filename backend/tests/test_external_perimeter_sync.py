@@ -131,6 +131,16 @@ def test_current_inside_snapshot_returns_only_valid_inside_badges():
     assert rows == [{"log_id": 41, "event_time": at, "zone_code": 2, "reporter_id": "2959281396"}]
 
 
+def test_unresolved_rows_are_counted_per_movement_not_collapsed_by_null_badge(caplog):
+    from app.services.external_perimeter_sync import external_current_states
+    at = datetime(2026, 10, 22, 11, 0, tzinfo=timezone.utc)
+    rows = external_current_states(max_log_id=10, query=lambda cursor: [
+        (1, at, 2, None), (2, at + timedelta(minutes=1), 1, None)
+    ])
+    assert rows == []
+    assert "enter=1 exit=1" in caplog.text
+
+
 def test_bootstrap_from_empty_local_history_imports_all_current_inside_badges(db, monkeypatch):
     config = FactoryPerimeterSettings(
         factory_code="ARGANDA",
