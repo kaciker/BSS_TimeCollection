@@ -5,6 +5,7 @@ import type { AdminAction, AdminTerminal, StructureData } from "../../types";
 import { exitPolicyLabel, exitPolicyModes } from "./exitPolicyOptions";
 import type { ExitPolicyMode } from "./exitPolicyOptions";
 import { EditorDialog } from "./EditorDialog";
+import { useLanguage } from "../../i18n";
 
 const LEGACY_STRUCTURE_KEYS = new Set(["Plant", "Workshop", "Cell", "Project"]);
 function editableAttributes(attributes: Record<string, unknown>): Record<string, unknown> {
@@ -19,10 +20,12 @@ function attributeText(attributes: Record<string, unknown>, key: string): string
 }
 
 export function TerminalEditor({ terminal, actions, onClose, onSaved }: { terminal: AdminTerminal | null; actions: AdminAction[]; onClose: () => void; onSaved: (value: AdminTerminal) => void; }) {
+  const { t } = useLanguage();
   const [perimeterOnly, setPerimeterOnly] = useState(!!terminal && terminal.terminal_role !== "CELL");
   const existingAttributes = terminal?.oracle_attributes ?? {};
   const [selected, setSelected] = useState<string[]>(terminal?.action_codes ?? []); const [enabled, setEnabled] = useState(terminal?.active ?? true); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [exitPolicy, setExitPolicy] = useState<ExitPolicyMode>(terminal?.exit_policy_mode ?? "INHERIT");
+  const [exitMenuTimeout, setExitMenuTimeout] = useState<number | "">(terminal?.exit_menu_timeout_seconds ?? 5);
   const [globalPolicy, setGlobalPolicy] = useState<ExitPolicyMode | null>(terminal?.global_exit_policy_mode ?? null);
   const [workCell, setWorkCell] = useState(attributeText(existingAttributes, "work_cell"));
   const [structure, setStructure] = useState<StructureData>({workshops:[],subworkshops:[],project_lines:[]});
@@ -72,7 +75,7 @@ export function TerminalEditor({ terminal, actions, onClose, onSaved }: { termin
     const cell = workCell.trim();
     if (cell) oracleAttributes.work_cell = cell; else delete oracleAttributes.work_cell;
     setBusy(true); setError("");
-    const payload = { perimeter_only:perimeterOnly, workshop_id:perimeterOnly ? null : Number(workshopId), subworkshop_id:perimeterOnly ? null : Number(subworkshopId), project_line_id:perimeterOnly ? null : Number(projectLineId), name: String(data.get("name")).trim(), external_device_id: perimeterOnly ? undefined : String(data.get("device")).trim(), identification_mode: data.get("mode"), oracle_attributes: perimeterOnly ? {} : oracleAttributes, exit_policy_mode: perimeterOnly ? "DISABLED" : exitPolicy, active: enabled, action_codes: perimeterOnly ? [] : selected };
+    const payload = { perimeter_only:perimeterOnly, workshop_id:perimeterOnly ? null : Number(workshopId), subworkshop_id:perimeterOnly ? null : Number(subworkshopId), project_line_id:perimeterOnly ? null : Number(projectLineId), name: String(data.get("name")).trim(), external_device_id: perimeterOnly ? undefined : String(data.get("device")).trim(), identification_mode: data.get("mode"), exit_menu_timeout_seconds: Number(exitMenuTimeout || 0), oracle_attributes: perimeterOnly ? {} : oracleAttributes, exit_policy_mode: perimeterOnly ? "DISABLED" : exitPolicy, active: enabled, action_codes: perimeterOnly ? [] : selected };
     try { const saved = terminal ? await api.put<AdminTerminal>(`/api/v1/admin/terminals/${encodeURIComponent(terminal.code)}`, payload) : await api.post<AdminTerminal>("/api/v1/admin/terminals", payload); onSaved(saved); }
     catch (err) { setError((err as Error).message); setBusy(false); }
   };
@@ -80,6 +83,7 @@ export function TerminalEditor({ terminal, actions, onClose, onSaved }: { termin
     <div className="editor-body"><fieldset disabled={busy}>
       <section className="form-section"><div className="section-heading"><div><h3>Factory perimeter terminal</h3><p>Use this terminal for factory entry and exit. Cell time collection fields are disabled.</p></div><label className="switch-control"><input type="checkbox" role="switch" checked={perimeterOnly} onChange={event => setPerimeterOnly(event.target.checked)} /><span className="switch-track" aria-hidden="true" /><span>Perimeter only</span></label></div>{perimeterOnly && <p className="form-notice">After saving, assign the factory and entrance / exit direction in Factory Perimeter. No cell actions or Oracle device mapping are required.</p>}</section>
       <section className="form-section"><h3>Terminal identity</h3><div className="field-grid"><label>Terminal code<input value={terminal?.code ?? "Assigned automatically"} readOnly /><small>Managed by the application. Codes are unique, immutable and never reused.</small></label><label>Display name<input name="name" required maxLength={160} defaultValue={terminal?.name ?? ""} /></label><label>Oracle device ID<input name="device" disabled={perimeterOnly} required={!perimeterOnly} maxLength={40} defaultValue={terminal?.external_device_id ?? ""} /></label><label>Identification method<select name="mode" defaultValue={terminal?.identification_mode ?? "BOTH"}><option value="BOTH">Badge reader + keypad</option><option value="KEYPAD">Manual keypad</option><option value="RFID">Badge reader (RFID)</option></select></label></div></section>
+      <section className="form-section"><fieldset disabled={perimeterOnly}><h3>{t("exitMenuTimeout")}</h3><p>{t("exitMenuTimeoutHelp")}</p><label>{t("secondsBeforeReturn")}<input type="number" min={0} max={120} step={1} required value={exitMenuTimeout} onChange={event => setExitMenuTimeout(event.target.value === "" ? "" : Math.max(0, Math.min(120, Number(event.target.value))))} /><small>{t("exitMenuTimeoutNote")}</small></label></fieldset></section>
       <section className="form-section"><fieldset disabled={perimeterOnly}><h3>Exit policy</h3><p>Override the global Same Terminal Exit policy for this terminal, or inherit its current default.</p><div className="field-grid">
         <label>Same Terminal Exit<select name="exit_policy_mode" value={exitPolicy} onChange={event => setExitPolicy(event.target.value as ExitPolicyMode)}><option value="INHERIT">Inherit global{globalPolicy ? ` (${exitPolicyLabel(globalPolicy)})` : ""}</option>{exitPolicyModes.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
         <label>Work cell<input name="work_cell" value={workCell} onChange={event => setWorkCell(event.target.value)} maxLength={64} placeholder="Not configured" /><small>Used only by the Same Work Cell policy. Matching values are case-sensitive; blank removes the cell.</small></label>
