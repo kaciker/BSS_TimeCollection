@@ -34,6 +34,8 @@ class Settings(BaseSettings):
 
     perimeter_sqlserver_credentials_file: str = "/run/secrets/perimeter_sqlserver.json"
     perimeter_external_max_age_hours: int = 12
+    perimeter_external_sync_seconds: float = 30.0
+    perimeter_external_sync_batch_size: int = 500
 
     worker_poll_seconds: float = 3.0
     worker_stale_sending_seconds: int = 300
