@@ -18,6 +18,7 @@ from app.services.external_perimeter_sync import (
     attr_value_to_reader_number,
     ensure_virtual_terminal,
     external_events_after,
+    external_inside_snapshot,
     mirror_external_event,
     sync_external_factory,
 )
@@ -112,6 +113,54 @@ def test_incremental_rows_preserve_log_id_zone_and_badge():
     attr = reader_number_to_attr_value("0582609699")
     rows = external_events_after(40, limit=25, query=lambda cursor, limit: [(41, at, "2", attr)])
     assert rows == [{"log_id": 41, "event_time": at, "zone_code": 2, "reporter_id": "0582609699"}]
+
+
+def test_current_inside_snapshot_returns_only_valid_inside_badges():
+    at = datetime(2026, 10, 22, 11, 0, tzinfo=timezone.utc)
+    inside_attr = reader_number_to_attr_value("2959281396")
+    outside_attr = reader_number_to_attr_value("0582609699")
+    rows = external_inside_snapshot(
+        query=lambda: [
+            (41, at, 2, inside_attr),
+            (42, at, 1, outside_attr),
+            (43, at, 2, None),
+        ]
+    )
+    assert rows == [{"log_id": 41, "event_time": at, "zone_code": 2, "reporter_id": "2959281396"}]
+
+
+def test_bootstrap_from_empty_local_history_imports_all_current_inside_badges(db, monkeypatch):
+    config = FactoryPerimeterSettings(
+        factory_code="ARGANDA",
+        enabled=True,
+        badge_source="EXTERNAL",
+        dedup_enabled=True,
+        dedup_seconds=5,
+        auto_exit_action_code=None,
+    )
+    db.add(config)
+    db.commit()
+
+    first_at = datetime(2026, 10, 22, 8, 0, tzinfo=LOCAL_TZ)
+    second_at = datetime(2026, 10, 22, 8, 1, tzinfo=LOCAL_TZ)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_high_watermark", lambda: 500)
+    monkeypatch.setattr(
+        "app.services.external_perimeter_sync.external_inside_snapshot",
+        lambda: [
+            {"log_id": 480, "event_time": first_at, "zone_code": 2, "reporter_id": "2959281396"},
+            {"log_id": 490, "event_time": second_at, "zone_code": 2, "reporter_id": "0582609699"},
+        ],
+    )
+
+    assert sync_external_factory(db, config) == 2
+    events = db.scalars(select(FactoryPerimeterEvent).order_by(FactoryPerimeterEvent.event_datetime)).all()
+    assert [event.reporter_id for event in events] == ["2959281396", "0582609699"]
+    assert {event.direction for event in events} == {"ENTER"}
+    assert config.external_last_log_id == 500
+    assert config.external_sync_initialized_at is not None
+    assert config.external_last_sync_at is not None
+    assert config.external_sync_error is None
+    assert db.scalar(select(func.count()).select_from(TimeEvent)) == 0
 
 
 def test_external_exit_is_mirrored_and_closes_active_cell_once(db):
