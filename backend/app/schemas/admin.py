@@ -12,6 +12,7 @@ class TerminalSettings(BaseModel):
     perimeter_only: bool | None = None
     external_device_id: str | None = Field(default=None, min_length=1, max_length=40)
     identification_mode: IdentificationMode = IdentificationMode.BOTH
+    exit_menu_timeout_seconds: int | None = Field(default=None, ge=0, le=120)
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     active: bool = True
     project_line_id: int | None = None
@@ -44,6 +45,7 @@ class TerminalRead(BaseModel):
     name: str
     external_device_id: str
     identification_mode: str
+    exit_menu_timeout_seconds: int = 5
     reporter_id_type: str
     oracle_attributes: dict[str, Any]
     active: bool

@@ -4,7 +4,7 @@ import { KeyboardWedge } from "../keyboardWedge";
 import { api } from "../api";
 import { NumericKeypad } from "../components/NumericKeypad";
 import { TerminalClock } from "../components/TerminalClock";
-import { useLanguage } from "../i18n";
+import { translateTerminalError, useLanguage } from "../i18n";
 import type { IdentificationMethod, ScanResponse, TerminalAction, TerminalConfig, TerminalPairingStart, TerminalPairingStatus } from "../types";
 
 
@@ -28,7 +28,8 @@ export function TerminalPage() {
   const [busy, setBusy] = useState(false);
   const requestLocked = useRef(false);
   const confirmationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(confirmationTimer.current), []);
+  const exitMenuTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => { clearTimeout(confirmationTimer.current); clearTimeout(exitMenuTimer.current); }, []);
 
   const requestPairing = async () => {
     setError("");
@@ -69,7 +70,12 @@ export function TerminalPage() {
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [pairing, config]);
 
-  const reset = () => { requestLocked.current = false; setMethod("KEYPAD"); setBadge(""); setExitActions([]); setSubactionMode(false); setBusy(false); };
+  const reset = () => { clearTimeout(exitMenuTimer.current); exitMenuTimer.current = undefined; requestLocked.current = false; setMethod("KEYPAD"); setBadge(""); setExitActions([]); setSubactionMode(false); setBusy(false); };
+  const scheduleExitMenuTimeout = () => {
+    clearTimeout(exitMenuTimer.current);
+    const timeoutSeconds = config?.exit_menu_timeout_seconds ?? 5;
+    if (timeoutSeconds > 0) exitMenuTimer.current = setTimeout(reset, timeoutSeconds * 1000);
+  };
 
   const handleResponse = (response: ScanResponse) => {
     if (response.flow === "EXIT_REQUIRED" || response.flow === "SUBACTION_REQUIRED") {
@@ -77,8 +83,11 @@ export function TerminalPage() {
       setSubactionMode(response.flow === "SUBACTION_REQUIRED");
       requestLocked.current = false;
       setBusy(false);
+      scheduleExitMenuTimeout();
       return;
     }
+    clearTimeout(exitMenuTimer.current);
+    exitMenuTimer.current = undefined;
     setRecordedAt(response.event?.event_datetime ?? null);
     setMessage(response.flow === "DUPLICATE_IGNORED" ? t("duplicateRecorded") : response.flow === "ALREADY_INSIDE" ? t("alreadyInsideFactory") : response.flow === "ALREADY_OUTSIDE" ? t("alreadyOutsideFactory") : ["ENTRY_RECORDED", "FACTORY_ENTRY_RECORDED"].includes(response.flow) ? t("entryRegistered") : t("exitRegistered"));
     confirmationTimer.current = setTimeout(() => { setMessage(""); setRecordedAt(null); reset(); }, 2200);
@@ -95,10 +104,12 @@ export function TerminalPage() {
 
   const exit = async (actionCode: string) => {
     if (requestLocked.current) return;
+    clearTimeout(exitMenuTimer.current);
+    exitMenuTimer.current = undefined;
     requestLocked.current = true;
     setBusy(true); setError("");
     try { handleResponse(await api.post<ScanResponse>("/api/v1/terminal/exit", { reporter_id: badge, identification_method: method, action_code: actionCode })); }
-    catch (err) { setError((err as Error).message); requestLocked.current = false; setBusy(false); }
+    catch (err) { setError((err as Error).message); requestLocked.current = false; setBusy(false); if (exitActions.length) scheduleExitMenuTimeout(); }
   };
 
   // Keep the listener stable while reading the current React flow on every scan.
@@ -140,12 +151,13 @@ export function TerminalPage() {
         <div className="eyebrow">{t("exit")}</div><h2>{subactionMode ? t("selectSubaction") : t("selectExit")}</h2>
         <div className="action-grid">{exitActions.map(action => <button className="action-card" key={action.code} disabled={busy} onClick={() => exit(action.code)}>{action.visual_key && actionVisualKeys.has(action.visual_key) && <img className="action-illustration" src={`/action-visuals/${action.visual_key}.png`} alt="" /> }<span>{action.label}{action.has_subactions ? " ›" : ""}</span></button>)}</div>
         <button className="secondary" onClick={reset} disabled={busy}>{t("cancel")}</button>
+        {error && <div className="inline-error" role="alert">{translateTerminalError(language, error)}</div>}
       </div> : <>
-        {(config.identification_mode === "KEYPAD" || config.identification_mode === "BOTH") && <NumericKeypad value={badge} onChange={setBadge} onSubmit={() => void scanReporter(badge, "KEYPAD")} disabled={busy} placeholder={t("enterBadge")} continueLabel={t("continue")} keyboardEntry={config.identification_mode === "KEYPAD"} />}
+        {(config.identification_mode === "KEYPAD" || config.identification_mode === "BOTH") && <NumericKeypad value={badge} onChange={setBadge} onSubmit={() => void scanReporter(badge, "KEYPAD")} disabled={busy} placeholder={t("enterBadge")} continueLabel={t("continue")} keyboardEntry={config.identification_mode === "KEYPAD"} error={error ? translateTerminalError(language, error) : undefined} />}
         {config.identification_mode === "BOTH" && <div className="method-note">{busy && method === "RFID" ? t("readingCard") : t("keypadNote")}</div>}
         {config.identification_mode === "RFID" && <div className="rfid-placeholder"><img src="/img/rfid-card.svg" alt="Contactless card" /><p role="status">{busy ? t("readingCard") : t("presentCard")}</p></div>}
       </>}
-      {error && config && <div className="inline-error">{error}</div>}
+      {error && config?.identification_mode === "RFID" && <div className="inline-error">{translateTerminalError(language, error)}</div>}
     </section>
   </main>;
 }

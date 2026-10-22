@@ -1,5 +1,5 @@
 """Factory-level presence without personal employee records."""
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 
@@ -12,6 +12,10 @@ class FactoryPerimeterSettings(Base):
     dedup_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     dedup_seconds: Mapped[int] = mapped_column(Integer, default=5)
     auto_exit_action_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    external_last_log_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    external_sync_initialized_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    external_last_sync_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    external_sync_error: Mapped[str | None] = mapped_column(String(64), nullable=True)
     __table_args__ = (
         CheckConstraint("dedup_seconds >= 0 AND dedup_seconds <= 300", name="ck_perimeter_dedup_seconds"),
         CheckConstraint("badge_source IN ('OPEN', 'EXTERNAL')", name="ck_perimeter_badge_source"),

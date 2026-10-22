@@ -7,9 +7,10 @@ import {TerminalPage} from '../src/pages/TerminalPage';
 import {api} from '../src/api';
 vi.mock('../src/api',()=>({api:{get:vi.fn(),post:vi.fn(),put:vi.fn()}}));
 vi.mock('../src/components/admin/EditorDialog',()=>({EditorDialog:({children}: {children:import('react').ReactNode})=><div>{children}</div>}));
-afterEach(()=>{cleanup();vi.clearAllMocks();});
+afterEach(()=>{cleanup();vi.clearAllMocks();localStorage.removeItem("bss-timecollection-language");});
 const keys=['bocadillo','comida','medico-empresa','formacion','no-productivo','comite-empresa','trabajo-fuera-fabrica','medico','viaje-empresa','examenes','mutua-accidente','comite-seguridad-salud','formacion-fuera-jornada','salida-sindical','huelga','acompanamiento-medico'];
 it('offers all sixteen new illustrations and retains every legacy key',()=>{
+ localStorage.setItem('bss-timecollection-language','es');
  render(<ActionEditor action={null} actions={[]} terminals={[]} onClose={()=>{}} onSaved={()=>{}}/>);
  for(const key of keys){
   const label=actionVisuals.find(v=>v.key===key)!.name;

@@ -40,6 +40,7 @@ def clone_terminal(db: Session, terminal_code: str) -> Terminal:
         name=source.name[:160 - len(name_suffix)] + name_suffix,
         external_device_id=device_id,
         identification_mode=source.identification_mode,
+        exit_menu_timeout_seconds=5,
         reporter_id_type=settings.oracle_reporter_id_type,
         oracle_attributes=deepcopy(source.oracle_attributes or {}),
         project_line_id=source.project_line_id,

@@ -8,9 +8,10 @@ interface Props {
   placeholder?: string;
   continueLabel?: string;
   keyboardEntry?: boolean;
+  error?: string;
 }
 
-export function NumericKeypad({ value, onChange, onSubmit, disabled, placeholder = "Enter badge number", continueLabel = "Continue", keyboardEntry = false }: Props) {
+export function NumericKeypad({ value, onChange, onSubmit, disabled, placeholder = "Enter badge number", continueLabel = "Continue", keyboardEntry = false, error }: Props) {
   const entryRef = useRef<HTMLInputElement>(null);
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "⌫"];
   const press = (key: string) => {
@@ -51,6 +52,7 @@ export function NumericKeypad({ value, onChange, onSubmit, disabled, placeholder
         ))}
       </div>
       <button className="primary large" type="button" disabled={disabled || !value} onClick={onSubmit}>{continueLabel}</button>
+      {error && <div className="inline-error keypad-error" role="alert" aria-live="assertive">{error}</div>}
     </div>
   );
 }

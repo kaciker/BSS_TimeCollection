@@ -53,10 +53,14 @@ def test_create_terminal_persists_configuration_and_duplicate_device_is_readable
     assert terminal["action_codes"] == ["START", "STOP"]
     assert terminal["oracle_attributes"]["Workshop"] == "Assembly"
     assert terminal["activation_token"]
+    assert terminal["exit_menu_timeout_seconds"] == 5
+    custom = client.post("/api/v1/admin/terminals", json={**payload, "code": "CLOCK-CUSTOM", "external_device_id": "CLOCK-CUSTOM", "exit_menu_timeout_seconds": 120, "active": False})
+    assert custom.status_code == 201, custom.text
+    assert custom.json()["exit_menu_timeout_seconds"] == 120
     response = client.post("/api/v1/admin/terminals", json={**payload, "code": "CLOCK-B"})
     assert response.status_code == 409
     assert "device ID" in response.json()["detail"]
-    assert len(client.get("/api/v1/admin/terminals").json()) == 1
+    assert len(client.get("/api/v1/admin/terminals").json()) == 2
     response = client.post("/api/v1/admin/terminals", json={**payload, "code": "CLOCK-C", "external_device_id": "CLOCK-C", "action_codes": []})
     assert response.status_code == 409
     assert client.post("/api/v1/admin/terminals", json={**payload, "code": "DRAFT", "external_device_id": "DRAFT", "active": False, "action_codes": []}).status_code == 201
@@ -134,6 +138,24 @@ def test_edit_configuration_keeps_captured_event_snapshot(monitor):
     assert event.oracle_attributes == {"Workshop": "Assembly", "Project": "P42"}
     config = client.get("/api/v1/terminal/config").json()
     assert config["actions"][0]["label"] == "Start shift"
+
+
+def test_exit_menu_timeout_is_bounded_and_preserved_when_omitted(monitor):
+    client, _ = monitor
+    terminal, payload = configured_terminal(client)
+    assert terminal["exit_menu_timeout_seconds"] == 5
+    for invalid in (-1, 121):
+        response = client.put("/api/v1/admin/terminals/CLOCK-A", json={**payload, "exit_menu_timeout_seconds": invalid})
+        assert response.status_code == 422
+    configured = client.put("/api/v1/admin/terminals/CLOCK-A", json={**payload, "exit_menu_timeout_seconds": 120})
+    assert configured.status_code == 200
+    assert configured.json()["exit_menu_timeout_seconds"] == 120
+    unchanged = client.put("/api/v1/admin/terminals/CLOCK-A", json=payload)
+    assert unchanged.status_code == 200
+    assert unchanged.json()["exit_menu_timeout_seconds"] == 120
+    disabled = client.put("/api/v1/admin/terminals/CLOCK-A", json={**payload, "exit_menu_timeout_seconds": 0})
+    assert disabled.status_code == 200
+    assert disabled.json()["exit_menu_timeout_seconds"] == 0
 
 
 def test_terminal_and_action_oracle_attributes_are_merged_for_new_events(monitor):

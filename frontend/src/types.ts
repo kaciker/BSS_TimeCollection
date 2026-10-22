@@ -13,6 +13,7 @@ export interface TerminalConfig {
   code: string;
   name: string;
   identification_mode: IdentificationMode;
+  exit_menu_timeout_seconds: number;
   actions: TerminalAction[];
 }
 
@@ -50,6 +51,7 @@ export interface AdminTerminal {
   name: string;
   external_device_id: string;
   identification_mode: IdentificationMode;
+  exit_menu_timeout_seconds: number;
   reporter_id_type: string;
   oracle_attributes: Record<string, unknown>;
   active: boolean;

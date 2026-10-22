@@ -24,6 +24,7 @@ class Terminal(Base):
     name: Mapped[str] = mapped_column(String(160))
     external_device_id: Mapped[str] = mapped_column(String(128), unique=True)
     identification_mode: Mapped[str] = mapped_column(String(16), default="BOTH")
+    exit_menu_timeout_seconds: Mapped[int] = mapped_column(Integer, default=5, server_default="5", nullable=False)
     reporter_id_type: Mapped[str] = mapped_column(String(16), default="BADGE")
     oracle_attributes: Mapped[dict] = mapped_column(JSON, default=dict)
     project_line_id: Mapped[int | None] = mapped_column(ForeignKey("project_lines.id", ondelete="RESTRICT"), nullable=True, index=True)

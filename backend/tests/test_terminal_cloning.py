@@ -8,6 +8,9 @@ from test_monitoring import monitor
 def test_clone_copies_settings_but_not_browser_identity_or_events(monitor):
     client, db = monitor
     terminal, payload = configured_terminal(client)
+    source = db.scalar(select(Terminal).where(Terminal.code == "CLOCK-A"))
+    source.exit_menu_timeout_seconds = 120
+    db.flush()
     activate_created_terminal(client, terminal)
     assert client.post("/api/v1/terminal/scan",json={"reporter_id":"CLONE-TEST","identification_method":"KEYPAD"}).status_code == 200
     response = client.post("/api/v1/admin/terminals/CLOCK-A/clone")
@@ -17,6 +20,7 @@ def test_clone_copies_settings_but_not_browser_identity_or_events(monitor):
     assert clone["external_device_id"] == "CLOCK-A-1"
     for field in ["identification_mode","reporter_id_type","oracle_attributes","active","action_codes"]:
         assert clone[field] == terminal[field]
+    assert clone["exit_menu_timeout_seconds"] == 5
     assert clone["provisioned"] is False
     assert clone["activation_pending"] is False
     assert clone["activation_token"] is None
