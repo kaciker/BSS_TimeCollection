@@ -84,6 +84,14 @@ describe("terminal RFID flow", () => {
     expect(screen.getByText("Reading card…")).toBeTruthy();
   });
   it("KEYPAD does not listen to reader input", async () => { await terminal("KEYPAD"); await scan(); expect(api.post).not.toHaveBeenCalled(); });
+  it("KEYPAD accepts typed and pasted digits and submits with Enter", async () => {
+    vi.mocked(api.post).mockResolvedValue({ flow: "ENTRY_RECORDED", event: { event_datetime: new Date().toISOString() } });
+    await terminal("KEYPAD");
+    const input = screen.getByRole("textbox", { name: "Enter badge number" });
+    fireEvent.change(input, { target: { value: "00012345" } });
+    await act(async () => { fireEvent.keyDown(input, { key: "Enter" }); });
+    expect(api.post).toHaveBeenCalledWith("/api/v1/terminal/scan", { reporter_id: "00012345", identification_method: "KEYPAD" });
+  });
   it("manual keypad remains KEYPAD in BOTH", async () => {
     vi.mocked(api.post).mockResolvedValue({ flow: "ENTRY_RECORDED", event: { event_datetime: new Date().toISOString() } });
     await terminal("BOTH"); fireEvent.click(screen.getByRole("button", { name: "1", exact: true }));
