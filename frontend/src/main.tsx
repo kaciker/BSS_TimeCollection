@@ -1,12 +1,1 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { AdminPage } from "./pages/AdminPage";
-import { TerminalPage } from "./pages/TerminalPage";
-import "./styles.css";
-import "./admin.css";
-
-const isAdmin = window.location.pathname.startsWith("/admin");
-
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>{isAdmin ? <AdminPage /> : <TerminalPage />}</React.StrictMode>,
-);
+aW1wb3J0IFJlYWN0IGZyb20gInJlYWN0IjsKaW1wb3J0IFJlYWN0RE9NIGZyb20gInJlYWN0LWRvbS9jbGllbnQiOwppbXBvcnQgeyBBZG1pbkF1dGhHYXRlIH0gZnJvbSAiLi9jb21wb25lbnRzL0FkbWluQXV0aEdhdGUiOwppbXBvcnQgeyBBZG1pblBhZ2UgfSBmcm9tICIuL3BhZ2VzL0FkbWluUGFnZSI7CmltcG9ydCB7IFRlcm1pbmFsUGFnZSB9IGZyb20gIi4vcGFnZXMvVGVybWluYWxQYWdlIjsKaW1wb3J0ICIuL3N0eWxlcy5jc3MiOwppbXBvcnQgIi4vYWRtaW4uY3NzIjsKaW1wb3J0ICIuL2FkbWluQXV0aC5jc3MiOwoKY29uc3QgaXNBZG1pbiA9IHdpbmRvdy5sb2NhdGlvbi5wYXRobmFtZS5zdGFydHNXaXRoKCIvYWRtaW4iKTsKClJlYWN0RE9NLmNyZWF0ZVJvb3QoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJvb3QiKSEpLnJlbmRlcigKICA8UmVhY3QuU3RyaWN0TW9kZT4KICAgIHtpc0FkbWluID8gPEFkbWluQXV0aEdhdGU+PEFkbWluUGFnZSAvPjwvQWRtaW5BdXRoR2F0ZT4gOiA8VGVybWluYWxQYWdlIC8+fQogIDwvUmVhY3QuU3RyaWN0TW9kZT4sCik7Cg==
