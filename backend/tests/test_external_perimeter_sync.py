@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import pytest
 from sqlalchemy import create_engine, func, select
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401 - register all mapped tables for SQLite tests
+from app.core.config import settings
 from app.db.base import Base
 from app.models.action import Action
 from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
@@ -20,6 +22,8 @@ from app.services.external_perimeter_sync import (
     sync_external_factory,
 )
 
+LOCAL_TZ = ZoneInfo(settings.event_timezone)
+
 
 @pytest.fixture
 def db():
@@ -31,7 +35,7 @@ def db():
 
 
 def _seed_active_cell(db: Session, *, badge: str = "2959281396", at: datetime | None = None):
-    at = at or datetime(2026, 10, 22, 10, 0, tzinfo=timezone.utc)
+    at = at or datetime(2026, 10, 22, 10, 0, tzinfo=LOCAL_TZ)
     enter = Action(
         code="CELL_ENTER",
         label="Cell entry",
@@ -87,7 +91,7 @@ def _seed_active_cell(db: Session, *, badge: str = "2959281396", at: datetime | 
         reporter_id_type="BADGE",
         identification_method="RFID",
         event_datetime=at,
-        event_timezone="Europe/Madrid",
+        event_timezone=settings.event_timezone,
         oracle_attributes={},
         delivery_status="PENDING",
         created_at=at,
@@ -113,7 +117,7 @@ def test_incremental_rows_preserve_log_id_zone_and_badge():
 def test_external_exit_is_mirrored_and_closes_active_cell_once(db):
     config, _, _ = _seed_active_cell(db)
     source_terminal = ensure_virtual_terminal(db, "ARGANDA")
-    exit_at = datetime(2026, 10, 22, 10, 5, tzinfo=timezone.utc)
+    exit_at = datetime(2026, 10, 22, 10, 5, tzinfo=LOCAL_TZ)
     item = {"log_id": 101, "event_time": exit_at, "zone_code": 1, "reporter_id": "2959281396"}
 
     assert mirror_external_event(db, config, source_terminal, item) is True
@@ -128,7 +132,10 @@ def test_external_exit_is_mirrored_and_closes_active_cell_once(db):
     cell_events = db.scalars(select(TimeEvent).order_by(TimeEvent.event_datetime)).all()
     assert [event.state_effect for event in cell_events] == ["ENTER", "EXIT"]
     assert cell_events[-1].terminal_code == "T0001"
-    assert cell_events[-1].event_datetime == exit_at
+    stored_exit = cell_events[-1].event_datetime
+    if stored_exit.tzinfo is None:
+        stored_exit = stored_exit.replace(tzinfo=LOCAL_TZ)
+    assert stored_exit == exit_at
 
     assert mirror_external_event(db, config, source_terminal, item) is False
     db.commit()
@@ -137,7 +144,7 @@ def test_external_exit_is_mirrored_and_closes_active_cell_once(db):
 
 
 def test_delayed_external_exit_older_than_active_cell_does_not_close_it(db):
-    cell_at = datetime(2026, 10, 22, 10, 0, tzinfo=timezone.utc)
+    cell_at = datetime(2026, 10, 22, 10, 0, tzinfo=LOCAL_TZ)
     config, _, _ = _seed_active_cell(db, at=cell_at)
     source_terminal = ensure_virtual_terminal(db, "ARGANDA")
     old_exit = cell_at - timedelta(minutes=5)
@@ -157,7 +164,7 @@ def test_delayed_external_exit_older_than_active_cell_does_not_close_it(db):
 
 def test_incremental_sync_advances_cursor_and_is_idempotent(db, monkeypatch):
     config, _, _ = _seed_active_cell(db)
-    at = datetime(2026, 10, 22, 10, 6, tzinfo=timezone.utc)
+    at = datetime(2026, 10, 22, 10, 6, tzinfo=LOCAL_TZ)
     calls = []
 
     def fake_events(cursor, *, limit=None, query=None):
