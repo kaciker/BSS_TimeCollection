@@ -28,9 +28,16 @@ def is_inside(db: Session, factory_code: str, badge: str) -> bool:
 
 
 def check_badge_source(config: FactoryPerimeterSettings, badge: str) -> None:
-    # The external adapter is intentionally unavailable until a plant integration is validated.
-    if config.badge_source != "OPEN":
-        raise HTTPException(503, "External badge validator is not configured")
+    if config.badge_source == "EXTERNAL":
+        from app.services.external_perimeter import check_external_presence
+        result = check_external_presence(badge)
+        if result["status"] != "INSIDE":
+            detail = "External perimeter presence: " + result["status"]
+            if result.get("error_category"):
+                detail += " (" + result["error_category"] + ")"
+            raise HTTPException(409, detail)
+    elif config.badge_source != "OPEN":
+        raise HTTPException(503, "Badge validator is not configured")
 
 
 def is_duplicate(db: Session, config: FactoryPerimeterSettings, terminal: Terminal, badge: str, now: datetime) -> bool:

@@ -12,6 +12,7 @@ from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
 from app.models.terminal import Terminal
 from app.models.action import Action
 from app.services.perimeter_service import settings_for, is_inside
+from app.services.external_perimeter import connector_status, test_external_connection, check_external_presence
 
 router = APIRouter(prefix="/api/v1/admin/perimeter", tags=["perimeter"])
 
@@ -27,6 +28,39 @@ class FactoryConfigUpdate(BaseModel):
 class TerminalRoleUpdate(BaseModel):
     role: Literal["CELL", "PERIMETER_ENTER", "PERIMETER_EXIT", "PERIMETER_BOTH"]
     factory_code: str = Field(min_length=1, max_length=64)
+
+
+class ExternalBadgeTest(BaseModel):
+    badge: str = Field(min_length=1, max_length=64)
+
+
+def _external_factory(factory_code: str) -> None:
+    if factory_code.upper() != "ARGANDA":
+        raise HTTPException(404, "External perimeter is available only for ARGANDA")
+
+
+@router.get("/{factory_code}/external/status")
+def external_status(factory_code: str):
+    _external_factory(factory_code)
+    return connector_status()
+
+
+@router.post("/{factory_code}/external/check")
+def external_check(factory_code: str):
+    _external_factory(factory_code)
+    return test_external_connection()
+
+
+@router.post("/{factory_code}/external/test-badge")
+def external_test_badge(factory_code: str, payload: ExternalBadgeTest):
+    _external_factory(factory_code)
+    result = check_external_presence(payload.badge)
+    return {
+        "status": result.get("status", "ERROR"),
+        "external_event_time": result.get("event_time"),
+        "zone_code": result.get("zone_code"),
+        "error_category": result.get("error_category"),
+    }
 
 
 @router.get("/{factory_code}")
@@ -45,8 +79,8 @@ def set_config(factory_code: str, payload: FactoryConfigUpdate, db: Session = De
         action = db.scalar(select(Action).where(Action.code == payload.auto_exit_action_code, Action.active.is_(True), Action.state_effect == 'EXIT', Action.requires_subaction.is_(False)))
         if action is None:
             raise HTTPException(422, 'Automatic cell EXIT action must exist, be active and not require subactions')
-    if payload.badge_source == "EXTERNAL":
-        raise HTTPException(422, "External badge source is not yet implemented")
+    if payload.badge_source == "EXTERNAL" and factory_code.upper() != "ARGANDA":
+        raise HTTPException(422, "External SQL Server perimeter is configured only for ARGANDA")
     c = db.get(FactoryPerimeterSettings, factory_code)
     if c is None:
         c = FactoryPerimeterSettings(factory_code=factory_code)
