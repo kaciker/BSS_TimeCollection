@@ -1,6 +1,6 @@
 services:
   api:
-    image: bsstimecollection-api:arganda-external-admin-auth
+    image: bsstimecollection-api:arganda-external-replica
     build:
       context: /opt/BSSTimeCollection/.worktrees/arganda-deploy/backend
       dockerfile: Dockerfile.corp-offline
@@ -9,9 +9,14 @@ services:
     volumes:
       - /opt/BSSTimeCollection/sql/perimeter_sqlserver.json:/run/secrets/perimeter_sqlserver.json:ro
   worker:
-    image: bsstimecollection-api:admin-auth-ba7923d
+    image: bsstimecollection-api:arganda-external-replica
     build:
+      context: /opt/BSSTimeCollection/.worktrees/arganda-deploy/backend
       dockerfile: Dockerfile.corp-offline
+    environment:
+      PERIMETER_SQLSERVER_CREDENTIALS_FILE: /run/secrets/perimeter_sqlserver.json
+    volumes:
+      - /opt/BSSTimeCollection/sql/perimeter_sqlserver.json:/run/secrets/perimeter_sqlserver.json:ro
   web:
     image: bsstimecollection-web:arganda-external-admin-auth
     build:
