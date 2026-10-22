@@ -28,7 +28,8 @@ export function TerminalPage() {
   const [busy, setBusy] = useState(false);
   const requestLocked = useRef(false);
   const confirmationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(confirmationTimer.current), []);
+  const exitMenuTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => { clearTimeout(confirmationTimer.current); clearTimeout(exitMenuTimer.current); }, []);
 
   const requestPairing = async () => {
     setError("");
@@ -69,7 +70,12 @@ export function TerminalPage() {
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [pairing, config]);
 
-  const reset = () => { requestLocked.current = false; setMethod("KEYPAD"); setBadge(""); setExitActions([]); setSubactionMode(false); setBusy(false); };
+  const reset = () => { clearTimeout(exitMenuTimer.current); exitMenuTimer.current = undefined; requestLocked.current = false; setMethod("KEYPAD"); setBadge(""); setExitActions([]); setSubactionMode(false); setBusy(false); };
+  const scheduleExitMenuTimeout = () => {
+    clearTimeout(exitMenuTimer.current);
+    const timeoutSeconds = config?.exit_menu_timeout_seconds ?? 5;
+    if (timeoutSeconds > 0) exitMenuTimer.current = setTimeout(reset, timeoutSeconds * 1000);
+  };
 
   const handleResponse = (response: ScanResponse) => {
     if (response.flow === "EXIT_REQUIRED" || response.flow === "SUBACTION_REQUIRED") {
@@ -77,8 +83,11 @@ export function TerminalPage() {
       setSubactionMode(response.flow === "SUBACTION_REQUIRED");
       requestLocked.current = false;
       setBusy(false);
+      scheduleExitMenuTimeout();
       return;
     }
+    clearTimeout(exitMenuTimer.current);
+    exitMenuTimer.current = undefined;
     setRecordedAt(response.event?.event_datetime ?? null);
     setMessage(response.flow === "DUPLICATE_IGNORED" ? t("duplicateRecorded") : response.flow === "ALREADY_INSIDE" ? t("alreadyInsideFactory") : response.flow === "ALREADY_OUTSIDE" ? t("alreadyOutsideFactory") : ["ENTRY_RECORDED", "FACTORY_ENTRY_RECORDED"].includes(response.flow) ? t("entryRegistered") : t("exitRegistered"));
     confirmationTimer.current = setTimeout(() => { setMessage(""); setRecordedAt(null); reset(); }, 2200);
@@ -95,10 +104,12 @@ export function TerminalPage() {
 
   const exit = async (actionCode: string) => {
     if (requestLocked.current) return;
+    clearTimeout(exitMenuTimer.current);
+    exitMenuTimer.current = undefined;
     requestLocked.current = true;
     setBusy(true); setError("");
     try { handleResponse(await api.post<ScanResponse>("/api/v1/terminal/exit", { reporter_id: badge, identification_method: method, action_code: actionCode })); }
-    catch (err) { setError((err as Error).message); requestLocked.current = false; setBusy(false); }
+    catch (err) { setError((err as Error).message); requestLocked.current = false; setBusy(false); if (exitActions.length) scheduleExitMenuTimeout(); }
   };
 
   // Keep the listener stable while reading the current React flow on every scan.

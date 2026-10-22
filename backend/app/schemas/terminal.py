@@ -17,6 +17,7 @@ class TerminalConfig(BaseModel):
     code: str
     name: str
     identification_mode: str
+    exit_menu_timeout_seconds: int = 5
     actions: list[TerminalAction]
 
 

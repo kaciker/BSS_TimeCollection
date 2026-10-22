@@ -81,6 +81,7 @@ def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> T
         name=terminal.name,
         external_device_id=terminal.external_device_id,
         identification_mode=terminal.identification_mode,
+        exit_menu_timeout_seconds=terminal.exit_menu_timeout_seconds,
         reporter_id_type=settings.oracle_reporter_id_type,
         oracle_attributes=terminal.oracle_attributes or {},
         active=terminal.active,
@@ -152,6 +153,7 @@ def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
         external_device_id=device_id,
         terminal_role="PERIMETER_BOTH" if payload.perimeter_only else "CELL",
         identification_mode=payload.identification_mode.value,
+        exit_menu_timeout_seconds=payload.exit_menu_timeout_seconds if payload.exit_menu_timeout_seconds is not None else 5,
         reporter_id_type=settings.oracle_reporter_id_type,
         oracle_attributes={} if payload.perimeter_only else payload.oracle_attributes,
         active=payload.active,
@@ -171,24 +173,9 @@ def clone_terminal_configuration(terminal_code: str, db: Session = Depends(get_d
 
 @router.put("/terminals/{terminal_code}", response_model=TerminalRead)
 def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session = Depends(get_db)):
-    terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)).with_for_update())
-    if terminal is None:
-        raise HTTPException(404, "Terminal not found")
-    perimeter = payload.perimeter_only if payload.perimeter_only is not None else terminal.terminal_role != "CELL"
-    role = (terminal.terminal_role if terminal.terminal_role != "CELL" else "PERIMETER_BOTH") if perimeter else "CELL"
-    device_id = payload.external_device_id or (terminal.external_device_id if perimeter else None)
-    if not device_id:
-        raise HTTPException(422, "Oracle device ID is required for a cell terminal")
-    check_device_id(db, device_id, terminal)
-    actions = [] if perimeter else resolve_actions(db, payload.action_codes)
-    if payload.active:
-        validate_actions(actions, terminal.code, role)
-    leaf = None if perimeter else _resolve_structure(db, payload.project_line_id, payload.workshop_id, payload.subworkshop_id, required=terminal.terminal_role != "CELL")
-    terminal.project_line_id = None if perimeter else (leaf.id if leaf else terminal.project_line_id)
-    terminal.terminal_role = role
-    terminal.name = payload.name
-    terminal.external_device_id = device_id
-    terminal.identification_mode = payload.identification_mode.value
+    terminal = db.scalar(select(Terminal).where(Terminal.code == termin…308 tokens truncated…oad.identification_mode.value
+    if payload.exit_menu_timeout_seconds is not None:
+        terminal.exit_menu_timeout_seconds = payload.exit_menu_timeout_seconds
     terminal.reporter_id_type = settings.oracle_reporter_id_type
     terminal.oracle_attributes = {} if perimeter else payload.oracle_attributes
     terminal.active = payload.active

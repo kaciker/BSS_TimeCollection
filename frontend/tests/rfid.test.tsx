@@ -72,7 +72,7 @@ describe("keyboard wedge", () => {
   });
 });
 async function terminal(mode: string) {
-  vi.mocked(api.get).mockResolvedValue({ code: "TEST", name: "Test clock", identification_mode: mode, actions: [] });
+  vi.mocked(api.get).mockResolvedValue({ code: "TEST", name: "Test clock", identification_mode: mode, exit_menu_timeout_seconds: 5, actions: [] });
   await act(async () => { render(<TerminalPage />); });
 }
 async function scan(value = card) { await act(async () => { burst(value); }); }
@@ -108,6 +108,36 @@ describe("terminal RFID flow", () => {
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Medical" })); });
     expect(api.post).toHaveBeenLastCalledWith("/api/v1/terminal/exit", { reporter_id: card, identification_method: "RFID", action_code: "MEDICAL" });
     expect(api.post).toHaveBeenCalledTimes(3);
+  });
+  it.each([0, 5, 120])( "exit menu timeout %i seconds", async timeout => {
+    vi.mocked(api.get).mockResolvedValue({ code: "TEST", name: "Test clock", identification_mode: "KEYPAD", exit_menu_timeout_seconds: timeout, actions: [] });
+    vi.mocked(api.post).mockResolvedValue({ flow: "EXIT_REQUIRED", worker_state: "INSIDE", actions: [{ code: "STOP", label: "Stop" }] });
+    await act(async () => { render(<TerminalPage />); });
+    await act(async () => { fireEvent.change(screen.getByRole("textbox", { name: "Enter badge number" }), { target: { value: "00123" } }); fireEvent.click(screen.getByRole("button", { name: "Continue" })); });
+    expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
+    if (timeout === 0) {
+      await act(async () => { vi.advanceTimersByTime(121_000); });
+      expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
+    } else {
+      await act(async () => { vi.advanceTimersByTime(timeout * 1000 - 1); });
+      expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
+      await act(async () => { vi.advanceTimersByTime(1); });
+      expect(screen.queryByText("Select the reason for leaving")).toBeNull();
+      expect(screen.getByRole("textbox", { name: "Enter badge number" })).toBeTruthy();
+    }
+  });
+  it("restarts the full exit menu timeout after an action fails", async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({ flow: "EXIT_REQUIRED", actions: [{ code: "STOP", label: "Stop" }] })
+      .mockRejectedValueOnce(new Error("Exit rejected by policy"));
+    await terminal("KEYPAD");
+    await act(async () => { fireEvent.change(screen.getByRole("textbox", { name: "Enter badge number" }), { target: { value: "00123" } }); fireEvent.click(screen.getByRole("button", { name: "Continue" })); });
+    await act(async () => { vi.advanceTimersByTime(4000); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Stop" })); });
+    expect(screen.getByText("Exit rejected by policy")).toBeTruthy();
+    await act(async () => { vi.advanceTimersByTime(4999); });
+    expect(screen.getByText("Select the reason for leaving")).toBeTruthy();
+    await act(async () => { vi.advanceTimersByTime(1); });
+    expect(screen.queryByText("Select the reason for leaving")).toBeNull();
   });
   it("returns API errors and allows a subsequent scan", async () => {
     vi.mocked(api.post).mockRejectedValueOnce(new Error("Exit rejected by policy"))
