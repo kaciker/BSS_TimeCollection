@@ -60,7 +60,7 @@ Eventos célula/perímetro con filtros, paginación y JSON histórico; perímetr
 
 ## RFID e interfaz de terminal
 
-USB HID keyboard-wedge en `RFID`/`BOTH`, ventana activa; `KEYPAD` manual. UID cadena, conserva ceros iniciales; separadores espacio/Tab del lector se omiten. UID/método conservados en salida/subacción, debounce y bloqueo; sin captura en segundo plano. Detalle: [docs/rfid.md](docs/rfid.md). Fix de separadores desplegado en CORP 2026-10-21 solo en web; prueba RFID 26 pasada, API/worker/DB y volúmenes intactos, Oracle desactivado.
+USB HID keyboard-wedge en `RFID`/`BOTH`, ventana activa; `KEYPAD` acepta escritura física y pegado de dígitos, Enter envía; `BOTH` conserva teclado táctil manual y ráfagas RFID. UID cadena, conserva ceros iniciales; separadores espacio/Tab del lector se omiten. UID/método conservados en salida/subacción, debounce y bloqueo; sin captura en segundo plano. Detalle: [docs/rfid.md](docs/rfid.md). Fix de separadores y entrada manual KEYPAD desplegados en CORP solo en web el 2026-10-21 y 2026-10-22 respectivamente; prueba RFID 26 pasada, API/worker/DB y volúmenes intactos, Oracle desactivado.
 
 Interfaz en/es/fr/pl, etiquetas del catálogo. Reloj HH:MM:SS local; confirmación congela `event_datetime` 2,2 s. Teclado hasta 620 px y administración responsive.
 
