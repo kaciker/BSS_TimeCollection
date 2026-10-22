@@ -13,6 +13,7 @@ from app.models.action import Action
 from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
 from app.models.terminal import Terminal
 from app.models.time_event import TimeEvent
+from app.models.transmission_attempt import TransmissionAttempt
 from app.services.external_perimeter import reader_number_to_attr_value
 from app.services.external_perimeter_sync import (
     attr_value_to_reader_number,
@@ -20,6 +21,7 @@ from app.services.external_perimeter_sync import (
     external_events_after,
     external_inside_snapshot,
     mirror_external_event,
+    reconcile_external_factory,
     sync_external_factory,
 )
 
@@ -120,7 +122,7 @@ def test_current_inside_snapshot_returns_only_valid_inside_badges():
     inside_attr = reader_number_to_attr_value("2959281396")
     outside_attr = reader_number_to_attr_value("0582609699")
     rows = external_inside_snapshot(
-        query=lambda: [
+        query=lambda watermark: [
             (41, at, 2, inside_attr),
             (42, at, 1, outside_attr),
             (43, at, 2, None),
@@ -146,7 +148,7 @@ def test_bootstrap_from_empty_local_history_imports_all_current_inside_badges(db
     monkeypatch.setattr("app.services.external_perimeter_sync.external_high_watermark", lambda: 500)
     monkeypatch.setattr(
         "app.services.external_perimeter_sync.external_inside_snapshot",
-        lambda: [
+        lambda max_log_id=None: [
             {"log_id": 480, "event_time": first_at, "zone_code": 2, "reporter_id": "2959281396"},
             {"log_id": 490, "event_time": second_at, "zone_code": 2, "reporter_id": "0582609699"},
         ],
@@ -162,6 +164,43 @@ def test_bootstrap_from_empty_local_history_imports_all_current_inside_badges(db
     assert config.external_sync_error is None
     assert db.scalar(select(func.count()).select_from(TimeEvent)) == 0
 
+
+def test_bootstrap_snapshot_is_limited_to_cursor(db, monkeypatch):
+    config = FactoryPerimeterSettings(factory_code="ARGANDA", enabled=True, badge_source="EXTERNAL",
+        dedup_enabled=True, dedup_seconds=5)
+    db.add(config)
+    db.commit()
+    at = datetime(2026, 10, 22, 8, 0, tzinfo=LOCAL_TZ)
+    cursors = []
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_high_watermark", lambda: 500)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_inside_snapshot", lambda max_log_id=None: cursors.append(max_log_id) or [
+        {"log_id": 499, "event_time": at, "zone_code": 2, "reporter_id": "2959281396"}
+    ])
+    assert sync_external_factory(db, config) == 1
+    assert cursors == [500]
+    assert config.external_last_log_id == 500
+
+
+
+def test_bootstrap_snapshot_without_external_log_id_is_unique_per_badge(db):
+    config = FactoryPerimeterSettings(
+        factory_code="ARGANDA", enabled=True, badge_source="EXTERNAL",
+        dedup_enabled=False, dedup_seconds=0, auto_exit_action_code=None,
+    )
+    db.add(config)
+    db.flush()
+    terminal = ensure_virtual_terminal(db, "ARGANDA")
+    at = datetime(2026, 10, 22, 8, 0, tzinfo=LOCAL_TZ)
+    first = {"log_id": -1, "event_time": at, "zone_code": 2, "reporter_id": "2959281396"}
+    second = {"log_id": -1, "event_time": at, "zone_code": 2, "reporter_id": "0582609699"}
+
+    assert mirror_external_event(db, config, terminal, first) is True
+    assert mirror_external_event(db, config, terminal, second) is True
+    assert mirror_external_event(db, config, terminal, first) is False
+    db.commit()
+    events = db.scalars(select(FactoryPerimeterEvent)).all()
+    assert len(events) == 2
+    assert {event.reporter_id for event in events} == {"2959281396", "0582609699"}
 
 def test_external_exit_is_mirrored_and_closes_active_cell_once(db):
     config, _, _ = _seed_active_cell(db)
@@ -229,3 +268,108 @@ def test_incremental_sync_advances_cursor_and_is_idempotent(db, monkeypatch):
     assert sync_external_factory(db, config) == 0
     assert calls[:2] == [100, 101]
     assert db.scalar(select(func.count()).select_from(FactoryPerimeterEvent)) == 1
+
+
+def _state(log_id, at, zone, badge):
+    return {"log_id": log_id, "event_time": at, "zone_code": zone, "reporter_id": badge}
+
+
+def test_incremental_unresolved_event_is_logged_and_cursor_advances(db, monkeypatch, caplog):
+    config, _, _ = _seed_active_cell(db)
+    at = datetime(2026, 10, 22, 10, 6, tzinfo=LOCAL_TZ)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_events_after", lambda cursor, **kwargs: [
+        {"log_id": cursor + 1, "event_time": at, "zone_code": 1, "reporter_id": None}
+    ] if cursor == 100 else [])
+    assert sync_external_factory(db, config) == 0
+    assert config.external_last_log_id == 101
+    assert "direction=EXIT" in caplog.text
+
+
+def test_reconcile_inside_sql_missing_local_creates_enter(db, monkeypatch):
+    config, _, _ = _seed_active_cell(db)
+    at = datetime(2026, 10, 22, 10, 6, tzinfo=LOCAL_TZ)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_high_watermark", lambda: 200)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_current_states", lambda **kwargs: [
+        _state(180, at, 2, "0582609699")
+    ])
+    assert reconcile_external_factory(db, config) == 1
+    event = db.scalar(select(FactoryPerimeterEvent))
+    assert (event.reporter_id, event.direction, event.event_datetime) == ("0582609699", "ENTER", at.replace(tzinfo=None))
+    assert event.terminal_id == ensure_virtual_terminal(db, "ARGANDA").id
+
+
+def test_reconcile_outside_creates_exit_and_auto_exits_active_cell_once(db, monkeypatch):
+    config, _, _ = _seed_active_cell(db)
+    terminal = ensure_virtual_terminal(db, "ARGANDA")
+    entered = datetime(2026, 10, 22, 10, 0, tzinfo=LOCAL_TZ)
+    exited = entered + timedelta(minutes=5)
+    mirror_external_event(db, config, terminal, _state(150, entered, 2, "2959281396"))
+    db.commit()
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_high_watermark", lambda: 200)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_current_states", lambda **kwargs: [
+        _state(180, exited, 1, "2959281396")
+    ])
+    assert reconcile_external_factory(db, config) == 1
+    assert reconcile_external_factory(db, config) == 0
+    perimeter = db.scalars(select(FactoryPerimeterEvent).order_by(FactoryPerimeterEvent.event_datetime.desc())).first()
+    cell = db.scalars(select(TimeEvent).order_by(TimeEvent.event_datetime.desc())).first()
+    assert perimeter.direction == "EXIT" and perimeter.event_datetime == exited.replace(tzinfo=None)
+    assert cell.state_effect == "EXIT" and cell.event_datetime == exited.replace(tzinfo=None)
+    assert cell.terminal_code == "T0001"
+    assert cell.correlation_id == perimeter.correlation_id
+    assert db.scalar(select(func.count()).select_from(TimeEvent)) == 2
+    assert db.scalar(select(func.count()).select_from(TransmissionAttempt)) == 0
+
+
+def test_reconcile_old_exit_does_not_close_new_cell_enter(db, monkeypatch):
+    config, _, cell_enter = _seed_active_cell(db)
+    terminal = ensure_virtual_terminal(db, "ARGANDA")
+    mirror_external_event(db, config, terminal, _state(90, cell_enter.event_datetime - timedelta(minutes=10), 2, "2959281396"))
+    db.commit()
+    old_exit = cell_enter.event_datetime - timedelta(minutes=5)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_high_watermark", lambda: 200)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_current_states", lambda **kwargs: [
+        _state(99, old_exit, 1, "2959281396")
+    ])
+    assert reconcile_external_factory(db, config) == 1
+    assert db.scalar(select(func.count()).select_from(TimeEvent)) == 1
+    assert db.scalar(select(TimeEvent).order_by(TimeEvent.event_datetime.desc())).state_effect == "ENTER"
+
+
+def test_reconcile_matching_state_and_sql_only_outside_do_not_write(db, monkeypatch):
+    config, _, _ = _seed_active_cell(db)
+    terminal = ensure_virtual_terminal(db, "ARGANDA")
+    at = datetime(2026, 10, 22, 10, 1, tzinfo=LOCAL_TZ)
+    mirror_external_event(db, config, terminal, _state(101, at, 2, "2959281396"))
+    db.commit()
+    before = db.scalar(select(func.count()).select_from(FactoryPerimeterEvent))
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_high_watermark", lambda: 300)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_current_states", lambda **kwargs: [
+        _state(101, at, 2, "2959281396"), _state(280, at, 1, "1111111111")
+    ])
+    assert reconcile_external_factory(db, config) == 0
+    assert db.scalar(select(func.count()).select_from(FactoryPerimeterEvent)) == before
+
+
+def test_reconcile_unresolved_does_not_invent_badge(db, monkeypatch):
+    config, _, _ = _seed_active_cell(db)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_high_watermark", lambda: 200)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_current_states", lambda **kwargs: [])
+    assert reconcile_external_factory(db, config) == 0
+    assert db.scalar(select(func.count()).select_from(FactoryPerimeterEvent)) == 0
+
+
+def test_reconcile_recovers_incremental_missed_movement_when_mapping_resolves(db, monkeypatch):
+    config, _, _ = _seed_active_cell(db)
+    at = datetime(2026, 10, 22, 10, 6, tzinfo=LOCAL_TZ)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_events_after", lambda cursor, **kwargs: [
+        {"log_id": cursor + 1, "event_time": at, "zone_code": 2, "reporter_id": None}
+    ] if cursor == 100 else [])
+    assert sync_external_factory(db, config) == 0
+    assert config.external_last_log_id == 101
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_high_watermark", lambda: 101)
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_current_states", lambda **kwargs: [
+        _state(101, at, 2, "0582609699")
+    ])
+    assert reconcile_external_factory(db, config) == 1
+    assert db.scalar(select(FactoryPerimeterEvent).where(FactoryPerimeterEvent.reporter_id == "0582609699")).direction == "ENTER"

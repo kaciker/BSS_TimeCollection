@@ -10,7 +10,10 @@ from app.domain.enums import DeliveryStatus
 from app.integrations.oracle.client import OracleClient
 from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
-from app.services.external_perimeter_sync import sync_enabled_external_perimeters
+from app.services.external_perimeter_sync import (
+    reconcile_enabled_external_perimeters,
+    sync_enabled_external_perimeters,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("delivery-worker")
@@ -102,6 +105,7 @@ def main() -> None:
     recover_stale_events()
     client = OracleClient()
     next_external_sync = 0.0
+    next_external_reconciliation = 0.0
     while True:
         now_monotonic = time.monotonic()
         if now_monotonic >= next_external_sync:
@@ -112,6 +116,15 @@ def main() -> None:
             except Exception:
                 logger.exception("Unhandled external perimeter replication failure")
             next_external_sync = now_monotonic + max(settings.perimeter_external_sync_seconds, 5.0)
+
+        if now_monotonic >= next_external_reconciliation:
+            try:
+                repaired = reconcile_enabled_external_perimeters()
+                if repaired:
+                    logger.info("Reconciled %s external perimeter state(s)", repaired)
+            except Exception:
+                logger.exception("Unhandled external perimeter reconciliation failure")
+            next_external_reconciliation = now_monotonic + 180.0
 
         if not settings.oracle_enabled:
             time.sleep(max(settings.worker_poll_seconds, 1.0))
