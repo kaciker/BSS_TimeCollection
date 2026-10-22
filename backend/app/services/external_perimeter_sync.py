@@ -224,6 +224,15 @@ def _external_event_uuid(factory_code: str, log_id: int) -> str:
     return str(uuid5(NAMESPACE_URL, f"bss-timecollection:{factory_code}:{SOURCE}:{log_id}"))
 
 
+def _snapshot_event_uuid(factory_code: str, item: dict) -> str:
+    """Give current-state snapshots a stable key even when SECURITY_DB omits log_id."""
+    log_id = item.get("log_id")
+    badge = item.get("reporter_id")
+    if log_id is not None and int(log_id) > 0:
+        return _external_event_uuid(factory_code, int(log_id))
+    return str(uuid5(NAMESPACE_URL, f"bss-timecollection:{factory_code}:{SOURCE}:snapshot:{badge}"))
+
+
 def _external_correlation_uuid(factory_code: str, log_id: int) -> str:
     return str(uuid5(NAMESPACE_URL, f"bss-timecollection:{factory_code}:{SOURCE}:correlation:{log_id}"))
 
@@ -241,7 +250,7 @@ def mirror_external_event(
     if log_id is None or event_time is None or zone_code not in (1, 2) or not badge:
         return False
 
-    event_id = _external_event_uuid(config.factory_code, log_id)
+    event_id = _snapshot_event_uuid(config.factory_code, item)
     if db.get(FactoryPerimeterEvent, event_id) is not None:
         return False
 
