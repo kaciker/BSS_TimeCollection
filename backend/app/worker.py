@@ -10,6 +10,7 @@ from app.domain.enums import DeliveryStatus
 from app.integrations.oracle.client import OracleClient
 from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
+from app.services.external_perimeter_sync import sync_enabled_external_perimeters
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("delivery-worker")
@@ -93,13 +94,29 @@ def deliver(event_id: str, client: OracleClient) -> None:
 
 
 def main() -> None:
-    logger.info("Delivery worker started; Oracle enabled=%s", settings.oracle_enabled)
+    logger.info(
+        "Delivery worker started; Oracle enabled=%s external perimeter sync=%ss",
+        settings.oracle_enabled,
+        settings.perimeter_external_sync_seconds,
+    )
     recover_stale_events()
     client = OracleClient()
+    next_external_sync = 0.0
     while True:
+        now_monotonic = time.monotonic()
+        if now_monotonic >= next_external_sync:
+            try:
+                mirrored = sync_enabled_external_perimeters()
+                if mirrored:
+                    logger.info("Mirrored %s external perimeter movement(s)", mirrored)
+            except Exception:
+                logger.exception("Unhandled external perimeter replication failure")
+            next_external_sync = now_monotonic + max(settings.perimeter_external_sync_seconds, 5.0)
+
         if not settings.oracle_enabled:
             time.sleep(max(settings.worker_poll_seconds, 1.0))
             continue
+
         event_id = claim_next_event()
         if event_id is None:
             time.sleep(settings.worker_poll_seconds)
