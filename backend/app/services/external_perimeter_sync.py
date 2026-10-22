@@ -31,12 +31,17 @@ WHERE t.acc_zone_code IN (1, 2)
 """
 
 _EVENTS_AFTER_SQL = """
-SELECT TOP ({limit}) t.log_id, t.event_time, t.acc_zone_code, pae.attr_value4
-FROM dbo.acc_transaction AS t
+WITH batch AS (
+    SELECT TOP ({limit}) log_id, event_time, acc_zone_code, card_no
+    FROM dbo.acc_transaction
+    WHERE log_id > ? AND acc_zone_code IN (1, 2)
+    ORDER BY log_id ASC
+)
+SELECT t.log_id, t.event_time, t.acc_zone_code, pae.attr_value4
+FROM batch AS t
 LEFT JOIN dbo.pers_card AS pc ON pc.card_no = t.card_no
 LEFT JOIN dbo.pers_person AS p ON p.id = pc.person_id
 LEFT JOIN dbo.pers_attribute_ext AS pae ON pae.person_id = p.id
-WHERE t.log_id > ? AND t.acc_zone_code IN (1, 2)
 ORDER BY t.log_id ASC
 """
 
@@ -47,7 +52,7 @@ JOIN dbo.pers_person AS p ON p.id = pae.person_id
 JOIN dbo.pers_card AS pc ON pc.person_id = p.id
 JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no
 WHERE pae.attr_value4 = ? AND t.acc_zone_code IN (1, 2)
-ORDER BY t.event_time DESC, t.log_id DESC
+ORDER BY t.log_id DESC, t.event_time DESC
 """
 
 _CURRENT_INSIDE_SQL = """
@@ -70,10 +75,17 @@ WITH latest AS (
     LEFT JOIN dbo.pers_attribute_ext AS pae ON pae.person_id = p.id
     WHERE t.acc_zone_code IN (1, 2)
       AND t.log_id <= ?
+), resolved AS (
+    SELECT log_id, MAX(event_time) AS event_time, MAX(acc_zone_code) AS acc_zone_code,
+           MAX(attr_value4) AS attr_value4, COUNT(DISTINCT attr_value4) AS mapping_count
+    FROM latest
+    WHERE rn = 1
+    GROUP BY log_id
 )
-SELECT log_id, event_time, acc_zone_code, attr_value4
-FROM latest
-WHERE rn = 1 AND acc_zone_code = 2
+SELECT log_id, event_time, acc_zone_code,
+       CASE WHEN mapping_count = 1 THEN attr_value4 ELSE NULL END AS attr_value4
+FROM resolved
+WHERE acc_zone_code = 2
 ORDER BY log_id ASC
 """
 
@@ -94,10 +106,19 @@ WITH latest AS (
     LEFT JOIN dbo.pers_attribute_ext AS pae ON pae.person_id = p.id
     WHERE t.acc_zone_code IN (1, 2)
       AND t.log_id <= ?
+), resolved AS (
+    SELECT
+        log_id, MAX(event_time) AS event_time,
+        MAX(acc_zone_code) AS acc_zone_code,
+        MAX(attr_value4) AS attr_value4,
+        COUNT(DISTINCT attr_value4) AS mapping_count
+    FROM latest
+    WHERE rn = 1
+    GROUP BY log_id
 )
-SELECT log_id, event_time, acc_zone_code, attr_value4
-FROM latest
-WHERE rn = 1
+SELECT log_id, event_time, acc_zone_code,
+       CASE WHEN mapping_count = 1 THEN attr_value4 ELSE NULL END AS attr_value4
+FROM resolved
 ORDER BY log_id ASC
 """
 
@@ -171,16 +192,38 @@ def external_events_after(last_log_id: int, *, limit: int | None = None, query=N
     batch_size = max(1, min(int(limit or settings.perimeter_external_sync_batch_size), 1000))
     if query is not None:
         rows = query(last_log_id, batch_size)
-        return [_normalize_external_row(row) for row in rows]
-    connection = _connect()
-    try:
-        sql = _EVENTS_AFTER_SQL.format(limit=batch_size)
-        rows = connection.cursor().execute(sql, int(last_log_id)).fetchall()
-        return [_normalize_external_row(row) for row in rows]
-    except Exception as exc:
-        raise ExternalPerimeterError(_safe_odbc_category(exc, phase="query")) from None
-    finally:
-        connection.close()
+    else:
+        connection = _connect()
+        try:
+            sql = _EVENTS_AFTER_SQL.format(limit=batch_size)
+            rows = connection.cursor().execute(sql, int(last_log_id)).fetchall()
+        except Exception as exc:
+            raise ExternalPerimeterError(_safe_odbc_category(exc, phase="query")) from None
+        finally:
+            connection.close()
+    by_log_id: dict[int, list[dict]] = {}
+    for row in rows:
+        item = _normalize_external_row(row)
+        if item.get("log_id") is not None:
+            by_log_id.setdefault(item["log_id"], []).append(item)
+    result = []
+    for log_id, items in sorted(by_log_id.items()):
+        badges = {item.get("reporter_id") for item in items if item.get("reporter_id")}
+        representative = dict(items[0])
+        has_unresolved_mapping = any(not item.get("reporter_id") for item in items)
+        is_ambiguous = any(item.get("_mapping_ambiguous") for item in items)
+        representative.pop("_mapping_ambiguous", None)
+        if len(badges) > 1 or (badges and (has_unresolved_mapping or is_ambiguous)):
+            representative["reporter_id"] = None
+            representative["_mapping_ambiguous"] = True
+            logger.warning(
+                "Ambiguous external perimeter mapping log_id=%s mapped_badges=%s unresolved_rows=%s",
+                log_id, len(badges), has_unresolved_mapping,
+            )
+        elif len(badges) == 1:
+            representative["reporter_id"] = next(iter(badges))
+        result.append(representative)
+    return result
 
 
 def latest_external_event_for_badge(badge: str, *, query=None) -> dict | None:
@@ -396,7 +439,7 @@ def external_current_states(*, max_log_id: int | None = None, query=None) -> lis
         finally:
             connection.close()
 
-    latest: dict[str, dict] = {}
+    candidates: list[dict] = []
     unresolved = {"ENTER": 0, "EXIT": 0}
     for row in rows:
         item = _normalize_external_row(row)
@@ -407,6 +450,25 @@ def external_current_states(*, max_log_id: int | None = None, query=None) -> lis
             unresolved[direction] += 1
             logger.warning("Unresolved external perimeter reconciliation movement log_id=%s direction=%s",
                            item["log_id"], direction)
+            continue
+        candidates.append(item)
+
+    by_log_id: dict[int, list[dict]] = {}
+    for item in candidates:
+        by_log_id.setdefault(item["log_id"], []).append(item)
+    ambiguous_ids: set[int] = set()
+    for log_id, items in by_log_id.items():
+        badges = {item["reporter_id"] for item in items}
+        if len(badges) > 1 or (badges and any(item.get("_mapping_ambiguous") for item in items)):
+            ambiguous_ids.add(log_id)
+            direction = "ENTER" if items[0]["zone_code"] == 2 else "EXIT"
+            unresolved[direction] += 1
+            logger.warning("Ambiguous external perimeter reconciliation mapping log_id=%s mapped_badges=%s",
+                           log_id, len(badges))
+
+    latest: dict[str, dict] = {}
+    for item in candidates:
+        if item["log_id"] in ambiguous_ids:
             continue
         badge = item["reporter_id"]
         previous = latest.get(badge)

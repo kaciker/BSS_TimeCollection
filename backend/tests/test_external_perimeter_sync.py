@@ -117,7 +117,22 @@ def test_incremental_rows_preserve_log_id_zone_and_badge():
     assert rows == [{"log_id": 41, "event_time": at, "zone_code": 2, "reporter_id": "0582609699"}]
 
 
+def test_incremental_join_mappings_are_collapsed_and_ambiguous_badges_unresolved(caplog):
+    at = datetime(2026, 10, 22, 11, 0, tzinfo=timezone.utc)
+    attr_a = reader_number_to_attr_value("0582609699")
+    attr_b = reader_number_to_attr_value("2959281396")
+    rows = external_events_after(40, limit=25, query=lambda cursor, limit: [
+        (41, at, 2, attr_a), (41, at, 2, attr_a), (42, at, 1, attr_a), (42, at, 1, attr_b),
+    ])
+    assert len(rows) == 2
+    assert rows[0]["reporter_id"] == "0582609699"
+    assert rows[1]["reporter_id"] is None
+    assert "log_id=42" in caplog.text
+
+
 def test_current_inside_snapshot_returns_only_valid_inside_badges():
+    from app.services.external_perimeter_sync import _CURRENT_INSIDE_SQL
+    assert "t.log_id <= ?" in _CURRENT_INSIDE_SQL
     at = datetime(2026, 10, 22, 11, 0, tzinfo=timezone.utc)
     inside_attr = reader_number_to_attr_value("2959281396")
     outside_attr = reader_number_to_attr_value("0582609699")
