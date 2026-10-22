@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../api";
 import type { AdminAction, AdminTerminal } from "../../types";
+import { useLanguage } from "../../i18n";
 
 type Config = {
   factory_code: string; enabled: boolean; badge_source: "OPEN" | "EXTERNAL";
   dedup_enabled: boolean; dedup_seconds: number; auto_exit_action_code: string | null;
 };
 type Presence = { factory_code: string; inside: string[]; recent_events: Array<{id: string; badge: string; direction: string; at: string; auto_cell_exit_event_id: string | null}> };
+type ExternalStatus = {provider: string; configured: boolean; reachable: boolean; database: string; server: string | null; driver: string; last_check_at: string | null; status: string; error_category: string | null};
+type BadgeTest = {status: "INSIDE" | "OUTSIDE" | "STALE" | "UNKNOWN" | "ERROR"; external_event_time: string | null; zone_code: number | null; error_category: string | null};
 type Role = "CELL" | "PERIMETER_ENTER" | "PERIMETER_EXIT" | "PERIMETER_BOTH";
 export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {terminals: AdminTerminal[]; actions: AdminAction[]; onTerminalsChanged?: () => Promise<void>}) {
+  const { t: tr, language } = useLanguage();
   const [terminalRows, setTerminalRows] = useState(terminals);
   useEffect(() => { setTerminalRows(terminals); }, [terminals]);
   const exitActions = actions.filter(a => a.active && a.state_effect === "EXIT" && !a.requires_subaction);
@@ -38,6 +42,9 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
   };
   const [config, setConfig] = useState<Config | null>(null);
   const [presence, setPresence] = useState<Presence | null>(null);
+  const [externalStatus, setExternalStatus] = useState<ExternalStatus | null>(null);
+  const [badge, setBadge] = useState("");
+  const [badgeResult, setBadgeResult] = useState<BadgeTest | null>(null);
   const [roles, setRoles] = useState<Record<string, Role>>({});
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -52,6 +59,10 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
     ]);
     if (version !== requestVersion.current) return;
     setConfig(settings); setPresence(state);
+    if (factory.toUpperCase() === "ARGANDA") {
+      const external = await api.get<ExternalStatus>(`/api/v1/admin/perimeter/${encodeURIComponent(factory)}/external/status`);
+      if (version === requestVersion.current) setExternalStatus(external);
+    } else setExternalStatus(null);
     if (Array.isArray(currentTerminals)) setTerminalRows(currentTerminals);
   }, [factory]);
   useEffect(() => {
@@ -63,9 +74,9 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
     if (!config) return;
     setBusy(true); setError(""); setNotice("");
     try {
-      if (config.enabled && !exitActions.some(a => a.code === config.auto_exit_action_code)) { setError("Select an existing active EXIT action without subactions."); return; }
+      if (config.enabled && !exitActions.some(a => a.code === config.auto_exit_action_code)) { setError(tr("selectEligibleExitError")); return; }
       await api.put(`/api/v1/admin/perimeter/${encodeURIComponent(factory)}`, config);
-      await load(); setError(""); setNotice("Factory perimeter configuration saved.");
+      await load(); setError(""); setNotice(tr("perimeterSaved"));
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   };
@@ -76,56 +87,85 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
       setTerminalRows(rows => rows.map(t => t.code === saved.code ? {...t, factory_code: saved.factory_code, terminal_role: saved.role} : t));
       setRoles(previous => { const next = {...previous}; delete next[code]; return next; });
       await onTerminalsChanged?.();
-      setError(""); setNotice(`Terminal ${code} updated.`);
+      setError(""); setNotice(`${tr("terminal")} ${code} ${tr("factoryRoleUpdated")}`);
     } catch(e) { setError((e as Error).message); }
+    finally { setBusy(false); }
+  };
+  const checkExternal = async () => {
+    setBusy(true); setError(""); setNotice("");
+    try { setExternalStatus(await api.post<ExternalStatus>(`/api/v1/admin/perimeter/${encodeURIComponent(factory)}/external/check`, {})); }
+    catch (e) { setError((e as Error).message); }
+    finally { setBusy(false); }
+  };
+  const testBadge = async () => {
+    setBusy(true); setBadgeResult(null); setError("");
+    try { setBadgeResult(await api.post<BadgeTest>(`/api/v1/admin/perimeter/${encodeURIComponent(factory)}/external/test-badge`, {badge})); }
+    catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   };
   return <div className="admin-stack perimeter-panel">
     {error && <div className="inline-error" role="alert">{error}</div>}
     {notice && !error && <div className="success-notice" role="status">{notice}</div>}
+    {config?.badge_source === "EXTERNAL" && <section className="admin-card">
+      <div className="section-heading"><div><h3>{tr("externalControlTitle")}</h3><p>{tr("externalAuthorityHelp")}</p></div>
+        <span className={`resource-status ${externalStatus?.reachable ? "is-active" : "is-inactive"}`}><span />{externalStatus?.reachable ? "Connected" : !externalStatus?.configured ? "Not configured" : !externalStatus?.last_check_at ? "Not checked" : "Error"}</span>
+      </div>
+      <div className="form-grid"><div><strong>{tr("externalSourceLabel")}</strong><div>SECURITY_DB</div></div><div><strong>{tr("externalModeLabel")}</strong><div>{tr("readOnly")}</div></div>
+        <div><strong>{tr("lastCheckLabel")}</strong><div>{externalStatus?.last_check_at ? new Date(externalStatus.last_check_at).toLocaleString(language) : "—"}</div></div>
+        {externalStatus?.error_category && <div><strong>{tr("technicalErrorLabel")}</strong><div>{externalStatus.error_category}</div></div>}
+      </div>
+      <div className="form-actions"><button className="secondary" disabled={busy} onClick={() => void checkExternal()}>{tr("testExternalConnection")}</button></div>
+      <div className="form-grid"><label>{tr("testBadgeLabel")}<input value={badge} maxLength={64} disabled={busy} onChange={e => setBadge(e.target.value)} /></label>
+        <div className="form-actions"><button className="secondary" disabled={busy || !badge.trim()} onClick={() => void testBadge()}>{tr("testBadgeButton")}</button></div></div>
+      {badgeResult && <div className="success-notice" role="status"><strong>{tr("externalTestResult")}: {badgeResult.status}</strong>{badgeResult.external_event_time && <div>{tr("externalEventTime")}: {new Date(badgeResult.external_event_time).toLocaleString(language)}</div>}{badgeResult.error_category && <div>{tr("technicalErrorLabel")}: {badgeResult.error_category}</div>}</div>}
+    </section>}
     <section className="admin-card">
-      <div className="section-heading"><div><h3>Factory settings</h3><p>Configure UID presence and repeated scans for each factory.</p></div>
-        {config && <span className={`resource-status ${config.enabled ? "is-active" : "is-inactive"}`}><span />{config.enabled ? "Enabled" : "Disabled"}</span>}
+      <div className="section-heading"><div><h3>{tr("factorySettings")}</h3><p>{tr("factorySettingsHelp")}</p></div>
+        {config && <span className={`resource-status ${config.enabled ? "is-active" : "is-inactive"}`}><span />{config.enabled ? tr("enabled") : tr("disabled")}</span>}
       </div>
       <div className="form-grid">
-        <label>Factory code<input disabled={busy} value={factory} maxLength={64} onChange={e => changeFactory(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""))} /></label>
-        {config && <label>Badge validation<select value={config.badge_source} onChange={e => setConfig({...config, badge_source:e.target.value as Config["badge_source"]})}><option value="OPEN">OPEN (any scanned UID)</option><option value="EXTERNAL" disabled>EXTERNAL (future integration)</option></select></label>}
+        <label>{tr("factoryCode")}<input disabled={busy} value={factory} maxLength={64} onChange={e => changeFactory(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""))} /></label>
+        {config && <label>{tr("presenceSource")}<select value={config.badge_source} onChange={e => setConfig({...config, badge_source:e.target.value as Config["badge_source"]})}><option value="OPEN">{tr("openAnyUid")}</option><option value="EXTERNAL" disabled={factory.toUpperCase() !== "ARGANDA"}>{tr("externalArganda")}</option></select></label>}
       </div>
       {config && <>
         <div className="perimeter-switches">
-          <label className="switch-control"><input type="checkbox" checked={config.enabled} disabled={busy} onChange={e => setConfig({...config, enabled:e.target.checked})} /><span className="switch-track" aria-hidden="true" />Require factory entry before cell entry</label>
-          <label className="switch-control"><input type="checkbox" checked={config.dedup_enabled} disabled={busy} onChange={e => setConfig({...config, dedup_enabled:e.target.checked})} /><span className="switch-track" aria-hidden="true" />Ignore repeated scans</label>
+          <label className="switch-control"><input type="checkbox" checked={config.enabled} disabled={busy} onChange={e => setConfig({...config, enabled:e.target.checked})} /><span className="switch-track" aria-hidden="true" />{tr("requireFactoryEntry")}</label>
+          <label className="switch-control"><input type="checkbox" checked={config.dedup_enabled} disabled={busy} onChange={e => setConfig({...config, dedup_enabled:e.target.checked})} /><span className="switch-track" aria-hidden="true" />{tr("ignoreRepeatedScans")}</label>
         </div>
         <div className="form-grid">
-          <label>Scan cooldown (seconds)<input type="number" min="0" max="300" value={config.dedup_seconds} onChange={e => setConfig({...config, dedup_seconds:Number(e.target.value)})} /></label>
-          <label>Automatic cell EXIT action<select aria-label="Automatic cell EXIT action" value={config.auto_exit_action_code ?? ""} onChange={e => { setConfig({...config, auto_exit_action_code:e.target.value || null}); setNotice(""); setError(""); }}><option value="">Select an existing EXIT action</option>{config.auto_exit_action_code && !exitActions.some(action => action.code === config.auto_exit_action_code) && <option value={config.auto_exit_action_code} disabled>{config.auto_exit_action_code} (unavailable)</option>}{exitActions.map(action => <option key={action.code} value={action.code}>{action.label} · {action.code}{action.show_on_terminal === false ? " (hidden)" : ""}</option>)}</select>{exitActions.length === 0 && <small>No eligible EXIT actions. Create an active EXIT action without subactions in Actions first.</small>}{config.auto_exit_action_code && !exitActions.some(action => action.code === config.auto_exit_action_code) && <small>Saved action is unavailable; select an active EXIT action before saving.</small>}</label>
+          <label>{tr("scanCooldown")}<input type="number" min="0" max="300" value={config.dedup_seconds} onChange={e => setConfig({...config, dedup_seconds:Number(e.target.value)})} /></label>
+          <label>{tr("autoExitAction")}<select aria-label={tr("autoExitAction")} value={config.auto_exit_action_code ?? ""} onChange={e => { setConfig({...config, auto_exit_action_code:e.target.value || null}); setNotice(""); setError(""); }}><option value="">{tr("selectExistingExit")}</option>{config.auto_exit_action_code && !exitActions.some(action => action.code === config.auto_exit_action_code) && <option value={config.auto_exit_action_code} disabled>{config.auto_exit_action_code} ({tr("unavailable")})</option>}{exitActions.map(action => <option key={action.code} value={action.code}>{action.label} · {action.code}{action.show_on_terminal === false ? ` (${tr("hidden")})` : ""}</option>)}</select>{exitActions.length === 0 && <small>{tr("noEligibleExit")}</small>}{config.auto_exit_action_code && !exitActions.some(action => action.code === config.auto_exit_action_code) && <small>{tr("savedActionUnavailable")}</small>}</label>
         </div>
-        <div className="form-actions"><button className="primary" disabled={busy || !factory} onClick={() => void save()}>Save factory settings</button></div>
+        <div className="form-actions"><button className="primary" disabled={busy || !factory} onClick={() => void save()}>{tr("saveFactorySettings")}</button></div>
       </>}
     </section>
     <section className="admin-card">
-      <div className="section-heading"><div><h3>Terminal roles</h3><p>The saved factory and role are shown below each terminal. Choose a role and save to assign it to the selected factory.</p></div></div>
-      <div className="perimeter-terminal-list">{terminalRows.map(t => <div key={t.code} className="perimeter-terminal-row">
-        <div className="perimeter-terminal-name"><strong>{t.name}</strong><div className="cell-secondary">{t.code}<br />Saved factory: <strong>{t.factory_code ?? "DEFAULT"}</strong><br />Saved role: {t.terminal_role === "CELL" ? "Cell" : t.terminal_role === "PERIMETER_ENTER" ? "Factory entrance" : t.terminal_role === "PERIMETER_EXIT" ? "Factory exit" : "Factory entrance / exit"}</div></div>
-        <label className="perimeter-role-control"><span className="field-label">Role to save</span><select aria-label={`Role for ${t.code}`} value={roles[t.code] ?? t.terminal_role ?? "CELL"} onChange={e => setRoles({...roles, [t.code]:e.target.value as Role})}>
-          <option value="CELL">Cell</option><option value="PERIMETER_ENTER">Factory entrance</option>
-          <option value="PERIMETER_EXIT">Factory exit</option><option value="PERIMETER_BOTH">Factory entrance / exit</option>
+      <div className="section-heading"><div><h3>{tr("terminalRoles")}</h3><p>{tr("terminalRolesHelp")}</p></div></div>
+      <div className="perimeter-terminal-list">{terminalRows.map(terminal => <div key={terminal.code} className="perimeter-terminal-row">
+        <div className="perimeter-terminal-name"><strong>{terminal.name}</strong><div className="cell-secondary">{terminal.code}<br />{tr("savedFactory")}: <strong>{terminal.factory_code ?? "DEFAULT"}</strong><br />{tr("savedRole")}: {terminal.terminal_role === "CELL" ? tr("cell") : terminal.terminal_role === "PERIMETER_ENTER" ? tr("factoryEntrance") : terminal.terminal_role === "PERIMETER_EXIT" ? tr("factoryExit") : tr("factoryEntranceExit")}</div></div>
+        <label className="perimeter-role-control"><span className="field-label">{tr("roleToSave")}</span><select aria-label={`${tr("roleToSave")} ${terminal.code}`} value={roles[terminal.code] ?? terminal.terminal_role ?? "CELL"} onChange={e => setRoles({...roles, [terminal.code]:e.target.value as Role})}>
+          <option value="CELL">{tr("cell")}</option><option value="PERIMETER_ENTER">{tr("factoryEntrance")}</option>
+          <option value="PERIMETER_EXIT">{tr("factoryExit")}</option><option value="PERIMETER_BOTH">{tr("factoryEntranceExit")}</option>
         </select></label>
-        <button className="secondary" disabled={busy || !factory || ((t.factory_code ?? "DEFAULT") === factory && (roles[t.code] ?? t.terminal_role ?? "CELL") === t.terminal_role)} onClick={() => void saveRole(t.code)}>{(t.factory_code ?? "DEFAULT") !== factory ? `Assign to ${factory}` : (roles[t.code] ?? t.terminal_role) !== t.terminal_role ? "Save role" : "Assignment saved"}</button>
+        <button className="secondary" disabled={busy || !factory || ((terminal.factory_code ?? "DEFAULT") === factory && (roles[terminal.code] ?? terminal.terminal_role ?? "CELL") === terminal.terminal_role)} onClick={() => void saveRole(terminal.code)}>{(terminal.factory_code ?? "DEFAULT") !== factory ? `${tr("assignTo")} ${factory}` : (roles[terminal.code] ?? terminal.terminal_role) !== terminal.terminal_role ? tr("saveRole") : tr("assignmentSaved")}</button>
       </div>)}</div>
-      {!terminalRows.length && <div className="empty-state">No terminals configured.</div>}
+      {!terminalRows.length && <div className="empty-state">{tr("noTerminalsConfigured")}</div>}
     </section>
-    <section className="admin-card">
-      <div className="section-heading"><div><h3>Factory presence</h3><p>Cards currently inside the selected factory.</p></div>
-        <button className="secondary" disabled={busy} onClick={() => void load().catch(e => setError((e as Error).message))}>Refresh presence</button>
+    {config?.badge_source === "EXTERNAL" && <section className="admin-card">
+      <div className="section-heading"><div><h3>{tr("localBssData")}</h3><p>{tr("externalAuthorityHelp")}</p></div></div>
+      <div className="empty-state">{tr("localBssDataOnly")}</div>
+    </section>}
+    {config?.badge_source !== "EXTERNAL" && <section className="admin-card">
+      <div className="section-heading"><div><h3>{tr("factoryPresence")}</h3><p>{tr("cardsInsideSelected")}</p></div>
+        <button className="secondary" disabled={busy} onClick={() => void load().catch(e => setError((e as Error).message))}>{tr("refreshPresence")}</button>
       </div>
-      <div className="list-stats"><strong>{presence?.inside.length ?? 0}</strong><span>cards inside factory</span></div>
-      {presence?.inside.length ? <div className="action-tags perimeter-presence">{presence.inside.map(badge => <span key={badge}>{badge}</span>)}</div> : <div className="empty-state">No cards currently inside this factory.</div>}
-    </section>
-    <section className="admin-card resource-list">
-      <div className="list-toolbar perimeter-audit-heading"><div className="section-heading"><div><h3>Recent perimeter movements</h3><p>Factory entry, exit and automatic cell exit history.</p></div></div></div>
-      {presence?.recent_events.length ? <div className="table-wrap"><table><thead><tr><th>UID</th><th>Direction</th><th>Time</th><th>Auto cell exit</th></tr></thead>
-        <tbody>{presence.recent_events.map(e => <tr key={e.id}><td><strong>{e.badge}</strong></td><td><span className="status">{e.direction}</span></td><td>{new Date(e.at).toLocaleString()}</td><td><code>{e.auto_cell_exit_event_id ?? "—"}</code></td></tr>)}</tbody></table></div> : <div className="empty-state">No perimeter movements recorded.</div>}
-    </section>
+      <div className="list-stats"><strong>{presence?.inside.length ?? 0}</strong><span>{tr("cardsInsideFactory")}</span></div>
+      {presence?.inside.length ? <div className="action-tags perimeter-presence">{presence.inside.map(badge => <span key={badge}>{badge}</span>)}</div> : <div className="empty-state">{tr("noCardsInside")}</div>}
+    </section>}
+    {config?.badge_source !== "EXTERNAL" && <section className="admin-card resource-list">
+      <div className="list-toolbar perimeter-audit-heading"><div className="section-heading"><div><h3>{tr("recentMovements")}</h3><p>{tr("perimeterHistoryHelp")}</p></div></div></div>
+      {presence?.recent_events.length ? <div className="table-wrap"><table><thead><tr><th>{tr("uid")}</th><th>{tr("direction")}</th><th>{tr("time")}</th><th>{tr("autoCellExit")}</th></tr></thead>
+        <tbody>{presence.recent_events.map(e => <tr key={e.id}><td><strong>{e.badge}</strong></td><td><span className="status">{e.direction}</span></td><td>{new Date(e.at).toLocaleString(language)}</td><td><code>{e.auto_cell_exit_event_id ?? "—"}</code></td></tr>)}</tbody></table></div> : <div className="empty-state">{tr("noMovements")}</div>}
+    </section>}
   </div>;
 }

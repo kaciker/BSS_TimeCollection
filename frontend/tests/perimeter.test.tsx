@@ -3,8 +3,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { PerimeterPanel } from "../src/components/admin/PerimeterPanel";
 import { api } from "../src/api";
-vi.mock("../src/api", () => ({ api: { get: vi.fn(), put: vi.fn() } }));
-afterEach(() => { cleanup(); vi.clearAllMocks(); window.history.replaceState({}, "", "/admin/perimeter"); localStorage.removeItem("bss-perimeter-factory"); });
+vi.mock("../src/api", () => ({ api: { get: vi.fn(), put: vi.fn(), post: vi.fn() } }));
+afterEach(() => { cleanup(); vi.clearAllMocks(); window.history.replaceState({}, "", "/admin/perimeter"); localStorage.removeItem("bss-perimeter-factory"); localStorage.removeItem("bss-timecollection-language"); });
 it("loads disabled settings and does not write terminal assignments", async () => {
   vi.mocked(api.get).mockImplementation(async path => path.endsWith("/presence") ? {inside: [], recent_events: []} : {factory_code: "DEFAULT", enabled: false, badge_source: "OPEN", dedup_enabled: false, dedup_seconds: 5, auto_exit_action_code: null});
   render(<PerimeterPanel terminals={[]} actions={[]} />);
@@ -115,4 +115,25 @@ it("distinguishes saved assignment from destination and updates it after saving"
   await screen.findByRole("button",{name:"Assignment saved"});
   expect(screen.queryByText("DEFAULT")).toBeNull();
   expect((screen.getByRole("button",{name:"Assignment saved"}) as HTMLButtonElement).disabled).toBe(true);
+});
+
+
+it("shows external diagnostics and tests a badge without requesting local events", async () => {
+  localStorage.setItem("bss-timecollection-language", "es");
+  window.history.replaceState({}, "", "/admin/perimeter?factory=ARGANDA");
+  vi.mocked(api.get).mockImplementation(async path => path.endsWith("/presence") ? {inside: [], recent_events: []} : path.endsWith("/external/status") ? {provider:"SQLSERVER_SECURITY_DB",configured:true,reachable:false,database:"SECURITY_DB",server:"10.33.157.67:1433",driver:"ODBC Driver 18 for SQL Server",last_check_at:"2026-10-22T10:00:00Z",status:"ERROR",error_category:"AUTH_FAILED"} : {factory_code:"ARGANDA",enabled:false,badge_source:"EXTERNAL",dedup_enabled:true,dedup_seconds:5,auto_exit_action_code:null});
+  vi.mocked(api.post).mockResolvedValue({status:"INSIDE",external_event_time:"2026-10-22T10:00:00Z",zone_code:2,error_category:null});
+  render(<PerimeterPanel terminals={[]} actions={[]} />);
+  expect(await screen.findByText("Control externo Arganda")).toBeTruthy();
+  expect(screen.getByText("Datos locales BSS")).toBeTruthy();
+  expect(screen.getByText("AUTH_FAILED")).toBeTruthy();
+  expect(screen.queryByText("Presencia en fábrica")).toBeNull();
+  expect(screen.queryByText("Movimientos perimetrales recientes")).toBeNull();
+  fireEvent.click(screen.getByText("Probar conexión"));
+  await waitFor(() => expect(api.post).toHaveBeenCalledWith("/api/v1/admin/perimeter/ARGANDA/external/check", {}));
+  fireEvent.change(screen.getByLabelText("Tarjeta para probar"), {target:{value:"0582609699"}});
+  fireEvent.click(screen.getByText("Probar tarjeta"));
+  expect(await screen.findByText("Resultado externo: INSIDE")).toBeTruthy();
+  expect(api.post).toHaveBeenCalledWith("/api/v1/admin/perimeter/ARGANDA/external/test-badge", {badge:"0582609699"});
+  expect(api.put).not.toHaveBeenCalled();
 });
