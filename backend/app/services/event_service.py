@@ -115,17 +115,17 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
     _validate_method(terminal, method)
     from datetime import timezone
     from app.services.perimeter_service import settings_for, is_inside, is_duplicate, remember_read, perimeter_scan, check_badge_source
-    if terminal.terminal_role != 'CELL':
+    if terminal.terminal_role != "CELL":
         return ScanResponse(**perimeter_scan(db, terminal, reporter_id, method))
     config = settings_for(db, terminal.factory_code)
     now = datetime.now(timezone.utc)
     current_state = derive_worker_state(db, reporter_id, terminal.factory_code)
     if current_state == WorkerState.OUTSIDE and config.enabled:
         check_badge_source(config, reporter_id)
-        if not is_inside(db, terminal.factory_code, reporter_id):
-            raise HTTPException(409, 'Badge has not entered the factory perimeter')
+        if config.badge_source != "EXTERNAL" and not is_inside(db, terminal.factory_code, reporter_id):
+            raise HTTPException(409, "Badge has not entered the factory perimeter")
     if is_duplicate(db, config, terminal, reporter_id, now):
-        return ScanResponse(flow='DUPLICATE_IGNORED', worker_state=current_state.value)
+        return ScanResponse(flow="DUPLICATE_IGNORED", worker_state=current_state.value)
 
     if current_state == WorkerState.OUTSIDE:
         entry_actions = _active_actions(terminal, StateEffect.ENTER)
@@ -155,8 +155,8 @@ def record_exit(db: Session, terminal_code: str, reporter_id: str, method: Ident
     _lock_badge(db, reporter_id)
     terminal = _get_terminal(db, terminal_code)
     _validate_method(terminal, method)
-    if terminal.terminal_role != 'CELL':
-        raise HTTPException(409, 'Perimeter terminals do not accept cell exit actions')
+    if terminal.terminal_role != "CELL":
+        raise HTTPException(409, "Perimeter terminals do not accept cell exit actions")
     from datetime import timezone
     from app.services.perimeter_service import settings_for, is_duplicate
     current_state = derive_worker_state(db, reporter_id, terminal.factory_code)
