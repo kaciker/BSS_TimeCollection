@@ -315,6 +315,7 @@ docs/          Architecture, operational guides and validation evidence
 - [Oracle payload contract](docs/oracle-contract.md)
 - [External PostgreSQL](docs/external-database.md)
 - [CORP deployment](docs/corp-deployment.md)
+- [v0.4A operational telemetry deployment](docs/deployment/operational-telemetry-v04a.md)
 - [Current decisions](CURRENT_STATE.md) and [product facts](FACTS.md)
 - [Historical journal](MEMORY.md)
 
