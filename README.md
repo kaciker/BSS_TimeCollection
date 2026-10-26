@@ -20,6 +20,7 @@ delivery to Oracle. Oracle remains the functional system of record.
 | PostgreSQL image | `postgres:16.4-alpine` |
 | API / worker base image | `python:3.12-slim` |
 | Frontend build image | `node:22-bookworm-slim` |
+| Frontend runtime image | `nginx:alpine` |
 | Corporate proxy | Build arguments inherited from the host shell |
 | Runtime proxy | None by default |
 
@@ -231,7 +232,7 @@ docker compose config --quiet
 docker compose up -d
 docker compose ps
 curl --noproxy '*' -fsS http://127.0.0.1:8080/api/v1/health/ready
-curl --noproxy '*' -fsS -o /dev/null -w '%{http_code}\\n' http://127.0.0.1:8080/
+curl --noproxy '*' -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
 ```
 
 Database, API and web have health checks; the worker is a long-running process
@@ -316,6 +317,7 @@ docs/          Architecture, operational guides and validation evidence
 - [CORP deployment](docs/corp-deployment.md)
 - [v0.4A operational telemetry deployment](docs/deployment/operational-telemetry-v04a.md)
 - [Current decisions](CURRENT_STATE.md) and [product facts](FACTS.md)
+- [Historical journal](MEMORY.md)
 
 The README and CORP operational guide are in English. Historical decision and
 validation documents retain their original language and deployment context;
