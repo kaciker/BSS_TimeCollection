@@ -5,16 +5,33 @@ import {MonitoringPanel} from '../src/components/MonitoringPanel';
 import {api} from '../src/api';
 vi.mock('../src/api',()=>({api:{get:vi.fn()}}));
 afterEach(()=>{cleanup();vi.clearAllMocks();localStorage.removeItem("bss-timecollection-language")});
-it('shows independent factory and cell states and sends both filters',async()=>{
+it('shows employee, reader and card with independent factory and cell states',async()=>{
  localStorage.setItem('bss-timecollection-language','es');
- vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:{factory_perimeter_enabled:true,total:1,items:[{reporter_id:'001',worker_state:'OUTSIDE',factory_state:'INSIDE',factory_code:'ARGANDA',event:{id:'x',terminal_code:'GATE',event_datetime:'2026-10-20T10:00:00Z',action_label:'Factory entry',delivery_status:'LOCAL_ONLY'}}]} as never);
+ vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:{factory_perimeter_enabled:true,total:1,items:[{reporter_id:'0582609699',person_id:'104582',credential_id:'CARD-A',worker_state:'OUTSIDE',factory_state:'INSIDE',factory_code:'ARGANDA',event:{id:'x',terminal_code:'GATE',event_datetime:'2026-10-20T10:00:00Z',action_label:'Factory entry',delivery_status:'LOCAL_ONLY'}}]} as never);
  render(<MonitoringPanel terminals={[]}/>);
  const factory=await screen.findByLabelText('Estado de fábrica');
+ expect(screen.getByRole('columnheader',{name:'N.º empleado'})).toBeTruthy();
+ expect(screen.getByRole('columnheader',{name:'ID lector'})).toBeTruthy();
+ expect(screen.getByRole('columnheader',{name:'Tarjeta'})).toBeTruthy();
+ expect(screen.getByText('104582')).toBeTruthy();
+ expect(screen.getByText('0582609699')).toBeTruthy();
+ expect(screen.getByText('CARD-A')).toBeTruthy();
  expect(screen.getByText('Fuera', {selector:'span'})).toBeTruthy();expect(screen.getByText('Dentro', {selector:'span'})).toBeTruthy();
  fireEvent.change(factory,{target:{value:'INSIDE'}});
  fireEvent.change(screen.getByLabelText('Estado de célula'),{target:{value:'OUTSIDE'}});
  fireEvent.click(screen.getByRole('button',{name:'Aplicar filtros'}));
  await waitFor(()=>expect(api.get).toHaveBeenCalledWith(expect.stringContaining('worker_state=OUTSIDE&factory_state=INSIDE')));
+});
+it('shows employee, reader and card in event logs',async()=>{
+ localStorage.setItem('bss-timecollection-language','en');
+ vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:{total:1,items:[{id:'event-1',event_kind:'CELL',terminal_code:'CLOCK',event_datetime:'2026-10-20T10:00:00Z',reporter_id:'0582609699',person_id:'104582',credential_id:'CARD-A',action_label:'Exit',state_effect:'EXIT',delivery_status:'PENDING',attempt_count:0}]} as never);
+ render(<MonitoringPanel terminals={[]} initialView="events"/>);
+ await screen.findByText('104582');
+ expect(screen.getByRole('columnheader',{name:'Employee ID'})).toBeTruthy();
+ expect(screen.getByRole('columnheader',{name:'Reader ID'})).toBeTruthy();
+ expect(screen.getByRole('columnheader',{name:'Card'})).toBeTruthy();
+ expect(screen.getByText('0582609699')).toBeTruthy();
+ expect(screen.getByText('CARD-A')).toBeTruthy();
 });
 it('hides factory column and filter when perimeter is disabled, including empty results',async()=>{
  vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:{factory_perimeter_enabled:false,total:0,items:[]} as never);

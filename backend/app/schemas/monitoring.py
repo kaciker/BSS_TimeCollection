@@ -49,6 +49,9 @@ class EventPage(BaseModel):
 
 class CardState(BaseModel):
     reporter_id: str
+    source_person_id: str | None = None
+    person_id: str | None = None
+    credential_id: str | None = None
     worker_state: str
     factory_code: str | None = None
     factory_state: str | None = None
