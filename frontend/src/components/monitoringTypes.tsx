@@ -14,6 +14,11 @@ export interface EventSnapshot extends AdminEvent {
   state_effect: string;
   reporter_id_type: string | null;
   identification_method: string | null;
+  source_person_id?: string | null;
+  person_id?: string | null;
+  credential_id?: string | null;
+  oracle_reporter_id?: string | null;
+  oracle_reporter_id_type?: string | null;
   event_timezone: string;
   oracle_attributes: Record<string, unknown>;
   created_at: string;

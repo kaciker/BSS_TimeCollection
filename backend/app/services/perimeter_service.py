@@ -1,17 +1,21 @@
 """Perimeter presence, factory-local policy, and external adapters."""
 from datetime import datetime, timedelta, timezone
+import logging
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.domain.enums import IdentificationMethod
 from app.models.action import Action
 from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings, TerminalBadgeRead
 from app.models.terminal import Terminal
 from app.models.time_event import TimeEvent
+
+logger = logging.getLogger(__name__)
 
 
 def settings_for(db: Session, factory_code: str) -> FactoryPerimeterSettings:
@@ -91,14 +95,36 @@ def create_auto_cell_exit_for_factory_exit(
     *,
     strict: bool = True,
 ) -> TimeEvent | None:
-    """Close the active cell only when the factory exit is not older than it."""
+    """Close the active cell using stable person identity when it is resolvable."""
     from app.services.event_service import _create_event
+    from app.services.person_identity import (
+        PersonIdentityError,
+        observe_identity,
+        resolve_person_identity,
+    )
 
+    identity = None
+    if config.badge_source == "EXTERNAL" and method == IdentificationMethod.RFID:
+        try:
+            identity = resolve_person_identity(badge)
+            observe_identity(db, factory_code, identity, observed_at=event_time)
+        except PersonIdentityError as exc:
+            logger.warning(
+                "External factory exit identity unresolved category=%s",
+                exc.category,
+            )
+
+    identity_condition = TimeEvent.reporter_id == badge
+    if identity is not None:
+        identity_condition = or_(
+            TimeEvent.person_id == identity.person_id,
+            and_(TimeEvent.person_id.is_(None), TimeEvent.reporter_id == badge),
+        )
     last_cell = db.scalar(
         select(TimeEvent)
         .join(Terminal, TimeEvent.terminal_id == Terminal.id)
         .where(
-            TimeEvent.reporter_id == badge,
+            identity_condition,
             Terminal.factory_code == factory_code,
             TimeEvent.state_effect.in_(["ENTER", "EXIT"]),
         )
@@ -146,6 +172,7 @@ def create_auto_cell_exit_for_factory_exit(
         event_time=exit_time,
         correlation_id=correlation_id,
         snapshot=last_cell,
+        identity=identity,
     )
 
 

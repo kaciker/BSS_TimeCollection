@@ -1,6 +1,6 @@
 """Terminal exit restriction policy, independent of Oracle attendance validation."""
 from fastapi import HTTPException
-from sqlalchemy import func, select, literal_column
+from sqlalchemy import and_, func, or_, select, literal_column
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from app.models.exit_policy import policies
@@ -39,14 +39,30 @@ def work_cell(terminal) -> str | None:
     return value.strip() if isinstance(value, str) and 0 < len(value.strip()) <= 64 else None
 
 
-def check_exit_policy(db: Session, terminal, reporter_id: str) -> None:
+def check_exit_policy(
+    db: Session,
+    terminal,
+    reporter_id: str,
+    *,
+    person_id: str | None = None,
+) -> None:
     from app.models.time_event import TimeEvent
+
     mode = get_mode(db, terminal.id)
     if mode == "DISABLED":
         return
-    last_entry = db.scalar(select(TimeEvent).where(
-        TimeEvent.reporter_id == reporter_id, TimeEvent.state_effect == "ENTER"
-    ).order_by(TimeEvent.event_datetime.desc(), TimeEvent.created_at.desc(), TimeEvent.id.desc()).limit(1))
+    identity_condition = TimeEvent.reporter_id == reporter_id
+    if person_id:
+        identity_condition = or_(
+            TimeEvent.person_id == person_id,
+            and_(TimeEvent.person_id.is_(None), TimeEvent.reporter_id == reporter_id),
+        )
+    last_entry = db.scalar(
+        select(TimeEvent)
+        .where(identity_condition, TimeEvent.state_effect == "ENTER")
+        .order_by(TimeEvent.event_datetime.desc(), TimeEvent.created_at.desc(), TimeEvent.id.desc())
+        .limit(1)
+    )
     if last_entry is None:
         raise HTTPException(409, "No entry event found for terminal policy validation")
     if mode == "SAME_TERMINAL" and last_entry.terminal_id != terminal.id:

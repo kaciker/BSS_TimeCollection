@@ -120,6 +120,11 @@ class EventRead(BaseModel):
     reporter_id: str
     reporter_id_type: str
     identification_method: str
+    source_person_id: str | None = None
+    person_id: str | None = None
+    credential_id: str | None = None
+    oracle_reporter_id: str | None = None
+    oracle_reporter_id_type: str | None = None
     event_datetime: datetime
     oracle_attributes: dict[str, Any]
     workshop_code: str | None = None

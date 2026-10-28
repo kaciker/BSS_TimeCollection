@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     oracle_api_path: str = "/hcmRestApi/resources/11.13.18.05/timeEventRequests"
     oracle_source_id: str = "HWM_CLOCK_TIME"
     oracle_reporter_id_type: str = "BADGE"
+    oracle_person_reporter_id_type: str = "PERSON"
     oracle_auth_mode: str = "none"
     oracle_username: str = ""
     oracle_password: str = ""
@@ -36,6 +37,7 @@ class Settings(BaseSettings):
     perimeter_external_max_age_hours: int = 12
     perimeter_external_sync_seconds: float = 30.0
     perimeter_external_sync_batch_size: int = 500
+    person_badge_sync_seconds: float = 180.0
 
     worker_poll_seconds: float = 3.0
     worker_stale_sending_seconds: int = 300
