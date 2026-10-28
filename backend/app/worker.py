@@ -16,6 +16,7 @@ from app.services.external_perimeter_sync import (
     reconcile_enabled_external_perimeters,
     sync_enabled_external_perimeters,
 )
+from app.services.person_identity import sync_enabled_person_badges
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("delivery-worker")
@@ -154,15 +155,17 @@ def deliver(event_id: str, client: OracleClient) -> None:
 
 def main() -> None:
     logger.info(
-        "Delivery worker started; Oracle enabled=%s external perimeter sync=%ss",
+        "Delivery worker started; Oracle enabled=%s external perimeter sync=%ss person/badge sync=%ss",
         settings.oracle_enabled,
         settings.perimeter_external_sync_seconds,
+        settings.person_badge_sync_seconds,
     )
     stop = threading.Event()
     heartbeat = threading.Thread(target=_heartbeat_loop, args=(stop,), name="worker-heartbeat", daemon=True)
     heartbeat.start()
     next_external_sync = 0.0
     next_external_reconciliation = 0.0
+    next_person_badge_sync = 0.0
     try:
         recover_stale_events()
         client = OracleClient()
@@ -185,6 +188,15 @@ def main() -> None:
                 except Exception:
                     logger.exception("Unhandled external perimeter reconciliation failure")
                 next_external_reconciliation = now_monotonic + 180.0
+
+            if now_monotonic >= next_person_badge_sync:
+                try:
+                    changes = sync_enabled_person_badges()
+                    if changes:
+                        logger.info("Recorded %s person/badge assignment change(s)", changes)
+                except Exception:
+                    logger.exception("Unhandled person/badge synchronization failure")
+                next_person_badge_sync = now_monotonic + max(settings.person_badge_sync_seconds, 30.0)
 
             if not settings.oracle_enabled:
                 time.sleep(max(settings.worker_poll_seconds, 1.0))

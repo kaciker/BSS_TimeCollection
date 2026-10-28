@@ -7,10 +7,12 @@ function Json({ value }: { value: unknown }) {
 
 export function EventInspector({ detail, onClose }: { detail: EventDetail; onClose: () => void }) {
   const event = detail.event;
-  const fields: [string, string | number | null][] = [
+  const fields: [string, string | number | null | undefined][] = [
     ["Event ID", event.id], ["Request / requestNumber", event.request_number],
     ["Clock", event.terminal_code], ["deviceId", event.device_id],
-    ["Badge / reporterId", event.reporter_id], ["reporterIdType", event.reporter_id_type],
+    ["Reader ID", event.reporter_id], ["Person ID", event.person_id],
+    ["SECURITY_DB person PK", event.source_person_id], ["Credential / card", event.credential_id],
+    ["Oracle reporterId", event.oracle_reporter_id], ["Oracle reporterIdType", event.oracle_reporter_id_type],
     ["Identification", event.identification_method], ["Action", `${event.action_code} · ${event.action_label}`],
     ["supplierDeviceEvent", event.supplier_device_event], ["Local effect", event.state_effect],
     ["Event time", dateLabel(event.event_datetime)], ["Time zone", event.event_timezone],
@@ -26,12 +28,12 @@ export function EventInspector({ detail, onClose }: { detail: EventDetail; onClo
     <details><summary>Complete record stored in BSS</summary><Json value={event} /></details>
   </section>;
   return <section className="admin-card event-inspector" aria-label="Event details">
-    <div className="monitor-heading"><div><div className="eyebrow">EVENT DETAILS</div><h2>Badge {event.reporter_id}</h2></div><button className="secondary" onClick={onClose}>Close details</button></div>
+    <div className="monitor-heading"><div><div className="eyebrow">EVENT DETAILS</div><h2>Person {event.person_id ?? event.reporter_id}</h2></div><button className="secondary" onClick={onClose}>Close details</button></div>
     <p><Status value={event.delivery_status} /> · Oracle {detail.oracle_enabled ? "enabled" : "disabled"}</p>
     <dl className="event-fields">{fields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value ?? "—"}</dd></div>)}</dl>
     <details><summary>Complete record stored in BSS</summary><Json value={event} /></details>
     <h3>Oracle payload preview</h3>
-    <p className="muted">Preview using the current configuration; this is not evidence of transmission. requestTimestamp is generated when sending. The actual JSON for each attempt appears below.</p>
+    <p className="muted">Preview using the event identity snapshot and current endpoint configuration; this is not evidence of transmission. requestTimestamp is generated when sending. The actual JSON for each attempt appears below.</p>
     <Json value={detail.oracle_payload_preview} />
     <h3>Transmission history ({detail.attempts.length})</h3>
     <p className="muted">SENT indicates HTTP acceptance; subsequent business validation is handled by Oracle.</p>

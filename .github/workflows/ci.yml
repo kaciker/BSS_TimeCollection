@@ -36,7 +36,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Prepare environment
-        run: cp .env.example .env
+        run: |
+          cp .env.example .env
+          cat >> .env <<'EOF'
+          ADMIN_PASSWORD_HASH='pbkdf2_sha256$120000$Y2ktYWRtaW4tc2FsdA$YAHAVOtQ_anMlVgm3M8ruO_7ntwmzsrRpx3Hic3BHDs'
+          ADMIN_SESSION_SECRET=ci-only-admin-session-secret-32-bytes-minimum
+          EOF
       - name: Validate compose file
         run: docker compose config >/dev/null
       - name: Build and start stack
@@ -54,7 +59,10 @@ jobs:
           exit 1
       - name: Smoke test terminal provisioning and event flow
         run: |
-          TOKEN=$(curl -fsS -X POST http://127.0.0.1:8080/api/v1/admin/terminals/DEMO-01/provision | python3 -c 'import json,sys; print(json.load(sys.stdin)["activation_token"])')
+          curl -fsS -c /tmp/admin-cookies.txt -H 'Content-Type: application/json' \
+            -d '{"username":"admin","password":"ci-admin-password"}' \
+            http://127.0.0.1:8080/api/v1/admin/auth/login | grep -q 'authenticated'
+          TOKEN=$(curl -fsS -b /tmp/admin-cookies.txt -X POST http://127.0.0.1:8080/api/v1/admin/terminals/DEMO-01/provision | python3 -c 'import json,sys; print(json.load(sys.stdin)["activation_token"])')
           curl -fsS -c /tmp/bss-cookies.txt -H 'Content-Type: application/json' \
             -d "{\"token\":\"${TOKEN}\"}" \
             http://127.0.0.1:8080/api/v1/terminal/activate | grep -q 'DEMO-01'
@@ -68,8 +76,9 @@ jobs:
           curl -fsS -b /tmp/bss-cookies.txt -H 'Content-Type: application/json' \
             -d '{"reporter_id":"CI-900001","identification_method":"KEYPAD","action_code":"END_WORK"}' \
             http://127.0.0.1:8080/api/v1/terminal/exit | grep -q 'EXIT_RECORDED'
-          curl -fsS 'http://127.0.0.1:8080/api/v1/admin/monitoring/events?reporter_id=CI-900001' | grep -q 'CI-900001'
+          curl -fsS -b /tmp/admin-cookies.txt 'http://127.0.0.1:8080/api/v1/admin/monitoring/events?reporter_id=CI-900001' | grep -q 'CI-900001'
       - name: Show stack status
+        if: always()
         run: docker compose ps
       - name: Stop stack
         if: always()

@@ -35,8 +35,8 @@ class OracleClient:
             "deviceId": event.device_id,
             "eventDateTime": local_time.isoformat(timespec="milliseconds"),
             "supplierDeviceEvent": event.supplier_device_event,
-            "reporterId": event.reporter_id,
-            "reporterIdType": event.reporter_id_type,
+            "reporterId": event.oracle_reporter_id or event.reporter_id,
+            "reporterIdType": event.oracle_reporter_id_type or event.reporter_id_type,
         }
         if event.oracle_attributes:
             oracle_event["timeEventAttributes"] = [

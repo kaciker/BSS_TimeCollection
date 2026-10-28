@@ -22,9 +22,17 @@ class TimeEvent(Base):
     supplier_device_event: Mapped[str] = mapped_column(String(128))
     state_effect: Mapped[str] = mapped_column(String(16))
 
+    # reporter_id remains the raw identifier received from the terminal for
+    # backwards compatibility. Identity fields below freeze the SECURITY_DB
+    # relationship that was effective when the event was captured.
     reporter_id: Mapped[str] = mapped_column(String(160), index=True)
     reporter_id_type: Mapped[str] = mapped_column(String(16))
     identification_method: Mapped[str] = mapped_column(String(16))
+    source_person_id: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    person_id: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    credential_id: Mapped[str | None] = mapped_column(String(250), nullable=True, index=True)
+    oracle_reporter_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    oracle_reporter_id_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
     event_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     event_timezone: Mapped[str] = mapped_column(String(64))
