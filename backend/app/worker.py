@@ -171,6 +171,18 @@ def main() -> None:
         client = OracleClient()
         while True:
             now_monotonic = time.monotonic()
+
+            # Refresh the local PERSON ID / reader / card mapping first so any
+            # perimeter movement inserted in this cycle can freeze that identity.
+            if now_monotonic >= next_person_badge_sync:
+                try:
+                    changes = sync_enabled_person_badges()
+                    if changes:
+                        logger.info("Recorded %s person/badge assignment change(s)", changes)
+                except Exception:
+                    logger.exception("Unhandled person/badge synchronization failure")
+                next_person_badge_sync = now_monotonic + max(settings.person_badge_sync_seconds, 30.0)
+
             if now_monotonic >= next_external_sync:
                 try:
                     mirrored = sync_enabled_external_perimeters()
@@ -188,15 +200,6 @@ def main() -> None:
                 except Exception:
                     logger.exception("Unhandled external perimeter reconciliation failure")
                 next_external_reconciliation = now_monotonic + 180.0
-
-            if now_monotonic >= next_person_badge_sync:
-                try:
-                    changes = sync_enabled_person_badges()
-                    if changes:
-                        logger.info("Recorded %s person/badge assignment change(s)", changes)
-                except Exception:
-                    logger.exception("Unhandled person/badge synchronization failure")
-                next_person_badge_sync = now_monotonic + max(settings.person_badge_sync_seconds, 30.0)
 
             if not settings.oracle_enabled:
                 time.sleep(max(settings.worker_poll_seconds, 1.0))

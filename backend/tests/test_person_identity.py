@@ -29,7 +29,7 @@ def _utc(value):
     return value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
 
 
-def test_resolve_person_identity_uses_pin_and_current_card():
+def test_resolve_person_identity_uses_pin_current_card_and_reader():
     seen = []
     identity = resolve_person_identity(
         "0582609699",
@@ -43,6 +43,7 @@ def test_resolve_person_identity_uses_pin_and_current_card():
         person_id="104582",
         source_card_id="CARD-PK-1",
         credential_id="CARD-A",
+        reader_id="0582609699",
     )
 
 
@@ -65,8 +66,8 @@ def test_resolve_person_identity_rejects_ambiguous_or_inconsistent_rows():
 def test_current_snapshot_closes_old_card_and_opens_new_assignment(db):
     first = datetime(2026, 10, 28, 10, 0, tzinfo=timezone.utc)
     second = first + timedelta(hours=2)
-    old = PersonIdentity("PERSON-PK-1", "104582", "CARD-PK-1", "CARD-A")
-    new = PersonIdentity("PERSON-PK-1", "104582", "CARD-PK-2", "CARD-B")
+    old = PersonIdentity("PERSON-PK-1", "104582", "CARD-PK-1", "CARD-A", "0582609699")
+    new = PersonIdentity("PERSON-PK-1", "104582", "CARD-PK-2", "CARD-B", "0582609700")
 
     assert apply_current_snapshot(db, "ARGANDA", [old], observed_at=first) == 1
     db.commit()
@@ -78,7 +79,9 @@ def test_current_snapshot_closes_old_card_and_opens_new_assignment(db):
     ).all()
     assert len(rows) == 2
     assert rows[0].credential_id == "CARD-A"
+    assert rows[0].reader_id == "0582609699"
     assert _utc(rows[0].observed_to) == second
     assert rows[1].credential_id == "CARD-B"
+    assert rows[1].reader_id == "0582609700"
     assert _utc(rows[1].observed_from) == second
     assert rows[1].observed_to is None

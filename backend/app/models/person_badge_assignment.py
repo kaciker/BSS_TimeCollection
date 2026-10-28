@@ -19,6 +19,7 @@ class PersonBadgeAssignment(Base):
     person_id: Mapped[str] = mapped_column(String(30), index=True)
     source_card_id: Mapped[str] = mapped_column(String(50))
     credential_id: Mapped[str] = mapped_column(String(250), index=True)
+    reader_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
 
     observed_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     observed_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
@@ -36,6 +37,12 @@ class PersonBadgeAssignment(Base):
             "ix_person_badge_assignments_factory_credential_active",
             "factory_code",
             "credential_id",
+            "observed_to",
+        ),
+        Index(
+            "ix_person_badge_assignments_factory_reader_active",
+            "factory_code",
+            "reader_id",
             "observed_to",
         ),
     )

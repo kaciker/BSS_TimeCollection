@@ -9,6 +9,8 @@ from sqlalchemy.pool import StaticPool
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
+from app.models.person_badge_assignment import PersonBadgeAssignment
+from app.models.perimeter import FactoryPerimeterEvent
 from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
 
@@ -41,34 +43,89 @@ def add_event(db, badge, clock, effect, minute):
     return event
 
 
+def add_current_identity(db, reader_id="001", person_id="104582", credential_id="CARD-A"):
+    timestamp = datetime(2026, 10, 9, 11, 0, tzinfo=timezone.utc)
+    row = PersonBadgeAssignment(
+        factory_code="DEFAULT",
+        source_system="SQLSERVER_SECURITY_DB",
+        source_person_id="PERSON-PK-1",
+        person_id=person_id,
+        source_card_id="CARD-PK-1",
+        credential_id=credential_id,
+        reader_id=reader_id,
+        observed_from=timestamp,
+        observed_to=None,
+        first_seen_at=timestamp,
+        last_seen_at=timestamp,
+    )
+    db.add(row)
+    db.commit()
+    return row
+
+
 def test_card_state_is_global_before_clock_filter(monitor):
     client, db = monitor
     add_event(db, "001", "A", "ENTER", 0)
     add_event(db, "002", "A", "ENTER", 1)
     add_event(db, "001", "B", "EXIT", 2)
+    add_current_identity(db)
     result = client.get("/api/v1/admin/monitoring/cards?terminal_code=A&worker_state=INSIDE").json()
     assert result["total"] == 1
     assert result["items"][0]["reporter_id"] == "002"
-    result = client.get("/api/v1/admin/monitoring/cards?reporter_id=001").json()
+    result = client.get("/api/v1/admin/monitoring/cards?reporter_id=104582").json()
+    assert result["total"] == 1
+    assert result["items"][0]["reporter_id"] == "001"
+    assert result["items"][0]["person_id"] == "104582"
+    assert result["items"][0]["credential_id"] == "CARD-A"
     assert result["items"][0]["worker_state"] == "OUTSIDE"
     assert result["items"][0]["event"]["terminal_code"] == "B"
+    assert client.get("/api/v1/admin/monitoring/cards?reporter_id=CARD-A").json()["total"] == 1
 
 
 def test_events_filters_and_pagination_preserve_leading_zeros(monitor):
     client, db = monitor
     add_event(db, "001", "A", "ENTER", 0)
-    add_event(db, "001", "A", "EXIT", 2)
+    identified = add_event(db, "001", "A", "EXIT", 2)
+    identified.source_person_id = "PERSON-PK-1"
+    identified.person_id = "104582"
+    identified.credential_id = "CARD-A"
+    db.commit()
     add_event(db, "002", "B", "ENTER", 3)
     result = client.get("/api/v1/admin/monitoring/events?terminal_code=A&reporter_id=001&limit=1&offset=1").json()
     assert result["total"] == 2
     assert result["items"][0]["reporter_id"] == "001"
     assert result["items"][0]["state_effect"] == "ENTER"
+    by_employee = client.get("/api/v1/admin/monitoring/events?reporter_id=104582").json()
+    assert by_employee["total"] == 1
+    assert by_employee["items"][0]["credential_id"] == "CARD-A"
+    assert client.get("/api/v1/admin/monitoring/events?reporter_id=CARD-A").json()["total"] == 1
     # Search characters are literals, not SQL LIKE wildcards.
     assert client.get("/api/v1/admin/monitoring/events?reporter_id=%25").json()["total"] == 0
     result = client.get("/api/v1/admin/monitoring/events?start=2026-10-09T12:01:00Z&end=2026-10-09T12:02:00Z").json()
     assert result["total"] == 1
     assert result["items"][0]["state_effect"] == "EXIT"
     assert client.get("/api/v1/admin/monitoring/events?start=2026-10-10T00:00:00Z&end=2026-10-09T00:00:00Z").status_code == 422
+
+
+def test_perimeter_event_freezes_current_identity(monitor):
+    _, db = monitor
+    add_current_identity(db, reader_id="0582609699", person_id="104582", credential_id="CARD-A")
+    event = FactoryPerimeterEvent(
+        id="perimeter-identity",
+        factory_code="DEFAULT",
+        reporter_id="0582609699",
+        terminal_id=999,
+        direction="ENTER",
+        event_datetime=datetime(2026, 10, 9, 12, 0, tzinfo=timezone.utc),
+        correlation_id="correlation-identity",
+        auto_cell_exit_event_id=None,
+    )
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+    assert event.source_person_id == "PERSON-PK-1"
+    assert event.person_id == "104582"
+    assert event.credential_id == "CARD-A"
 
 
 def test_detail_preserves_actual_attempt_payload_and_does_not_write(monitor):
