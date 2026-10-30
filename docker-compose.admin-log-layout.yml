@@ -1,0 +1,3 @@
+services:
+  web:
+    image: bsstimecollection-web:admin-columns-20261029
