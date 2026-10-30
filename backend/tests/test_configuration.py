@@ -81,7 +81,7 @@ def test_terminal_code_is_allocated_and_retired_codes_are_not_reused(monitor):
 
 def test_reporter_id_type_is_global_integration_configuration(monitor, monkeypatch):
     client, db = monitor
-    monkeypatch.setattr(settings, "oracle_reporter_id_type", "PERSON")
+    monkeypatch.setattr(settings, "oracle_person_reporter_id_type", "PERSON")
     terminal, _ = configured_terminal(client)
     assert terminal["reporter_id_type"] == "PERSON"
     integration = client.get("/api/v1/admin/integration-settings")
@@ -91,7 +91,40 @@ def test_reporter_id_type_is_global_integration_configuration(monitor, monkeypat
     response = client.post("/api/v1/terminal/scan", json={"reporter_id": "0001", "identification_method": "KEYPAD"})
     assert response.status_code == 200
     event = db.get(TimeEvent, response.json()["event"]["id"])
-    assert event.reporter_id_type == "PERSON"
+    assert event.reporter_id_type == "BADGE"
+
+
+def test_integration_settings_expose_effective_nonsecret_values(monitor):
+    client, _ = monitor
+    response = client.get("/api/v1/admin/integration-settings")
+    assert response.status_code == 200
+    value = response.json()
+    assert value["base_url"] == "https://fa-eocc-dev2-saasfaprod1.fa.ocs.oraclecloud.com"
+    assert value["api_path"] == "/hcmRestApi/resources/11.13.18.05/timeEventRequests"
+    assert value["oracle_source_id"] == "HUT_TCD_SUPP1"
+    assert value["auth_mode"] == "basic"
+    assert value["reporter_id_type"] == "PERSON"
+    assert value["rest_framework_version"] == "4"
+    assert value["oracle_enabled"] is False
+    assert value["password"] in {"Configured", "Not configured"}
+    assert value["bearer_token"] in {"Configured", "Not configured"}
+
+
+def test_connection_test_only_checks_base_https_host(monitor, monkeypatch):
+    import app.routers.admin as admin
+    client, _ = monitor
+    called = {}
+    class Response:
+        status_code = 401
+    def fake_get(url, **kwargs):
+        called.update(url=url, kwargs=kwargs)
+        return Response()
+    monkeypatch.setattr(admin.httpx, "get", fake_get)
+    result = client.post("/api/v1/admin/integration-connection-test", json={}).json()
+    assert called["url"] == settings.oracle_base_url
+    assert result["reachable"] is True
+    assert result["authentication_validated"] is False
+    assert "timeEventRequests" not in called["url"]
 
 
 def test_terminal_activation_binds_browser_and_hides_code_from_runtime_api(monitor):
@@ -128,12 +161,13 @@ def test_edit_configuration_keeps_captured_event_snapshot(monitor):
     })
     assert response.status_code == 200
     assert response.json()["name"] == "Updated gate"
-    assert response.json()["reporter_id_type"] == "BADGE"
+    assert response.json()["reporter_id_type"] == "PERSON"
     db.expire_all()
     event = db.get(TimeEvent, event_id)
     assert event.device_id == "CLOCK-A"
     assert event.action_label == "Start"
     assert event.supplier_device_event == "BSS_START"
+    assert event.oracle_supplier_event == "HUT_TCD_SUPP1_IN_2"
     assert event.reporter_id_type == "BADGE"
     assert event.oracle_attributes == {"Workshop": "Assembly", "Project": "P42"}
     config = client.get("/api/v1/terminal/config").json()
@@ -194,7 +228,7 @@ def test_action_edits_cannot_break_active_terminal(monitor):
     configured_terminal(client)
     action = next(row for row in client.get("/api/v1/admin/actions").json() if row["code"] == "START")
     assert client.put("/api/v1/admin/actions/START", json={**action, "active":False}).status_code == 409
-    assert client.put("/api/v1/admin/actions/START", json={**action, "state_effect":"EXIT"}).status_code == 409
+    assert client.put("/api/v1/admin/actions/START", json={**action, "state_effect":"EXIT"}).status_code == 422
     result = next(row for row in client.get("/api/v1/admin/actions").json() if row["code"] == "START")
     assert result["active"] is True
     assert result["state_effect"] == "ENTER"
@@ -205,7 +239,7 @@ def test_action_edits_cannot_break_active_terminal(monitor):
 def test_new_and_edited_action_mapping_is_validated(monitor):
     client, db = monitor
     action = create_action(client, "MEAL")
-    assert client.post("/api/v1/admin/actions", json={**action, "code":"LUNCH"}).status_code == 409
+    assert client.post("/api/v1/admin/actions", json={**action, "code":"LUNCH"}).status_code == 201
     response = client.put("/api/v1/admin/actions/MEAL", json={**action,"label":"Meal break","display_order":25,"oracle_attributes":{"reason":"MEAL"}})
     assert response.status_code == 200
     assert response.json()["oracle_attributes"] == {"reason":"MEAL"}
