@@ -1,4 +1,5 @@
 import json
+import secrets
 
 import httpx
 import pytest
@@ -17,44 +18,59 @@ def credentials_file(tmp_path, monkeypatch):
     return path
 
 
-def test_basic_credentials_are_saved_atomically_and_secret_free_in_responses(credentials_file):
+@pytest.fixture
+def fake_credentials():
+    return {
+        "username": f"synthetic-{secrets.token_hex(8)}",
+        "password": secrets.token_urlsafe(32),
+        "replacement": secrets.token_urlsafe(32),
+        "bearer_token": secrets.token_urlsafe(32),
+    }
+
+
+def test_basic_credentials_are_saved_atomically_and_secret_free_in_responses(credentials_file, fake_credentials):
+    username = fake_credentials["username"]
+    password = fake_credentials["password"]
     client = TestClient(app)
     response = client.put("/api/v1/admin/integration-credentials", json={
-        "auth_mode": "basic", "username": "oracle-user", "password": "never-return-this",
+        "auth_mode": "basic", "username": username, "password": password,
     })
     assert response.status_code == 200
     assert response.json() == {
-        "saved": True, "auth_mode": "basic", "username": "oracle-user",
+        "saved": True, "auth_mode": "basic", "username": username,
         "password_configured": True, "bearer_token_configured": False,
         "credentials_configured": True,
     }
-    assert "never-return-this" not in response.text
+    assert password not in response.text
     assert credentials_file.stat().st_mode & 0o777 == 0o600
     assert credentials_file.parent.stat().st_mode & 0o777 == 0o700
-    assert json.loads(credentials_file.read_text())["password"] == "never-return-this"
+    assert json.loads(credentials_file.read_text())["password"] == password
     get_response = client.get("/api/v1/admin/integration-settings")
-    assert "never-return-this" not in get_response.text
+    assert password not in get_response.text
     assert get_response.json()["password"] == "Configured"
     assert get_response.json()["bearer_token"] == "Not configured"
 
 
-def test_bearer_credentials_never_return_secret(credentials_file):
+def test_bearer_credentials_never_return_secret(credentials_file, fake_credentials):
+    token = fake_credentials["bearer_token"]
     client = TestClient(app)
     response = client.put("/api/v1/admin/integration-credentials", json={
-        "auth_mode": "bearer", "bearer_token": "private-bearer-token",
+        "auth_mode": "bearer", "bearer_token": token,
     })
     assert response.status_code == 200
     assert response.json()["bearer_token_configured"] is True
-    assert "private-bearer-token" not in response.text
-    assert "private-bearer-token" not in client.get("/api/v1/admin/integration-settings").text
+    assert token not in response.text
+    assert token not in client.get("/api/v1/admin/integration-settings").text
 
 
-def test_empty_secret_preserves_existing_and_explicit_replacement_works(credentials_file):
-    oracle_credentials.configure_oracle_credentials(auth_mode="basic", username="user", password="original", bearer_token=None)
-    oracle_credentials.configure_oracle_credentials(auth_mode="basic", username="renamed", password="", bearer_token=None)
-    assert oracle_credentials.get_oracle_credentials()["password"] == "original"
-    oracle_credentials.configure_oracle_credentials(auth_mode="basic", username=None, password="replacement", bearer_token=None)
-    assert oracle_credentials.get_oracle_credentials()["password"] == "replacement"
+def test_empty_secret_preserves_existing_and_explicit_replacement_works(credentials_file, fake_credentials):
+    original = fake_credentials["password"]
+    replacement = fake_credentials["replacement"]
+    oracle_credentials.configure_oracle_credentials(auth_mode="basic", username=fake_credentials["username"], password=original, bearer_token=None)
+    oracle_credentials.configure_oracle_credentials(auth_mode="basic", username=fake_credentials["username"], password="", bearer_token=None)
+    assert oracle_credentials.get_oracle_credentials()["password"] == original
+    oracle_credentials.configure_oracle_credentials(auth_mode="basic", username=None, password=replacement, bearer_token=None)
+    assert oracle_credentials.get_oracle_credentials()["password"] == replacement
 
 
 @pytest.mark.parametrize("mode", ["None", "password", "digest", "invalid"])
@@ -63,8 +79,8 @@ def test_invalid_authentication_mode_is_rejected(mode, credentials_file):
     assert response.status_code == 422
 
 
-def test_explicit_clear_removes_active_secret(credentials_file):
-    oracle_credentials.configure_oracle_credentials(auth_mode="bearer", username=None, password=None, bearer_token="secret")
+def test_explicit_clear_removes_active_secret(credentials_file, fake_credentials):
+    oracle_credentials.configure_oracle_credentials(auth_mode="bearer", username=None, password=None, bearer_token=fake_credentials["bearer_token"])
     oracle_credentials.configure_oracle_credentials(auth_mode="bearer", username=None, password=None, bearer_token=None, clear_credentials=True)
     assert oracle_credentials.get_oracle_credentials()["bearer_token"] == ""
 
@@ -78,7 +94,7 @@ def test_explicit_clear_removes_active_secret(credentials_file):
     (407, "proxy_error", False),
 ])
 def test_authentication_test_uses_only_read_only_describe_get(
-    credentials_file, monkeypatch, status_code, expected_result, expected_validated
+    credentials_file, monkeypatch, fake_credentials, status_code, expected_result, expected_validated
 ):
     calls = []
     monkeypatch.setattr(settings, "oracle_base_url", "https://oracle.invalid")
@@ -87,7 +103,7 @@ def test_authentication_test_uses_only_read_only_describe_get(
     monkeypatch.setattr(settings, "oracle_timeout_seconds", 7)
     monkeypatch.setattr(settings, "oracle_enabled", False)
     oracle_credentials.configure_oracle_credentials(
-        auth_mode="basic", username="oracle-user", password="private-test-password", bearer_token=None
+        auth_mode="basic", username=fake_credentials["username"], password=fake_credentials["password"], bearer_token=None
     )
 
     class FakeResponse:
@@ -130,7 +146,7 @@ def test_authentication_test_uses_only_read_only_describe_get(
     assert result["result"] == expected_result
     assert result["validated"] is expected_validated
     assert result["http_status"] == status_code
-    assert "private-test-password" not in response.text
+    assert fake_credentials["password"] not in response.text
     assert calls[0] == ("client", {"timeout": 7, "follow_redirects": False, "trust_env": True})
     method, url, kwargs = calls[1]
     assert method == "GET"
@@ -143,11 +159,11 @@ def test_authentication_test_uses_only_read_only_describe_get(
     assert all(call[0] != "POST" for call in calls if len(call) == 3)
 
 
-def test_authentication_test_uses_stored_bearer_and_classifies_transport_errors(credentials_file, monkeypatch):
+def test_authentication_test_uses_stored_bearer_and_classifies_transport_errors(credentials_file, monkeypatch, fake_credentials):
     monkeypatch.setattr(settings, "oracle_base_url", "https://oracle.invalid")
     monkeypatch.setattr(settings, "oracle_enabled", False)
     oracle_credentials.configure_oracle_credentials(
-        auth_mode="bearer", username=None, password=None, bearer_token="private-test-token"
+        auth_mode="bearer", username=None, password=None, bearer_token=fake_credentials["bearer_token"]
     )
     calls = []
 
@@ -169,9 +185,9 @@ def test_authentication_test_uses_stored_bearer_and_classifies_transport_errors(
     assert response.json()["result"] == "authenticated"
     method, url, kwargs = calls[0]
     assert method == "GET" and url.endswith("/timeEventRequests/describe")
-    assert kwargs["headers"]["Authorization"] == "Bearer private-test-token"
+    assert kwargs["headers"]["Authorization"] == "Bearer " + fake_credentials["bearer_token"]
     assert kwargs["auth"] is None
-    assert "private-test-token" not in response.text
+    assert fake_credentials["bearer_token"] not in response.text
 
     class ProxyErrorClient(FakeClient):
         def stream(self, *_args, **_kwargs):
@@ -246,9 +262,9 @@ def test_worker_delivery_behavior_remains_disabled(credentials_file, monkeypatch
     assert settings.oracle_enabled is False
 
 
-def test_oracle_client_uses_file_backed_auth_without_changing_delivery_flag(credentials_file):
-    oracle_credentials.configure_oracle_credentials(auth_mode="bearer", username=None, password=None, bearer_token="client-secret")
+def test_oracle_client_uses_file_backed_auth_without_changing_delivery_flag(credentials_file, fake_credentials):
+    oracle_credentials.configure_oracle_credentials(auth_mode="bearer", username=None, password=None, bearer_token=fake_credentials["bearer_token"])
     client = OracleClient()
-    assert client._headers()["Authorization"] == "Bearer client-secret"
+    assert client._headers()["Authorization"] == "Bearer " + fake_credentials["bearer_token"]
     assert client._auth() is None
     assert settings.oracle_enabled is False
