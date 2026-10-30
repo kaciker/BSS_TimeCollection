@@ -13,8 +13,9 @@ export function EventInspector({ detail, onClose }: { detail: EventDetail; onClo
     ["Reader ID", event.reporter_id], ["Person ID", event.person_id],
     ["SECURITY_DB person PK", event.source_person_id], ["Credential / card", event.credential_id],
     ["Oracle reporterId", event.oracle_reporter_id], ["Oracle reporterIdType", event.oracle_reporter_id_type],
+    ["Oracle mapping issue", event.oracle_mapping_error], ["PayrollTimeType", event.oracle_payroll_time_type],
     ["Identification", event.identification_method], ["Action", `${event.action_code} · ${event.action_label}`],
-    ["supplierDeviceEvent", event.supplier_device_event], ["Local effect", event.state_effect],
+    ["Local supplier event", event.supplier_device_event], ["Oracle supplier event", event.oracle_supplier_event ?? "—"], ["Local effect", event.state_effect],
     ["Event time", dateLabel(event.event_datetime)], ["Time zone", event.event_timezone],
     ["Stored in BSS", dateLabel(event.created_at)], ["Attempts", event.attempt_count],
     ["Last attempt", dateLabel(event.last_attempt_at)], ["Next attempt", dateLabel(event.next_attempt_at)],
@@ -34,7 +35,7 @@ export function EventInspector({ detail, onClose }: { detail: EventDetail; onClo
     <details><summary>Complete record stored in BSS</summary><Json value={event} /></details>
     <h3>Oracle payload preview</h3>
     <p className="muted">Preview using the event identity snapshot and current endpoint configuration; this is not evidence of transmission. requestTimestamp is generated when sending. The actual JSON for each attempt appears below.</p>
-    <Json value={detail.oracle_payload_preview} />
+    {detail.oracle_payload_preview ? <Json value={detail.oracle_payload_preview} /> : <p className="form-notice">Oracle payload unavailable: {detail.oracle_mapping_error ?? "mapping or identity reconciliation is required"}.</p>}
     <h3>Transmission history ({detail.attempts.length})</h3>
     <p className="muted">SENT indicates HTTP acceptance; subsequent business validation is handled by Oracle.</p>
     {!detail.attempts.length && <p className="empty-state">No transmission attempts recorded. This event has not been sent to Oracle yet.</p>}

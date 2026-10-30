@@ -15,6 +15,7 @@ def test_oracle_payload_uses_frozen_person_identity_when_available():
         action_code="START_WORK",
         action_label="Start work",
         supplier_device_event="BSS_START_WORK",
+        oracle_supplier_event="HUT_TCD_SUPP1_IN_2",
         state_effect="ENTER",
         reporter_id="0582609699",
         reporter_id_type="BADGE",
@@ -27,6 +28,9 @@ def test_oracle_payload_uses_frozen_person_identity_when_available():
         event_datetime=datetime(2026, 10, 28, 10, 0, tzinfo=timezone.utc),
         event_timezone="Europe/Madrid",
         oracle_attributes={},
+        workshop_code="439",
+        subworkshop_code="4393",
+        project_line_code="54A",
         delivery_status="PENDING",
     )
     item = OracleClient().build_payload(event)["timeEvents"][0]

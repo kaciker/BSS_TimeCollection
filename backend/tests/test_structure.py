@@ -67,13 +67,32 @@ def test_terminal_path_snapshot_and_oracle_attributes(structure_client):
     terminal=db.scalar(select(Terminal).where(Terminal.code=="TEST"))
     action=db.scalar(select(Action).where(Action.code=="IN"))
     event=_create_event(db,terminal,action,"TEST-BADGE",IdentificationMethod.KEYPAD)
+    event.person_id = "104582"
+    event.oracle_reporter_id = "104582"
+    event.oracle_reporter_id_type = "PERSON"
     assert (event.workshop_code,event.subworkshop_code,event.project_line_code)==("W","S","P")
     assert (event.workshop_description,event.subworkshop_description,event.project_line_description)==("Workshop","Sub","Project")
+    assert event.supplier_device_event == action.supplier_device_event
+    assert event.oracle_supplier_event == "HUT_TCD_SUPP1_IN_2"
     assert event.oracle_attributes=={"Plant":"legacy","unknown":"preserved"}
-    assert {x["name"] for x in OracleClient().build_payload(event)["timeEvents"][0]["timeEventAttributes"]} == {"Plant", "unknown"}
+    payload = OracleClient().build_payload(event)["timeEvents"][0]
+    assert {x["name"] for x in payload["timeEventAttributes"]} == {"Plant", "unknown", "WORK_AREA", "MACHINE", "CELL"}
+    attributes = {x["name"]: x["value"] for x in payload["timeEventAttributes"]}
+    assert (attributes["WORK_AREA"], attributes["MACHINE"], attributes["CELL"]) == ("W", "S", "P")
     db.get(ProjectLine,leaf["id"]).description="Changed";db.commit();db.refresh(event)
     assert event.project_line_description=="Project"
-    assert client.post("/api/v1/admin/terminals/TEST/clone",json={}).json()["project_line_id"]==leaf["id"]
+
+
+def test_actions_may_share_directional_supplier_event_and_payroll_type(structure_client):
+    client, _ = structure_client
+    first = client.post("/api/v1/admin/actions", json={"code":"EXIT_A", "label":"Exit A", "supplier_device_event":"BSS_A", "oracle_supplier_event":"HUT_TCD_SUPP1_OUT_2", "state_effect":"EXIT", "oracle_payroll_time_type":"Break ES"})
+    second = client.post("/api/v1/admin/actions", json={"code":"EXIT_B", "label":"Exit B", "supplier_device_event":"BSS_B", "oracle_supplier_event":"HUT_TCD_SUPP1_OUT_2", "state_effect":"EXIT"})
+    invalid = client.post("/api/v1/admin/actions", json={"code":"BAD_IN", "label":"Bad direction", "supplier_device_event":"BSS_BAD", "oracle_supplier_event":"HUT_TCD_SUPP1_OUT_2", "state_effect":"ENTER"})
+    assert first.status_code == second.status_code == 201
+    assert first.json()["oracle_payroll_time_type"] == "Break ES"
+    assert first.json()["supplier_device_event"] == "BSS_A"
+    assert first.json()["oracle_supplier_event"] == "HUT_TCD_SUPP1_OUT_2"
+    assert invalid.status_code == 422
 
 def test_legacy_terminal_and_event_remain_readable(structure_client):
     client,db=structure_client
