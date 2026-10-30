@@ -60,7 +60,7 @@ One local event is sent per request:
       "deviceId": "J35",
       "eventDateTime": "2026-10-30T14:45:10.321+02:00",
       "supplierDeviceEvent": "HUT_TCD_SUPP1_IN_2",
-      "reporterId": "104582",
+      "reporterId": "<resolved Person ID>",
       "reporterIdType": "PERSON",
       "timeEventAttributes": [
         {"name": "PayrollTimeType", "value": "<confirmed action mapping>"},
