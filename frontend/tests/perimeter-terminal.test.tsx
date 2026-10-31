@@ -7,9 +7,9 @@ vi.mock('../src/components/admin/EditorDialog',()=>({EditorDialog:({children}: {
 vi.mock('../src/api',()=>({api:{get:vi.fn(),post:vi.fn(),put:vi.fn()}}));
 afterEach(()=>{cleanup();vi.clearAllMocks();});
 it('creates an active perimeter terminal without device mapping, structure or actions',async()=>{
- vi.mocked(api.get).mockImplementation(async path=>path.includes('/policies/')?{global_mode:'DISABLED'}:{workshops:[],subworkshops:[],project_lines:[]});
+ vi.mocked(api.get).mockImplementation(async path=>path.includes('/policies/')?{global_mode:'DISABLED'}:path==='/api/v1/admin/factories'?[{id:1,code:'ARGANDA',name:'Arganda',timezone:'Europe/Madrid',active:true}]:path==='/api/v1/admin/installation-settings'?{default_factory_code:'ARGANDA',default_factory:{id:1,code:'ARGANDA',name:'Arganda',timezone:'Europe/Madrid',active:true},configuration_error:null}:{workshops:[],subworkshops:[],project_lines:[]});
  vi.mocked(api.post).mockResolvedValue({code:'T100'});
- render(<TerminalEditor terminal={null} actions={[]} onClose={()=>{}} onSaved={()=>{}}/>);
+ render(<TerminalEditor terminal={null} actions={[]} factories={[{id:1,code:'ARGANDA',name:'Arganda',timezone:'Europe/Madrid',active:true,created_at:'',updated_at:''}]} initialFactory="ARGANDA" onClose={()=>{}} onSaved={()=>{}}/>);
  fireEvent.click(screen.getByRole('switch',{name:'Perimeter only'}));
  expect((screen.getByLabelText('Oracle device ID') as HTMLInputElement).disabled).toBe(true);
  expect((screen.getByLabelText('Automatic entry') as HTMLSelectElement).closest('fieldset')?.disabled).toBe(true);
