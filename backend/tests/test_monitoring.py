@@ -33,9 +33,12 @@ def add_event(db, badge, clock, effect, minute):
         id=f"{badge}-{clock}-{minute}", request_number=f"BSS-{badge}-{clock}-{minute}",
         terminal_id=1, action_id=1, terminal_code=clock, device_id=f"DEVICE-{clock}",
         action_code=effect, action_label=effect, supplier_device_event=f"BSS-{effect}",
+        oracle_supplier_event="HUT_TCD_SUPP1_IN_2" if effect == "ENTER" else "HUT_TCD_SUPP1_OUT_2",
         state_effect=effect, reporter_id=badge, reporter_id_type="BADGE",
         identification_method="KEYPAD", event_datetime=timestamp,
         event_timezone="Europe/Madrid", oracle_attributes={"reason": "meal"},
+        person_id=badge, oracle_reporter_id=badge, oracle_reporter_id_type="PERSON",
+        workshop_code="439", subworkshop_code="4393", project_line_code="54A",
         delivery_status="PENDING", created_at=timestamp,
     )
     db.add(event)

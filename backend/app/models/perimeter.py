@@ -1,5 +1,5 @@
 """Factory-level presence with minimized technical identity snapshots."""
-from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, event, select
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, event, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from app.db.base import Base
@@ -15,6 +15,9 @@ class FactoryPerimeterSettings(Base):
     dedup_seconds: Mapped[int] = mapped_column(Integer, default=5)
     auto_exit_action_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     external_last_log_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    external_sync_window_from: Mapped[object | None] = mapped_column(DateTime(timezone=False), nullable=True)
+    external_sync_cursor_created_at: Mapped[object | None] = mapped_column(DateTime(timezone=False), nullable=True)
+    external_sync_cursor_transaction_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     external_sync_initialized_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
     external_last_sync_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
     external_sync_error: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -36,8 +39,20 @@ class FactoryPerimeterEvent(Base):
     direction: Mapped[str] = mapped_column(String(8))
     event_datetime: Mapped[object] = mapped_column(DateTime(timezone=True))
     correlation_id: Mapped[str] = mapped_column(String(36))
+    source_system: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_transaction_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    source_log_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    source_unique_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
     auto_cell_exit_event_id: Mapped[str | None] = mapped_column(ForeignKey("time_events.id"), nullable=True)
-    __table_args__ = (CheckConstraint("direction IN ('ENTER', 'EXIT')", name="ck_perimeter_direction"),)
+    __table_args__ = (
+        CheckConstraint("direction IN ('ENTER', 'EXIT')", name="ck_perimeter_direction"),
+        Index(
+            "ix_factory_perimeter_events_source_transaction",
+            "factory_code", "source_system", "source_transaction_id",
+            unique=True,
+            postgresql_where=source_transaction_id.is_not(None),
+        ),
+    )
 
 
 @event.listens_for(Session, "before_flush")

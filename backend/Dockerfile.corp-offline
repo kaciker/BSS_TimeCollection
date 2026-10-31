@@ -1,5 +1,5 @@
 # Reuse the validated CORP Arganda API runtime with pyodbc + ODBC Driver 18.
-FROM bsstimecollection-api:arganda-external-admin-auth
+FROM bsstimecollection-api:perimeter-9930f3a
 WORKDIR /app
 COPY . .
-LABEL org.opencontainers.image.revision="arganda-external-perimeter-replica"
+LABEL org.opencontainers.image.revision="oracle-hrpath-contract-20261029"

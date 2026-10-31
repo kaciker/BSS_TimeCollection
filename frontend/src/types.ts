@@ -74,7 +74,9 @@ export interface AdminAction {
   code: string;
   label: string;
   supplier_device_event: string;
+  oracle_supplier_event: string;
   state_effect: "ENTER" | "EXIT";
+  oracle_payroll_time_type?: string | null;
   oracle_attributes: Record<string, unknown>;
   display_order: number;
   requires_subaction: boolean;

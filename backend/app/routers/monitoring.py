@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.db.session import get_db
 from app.domain.enums import DeliveryStatus
-from app.integrations.oracle.client import OracleClient
+from app.integrations.oracle.client import OracleClient, OracleMappingError
 from app.models.person_badge_assignment import PersonBadgeAssignment
 from app.models.time_event import TimeEvent
 from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
@@ -234,13 +234,19 @@ def event_detail(event_id: str, db: Session = Depends(get_db)):
     if event is None:
         raise HTTPException(404, "Event not found")
     attempts = db.scalars(select(TransmissionAttempt).where(TransmissionAttempt.event_id == event_id).order_by(TransmissionAttempt.attempt_number, TransmissionAttempt.id)).all()
-    preview = OracleClient().build_payload(event)
+    try:
+        preview = OracleClient().build_payload(event)
+    except OracleMappingError:
+        preview = None
+        db.flush()
     # A preview is not an historical send. The actual timestamp/sourceId are
     # available only in the persisted request_payload of each attempt.
-    preview.pop("requestTimestamp", None)
+    if preview is not None:
+        preview.pop("requestTimestamp", None)
     return EventDetail(
         event=EventSnapshot.model_validate(event),
         attempts=[AttemptRead.model_validate(row) for row in attempts],
         oracle_enabled=settings.oracle_enabled,
         oracle_payload_preview=preview,
+        oracle_mapping_error=event.oracle_mapping_error,
     )

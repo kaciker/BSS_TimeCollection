@@ -9,7 +9,7 @@ it('shows employee, reader and card with independent factory and cell states',as
  localStorage.setItem('bss-timecollection-language','es');
  vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:{factory_perimeter_enabled:true,total:1,items:[{reporter_id:'0582609699',person_id:'104582',credential_id:'CARD-A',worker_state:'OUTSIDE',factory_state:'INSIDE',factory_code:'ARGANDA',event:{id:'x',terminal_code:'GATE',event_datetime:'2026-10-20T10:00:00Z',action_label:'Factory entry',delivery_status:'LOCAL_ONLY'}}]} as never);
  render(<MonitoringPanel terminals={[]}/>);
- const factory=await screen.findByLabelText('Estado de fábrica');
+ const factory=await screen.findByRole('combobox',{name:'Estado de fábrica'});
  expect(screen.getByRole('columnheader',{name:'N.º empleado'})).toBeTruthy();
  expect(screen.getByRole('columnheader',{name:'ID lector'})).toBeTruthy();
  expect(screen.getByRole('columnheader',{name:'Tarjeta'})).toBeTruthy();
@@ -18,7 +18,7 @@ it('shows employee, reader and card with independent factory and cell states',as
  expect(screen.getByText('CARD-A')).toBeTruthy();
  expect(screen.getByText('Fuera', {selector:'span'})).toBeTruthy();expect(screen.getByText('Dentro', {selector:'span'})).toBeTruthy();
  fireEvent.change(factory,{target:{value:'INSIDE'}});
- fireEvent.change(screen.getByLabelText('Estado de célula'),{target:{value:'OUTSIDE'}});
+ fireEvent.change(screen.getByRole('combobox',{name:'Estado de célula'}),{target:{value:'OUTSIDE'}});
  fireEvent.click(screen.getByRole('button',{name:'Aplicar filtros'}));
  await waitFor(()=>expect(api.get).toHaveBeenCalledWith(expect.stringContaining('worker_state=OUTSIDE&factory_state=INSIDE')));
 });

@@ -21,12 +21,12 @@ logger = logging.getLogger(__name__)
 SOURCE = "SQLSERVER_SECURITY_DB"
 
 _RESOLVE_SQL = """
-SELECT p.id, p.pin, pc.id, pc.card_no, pc.person_pin
+SELECT pae.attr_value4, p.id, p.pin, pc.id, pc.card_no, pc.person_pin
 FROM dbo.pers_attribute_ext AS pae
 JOIN dbo.pers_person AS p ON p.id = pae.person_id
 JOIN dbo.pers_card AS pc ON pc.person_id = p.id
-WHERE pae.attr_value4 = ?
-ORDER BY p.id, pc.id
+WHERE pae.attr_value4 IN (?, ?)
+ORDER BY pae.attr_value4, p.id, pc.id
 """
 
 _CURRENT_SQL = """
@@ -105,33 +105,62 @@ def _normalize_row(row, *, reader_id: str | None = None) -> PersonIdentity | Non
 
 
 def resolve_person_identity(reader_id: str, *, query=None) -> PersonIdentity:
-    """Resolve one terminal RFID value to the current SECURITY_DB person/card row."""
+    """Resolve either supported decimal representation, failing closed on collisions."""
     try:
-        converted = reader_number_to_attr_value(reader_id)
+        digits = str(reader_id).strip()
+        if not digits or not digits.isascii() or not digits.isdecimal():
+            raise ValueError
+        number = int(digits)
+        if number >= 2**32:
+            raise ValueError
+        # Keep the terminal's exact decimal spelling, including RFID leading zeros.
+        raw_value = digits
+        converted = reader_number_to_attr_value(digits)
     except ValueError:
         raise PersonIdentityError("INVALID_READER_ID") from None
 
     if query is not None:
         try:
-            rows = list(query(converted))
+            rows = list(query(raw_value, converted))
         except Exception:
             raise PersonIdentityError("QUERY_FAILED") from None
     else:
         connection = _connect()
         try:
-            rows = connection.cursor().execute(_RESOLVE_SQL, converted).fetchall()
+            rows = connection.cursor().execute(_RESOLVE_SQL, raw_value, converted).fetchall()
         except Exception as exc:
             raise PersonIdentityError(_safe_odbc_category(exc, phase="query")) from None
         finally:
             connection.close()
 
-    normalized = {_normalize_row(row, reader_id=reader_id) for row in rows}
-    normalized.discard(None)
-    if not normalized:
-        raise PersonIdentityError("IDENTITY_NOT_FOUND")
-    if len(normalized) != 1:
+    by_representation: dict[str, set[PersonIdentity]] = {}
+    invalid_representation_match = False
+    for candidate in {raw_value, converted}:
+        by_representation.setdefault(candidate, set())
+    for row in rows:
+        try:
+            representation = str(row[0]).strip()
+        except (TypeError, IndexError):
+            continue
+        if representation not in by_representation:
+            continue
+        identity = _normalize_row(row[1:], reader_id=digits)
+        if identity is not None:
+            by_representation[representation].add(identity)
+        else:
+            invalid_representation_match = True
+
+    if invalid_representation_match or any(len(matches) > 1 for matches in by_representation.values()):
+        logger.warning("Ambiguous SECURITY_DB identity reader_id=%s", digits)
         raise PersonIdentityError("AMBIGUOUS_IDENTITY")
-    return next(iter(normalized))
+
+    identities = set().union(*by_representation.values())
+    if not identities:
+        raise PersonIdentityError("IDENTITY_NOT_FOUND")
+    if len(identities) != 1:
+        logger.warning("Conflicting SECURITY_DB representations reader_id=%s", digits)
+        raise PersonIdentityError("AMBIGUOUS_IDENTITY")
+    return next(iter(identities))
 
 
 def fetch_current_person_badges(*, query=None) -> list[PersonIdentity]:
