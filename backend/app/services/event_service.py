@@ -23,6 +23,11 @@ from app.services.person_identity import (
 from app.services.state_service import derive_worker_state
 
 
+def _oracle_request_number(terminal_code: str, event_id: str) -> str:
+    """Build a globally unique local request ID within Oracle's 80-char limit."""
+    return f"BSS-{terminal_code[:39]}-{event_id}"
+
+
 def _lock_badge(db: Session, reporter_id: str) -> None:
     # Serialize state evaluation and capture across all PostgreSQL terminals.
     # A transaction advisory lock also covers a badge with no existing events.
@@ -98,6 +103,9 @@ def _create_event(
     if terminal.terminal_role != "CELL":
         raise HTTPException(409, "Perimeter terminals cannot create cell time events")
     event_id = str(uuid4())
+    # Oracle's live timeEventRequests metadata caps requestNumber at 80 chars.
+    # Keep the UUID intact for uniqueness and trim only the descriptive clock code.
+    request_number = _oracle_request_number(terminal.code, event_id)
     event_time = event_time or datetime.now(ZoneInfo(settings.event_timezone))
     # work_cell is a local exit-policy attribute, not part of the Oracle TCD context.
     oracle_attributes = {key: value for key, value in (terminal.oracle_attributes or {}).items() if key != "work_cell"}
@@ -111,18 +119,14 @@ def _create_event(
     source_person_id = identity.source_person_id if identity else None
     person_id = identity.person_id if identity else None
     credential_id = identity.credential_id if identity else None
-    oracle_reporter_id = person_id if person_id else reporter_id
-    oracle_reporter_id_type = (
-        settings.oracle_person_reporter_id_type if person_id else settings.oracle_reporter_id_type
-    )
+    oracle_reporter_id = person_id
+    oracle_reporter_id_type = settings.oracle_person_reporter_id_type if person_id else None
     if identity is None and snapshot is not None and snapshot.person_id:
         source_person_id = snapshot.source_person_id
         person_id = snapshot.person_id
         credential_id = snapshot.credential_id
-        oracle_reporter_id = snapshot.oracle_reporter_id or snapshot.person_id
-        oracle_reporter_id_type = (
-            snapshot.oracle_reporter_id_type or settings.oracle_person_reporter_id_type
-        )
+        oracle_reporter_id = snapshot.person_id
+        oracle_reporter_id_type = settings.oracle_person_reporter_id_type
 
     event = TimeEvent(
         workshop_code=workshop.code if workshop else None,
@@ -133,16 +137,21 @@ def _create_event(
         project_line_description=structure.description if structure else None,
         id=event_id,
         correlation_id=correlation_id,
-        request_number=f"BSS-{terminal.code}-{event_id}",
+        request_number=request_number,
         terminal_id=terminal.id,
         action_id=action.id,
         terminal_code=terminal.code,
         device_id=terminal.external_device_id,
         action_code=action.code,
         action_label=action.label,
+        # Keep the original BSS supplier code in the local/audit snapshot.
+        # Oracle's directional supplier event is a separate contract field.
         supplier_device_event=action.supplier_device_event,
+        oracle_supplier_event=action.oracle_supplier_event,
         state_effect=action.state_effect,
         reporter_id=reporter_id,
+        # Preserve the local capture/monitoring identity semantics. Oracle
+        # serialization independently enforces reporterIdType=PERSON.
         reporter_id_type=settings.oracle_reporter_id_type,
         identification_method=method.value,
         source_person_id=source_person_id,
@@ -153,6 +162,14 @@ def _create_event(
         event_datetime=event_time,
         event_timezone=settings.event_timezone,
         oracle_attributes=oracle_attributes,
+        oracle_payroll_time_type=action.oracle_payroll_time_type,
+        oracle_mapping_error=(
+            "Resolved Person ID is missing; event requires identity reconciliation" if not person_id
+            else "Workshop / Subworkshop / Project-Line snapshot is incomplete"
+            if not (workshop and branch and structure) else None
+        ),
+        # Keep capture available locally; events without a frozen Person ID
+        # are held out of Oracle delivery for reconciliation.
         delivery_status="PENDING",
     )
     if snapshot is not None:
@@ -171,6 +188,7 @@ def _create_event(
             **(snapshot.oracle_attributes or {}),
             **{k: v for k, v in (action.oracle_attributes or {}).items() if k != "work_cell"},
         }
+        event.oracle_payroll_time_type = action.oracle_payroll_time_type or snapshot.oracle_payroll_time_type
     db.add(event)
     if commit:
         db.commit()

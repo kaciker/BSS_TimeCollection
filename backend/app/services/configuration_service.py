@@ -77,8 +77,15 @@ def check_device_id(db: Session, device_id: str, terminal: Terminal | None = Non
 
 
 def check_supplier_event(db: Session, code: str, action: Action | None = None) -> None:
-    query = select(Action).where(Action.supplier_device_event == code)
-    if action:
-        query = query.where(Action.id != action.id)
-    if db.scalar(query):
-        raise HTTPException(409, "Oracle supplier event already belongs to another action")
+    # Oracle's supplier device event describes direction and may be shared by
+    # any number of local actions (for example all EXIT reasons).
+    return None
+
+
+def validate_supplier_event_direction(code: str, effect: str) -> None:
+    expected = {
+        "HUT_TCD_SUPP1_IN_2": "ENTER",
+        "HUT_TCD_SUPP1_OUT_2": "EXIT",
+    }.get(code)
+    if expected and effect != expected:
+        raise HTTPException(422, f"{code} is only valid for {expected} actions")

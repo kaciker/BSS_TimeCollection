@@ -21,19 +21,20 @@ logger = logging.getLogger(__name__)
 SOURCE = "SQLSERVER_SECURITY_DB"
 
 _RESOLVE_SQL = """
-SELECT p.id, p.pin, pc.id, pc.card_no, pc.person_pin
+SELECT pae.attr_value4, p.id, p.pin, pc.id, pc.card_no, pc.person_pin
 FROM dbo.pers_attribute_ext AS pae
 JOIN dbo.pers_person AS p ON p.id = pae.person_id
 JOIN dbo.pers_card AS pc ON pc.person_id = p.id
-WHERE pae.attr_value4 = ?
-ORDER BY p.id, pc.id
+WHERE pae.attr_value4 IN (?, ?)
+ORDER BY pae.attr_value4, p.id, pc.id
 """
 
 _CURRENT_SQL = """
-SELECT p.id, p.pin, pc.id, pc.card_no, pc.person_pin
+SELECT p.id, p.pin, pc.id, pc.card_no, pc.person_pin, pae.attr_value4
 FROM dbo.pers_card AS pc
 JOIN dbo.pers_person AS p ON p.id = pc.person_id
-ORDER BY p.id, pc.id
+LEFT JOIN dbo.pers_attribute_ext AS pae ON pae.person_id = p.id
+ORDER BY p.id, pc.id, pae.attr_value4
 """
 
 
@@ -49,6 +50,7 @@ class PersonIdentity:
     person_id: str
     source_card_id: str
     credential_id: str
+    reader_id: str | None = None
 
 
 def _connect():
@@ -68,7 +70,18 @@ def _connect():
         raise PersonIdentityError(_safe_odbc_category(exc, phase="connect")) from None
 
 
-def _normalize_row(row) -> PersonIdentity | None:
+def _attr_value_to_reader_number(value: str) -> str:
+    digits = str(value).strip()
+    if not digits or not digits.isascii() or not digits.isdecimal():
+        raise ValueError("External badge attribute must contain ASCII decimal digits")
+    number = int(digits)
+    if number >= 2 ** 32:
+        raise ValueError("External badge attribute exceeds the validated 32-bit format")
+    reader_number = int.from_bytes(number.to_bytes(4, "big"), "little")
+    return f"{reader_number:010d}"
+
+
+def _normalize_row(row, *, reader_id: str | None = None) -> PersonIdentity | None:
     try:
         values = row[0], row[1], row[2], row[3], row[4]
     except (TypeError, IndexError):
@@ -87,37 +100,67 @@ def _normalize_row(row) -> PersonIdentity | None:
         person_id=person_id,
         source_card_id=source_card_id,
         credential_id=credential_id,
+        reader_id=reader_id.strip() if reader_id else None,
     )
 
 
 def resolve_person_identity(reader_id: str, *, query=None) -> PersonIdentity:
-    """Resolve one terminal RFID value to the current SECURITY_DB person/card row."""
+    """Resolve either supported decimal representation, failing closed on collisions."""
     try:
-        converted = reader_number_to_attr_value(reader_id)
+        digits = str(reader_id).strip()
+        if not digits or not digits.isascii() or not digits.isdecimal():
+            raise ValueError
+        number = int(digits)
+        if number >= 2**32:
+            raise ValueError
+        # Keep the terminal's exact decimal spelling, including RFID leading zeros.
+        raw_value = digits
+        converted = reader_number_to_attr_value(digits)
     except ValueError:
         raise PersonIdentityError("INVALID_READER_ID") from None
 
     if query is not None:
         try:
-            rows = list(query(converted))
+            rows = list(query(raw_value, converted))
         except Exception:
             raise PersonIdentityError("QUERY_FAILED") from None
     else:
         connection = _connect()
         try:
-            rows = connection.cursor().execute(_RESOLVE_SQL, converted).fetchall()
+            rows = connection.cursor().execute(_RESOLVE_SQL, raw_value, converted).fetchall()
         except Exception as exc:
             raise PersonIdentityError(_safe_odbc_category(exc, phase="query")) from None
         finally:
             connection.close()
 
-    normalized = {_normalize_row(row) for row in rows}
-    normalized.discard(None)
-    if not normalized:
-        raise PersonIdentityError("IDENTITY_NOT_FOUND")
-    if len(normalized) != 1:
+    by_representation: dict[str, set[PersonIdentity]] = {}
+    invalid_representation_match = False
+    for candidate in {raw_value, converted}:
+        by_representation.setdefault(candidate, set())
+    for row in rows:
+        try:
+            representation = str(row[0]).strip()
+        except (TypeError, IndexError):
+            continue
+        if representation not in by_representation:
+            continue
+        identity = _normalize_row(row[1:], reader_id=digits)
+        if identity is not None:
+            by_representation[representation].add(identity)
+        else:
+            invalid_representation_match = True
+
+    if invalid_representation_match or any(len(matches) > 1 for matches in by_representation.values()):
+        logger.warning("Ambiguous SECURITY_DB identity reader_id=%s", digits)
         raise PersonIdentityError("AMBIGUOUS_IDENTITY")
-    return next(iter(normalized))
+
+    identities = set().union(*by_representation.values())
+    if not identities:
+        raise PersonIdentityError("IDENTITY_NOT_FOUND")
+    if len(identities) != 1:
+        logger.warning("Conflicting SECURITY_DB representations reader_id=%s", digits)
+        raise PersonIdentityError("AMBIGUOUS_IDENTITY")
+    return next(iter(identities))
 
 
 def fetch_current_person_badges(*, query=None) -> list[PersonIdentity]:
@@ -136,12 +179,32 @@ def fetch_current_person_badges(*, query=None) -> list[PersonIdentity]:
         finally:
             connection.close()
 
-    identities = []
+    grouped: dict[tuple[str, str, str, str], set[str]] = {}
     for row in rows:
         identity = _normalize_row(row)
         if identity is None:
             raise PersonIdentityError("INVALID_CURRENT_MAPPING")
-        identities.append(identity)
+        key = (
+            identity.source_person_id,
+            identity.person_id,
+            identity.source_card_id,
+            identity.credential_id,
+        )
+        readers = grouped.setdefault(key, set())
+        try:
+            attr_value = row[5]
+        except (TypeError, IndexError):
+            attr_value = None
+        if attr_value is not None:
+            try:
+                readers.add(_attr_value_to_reader_number(str(attr_value)))
+            except ValueError:
+                pass
+
+    identities = [
+        PersonIdentity(*key, reader_id=next(iter(readers)) if len(readers) == 1 else None)
+        for key, readers in grouped.items()
+    ]
 
     by_person: dict[str, PersonIdentity] = {}
     by_credential: dict[str, PersonIdentity] = {}
@@ -173,25 +236,26 @@ def observe_identity(
             or_(
                 PersonBadgeAssignment.source_person_id == identity.source_person_id,
                 PersonBadgeAssignment.credential_id == identity.credential_id,
+                PersonBadgeAssignment.reader_id == identity.reader_id if identity.reader_id else False,
             ),
         )
     ).all()
     exact = None
     changed = False
     for row in active:
-        conflicts = (
-            row.source_person_id == identity.source_person_id
-            or row.credential_id == identity.credential_id
-        )
-        same = (
+        same_base = (
             row.source_person_id == identity.source_person_id
             and row.person_id == identity.person_id
             and row.source_card_id == identity.source_card_id
             and row.credential_id == identity.credential_id
         )
-        if same:
+        if same_base and (row.reader_id == identity.reader_id or not identity.reader_id):
             exact = row
-        elif conflicts:
+        elif same_base and row.reader_id is None and identity.reader_id:
+            row.reader_id = identity.reader_id
+            exact = row
+            changed = True
+        else:
             row.observed_to = observed_at
             changed = True
     if exact is not None:
@@ -206,6 +270,7 @@ def observe_identity(
             person_id=identity.person_id,
             source_card_id=identity.source_card_id,
             credential_id=identity.credential_id,
+            reader_id=identity.reader_id,
             observed_from=observed_at,
             observed_to=None,
             first_seen_at=observed_at,
@@ -236,16 +301,23 @@ def apply_current_snapshot(
         )
     ).all()
     changes = 0
-    active_exact: dict[tuple[str, str, str, str], PersonBadgeAssignment] = {}
+    active_base: dict[tuple[str, str, str, str], PersonBadgeAssignment] = {}
     for row in active:
         key = (row.source_person_id, row.person_id, row.source_card_id, row.credential_id)
-        active_exact[key] = row
+        active_base[key] = row
         incoming = incoming_by_person.get(row.source_person_id)
         if incoming is None or (
             incoming.person_id,
             incoming.source_card_id,
             incoming.credential_id,
         ) != (row.person_id, row.source_card_id, row.credential_id):
+            row.observed_to = observed_at
+            changes += 1
+            continue
+        if row.reader_id is None and incoming.reader_id:
+            row.reader_id = incoming.reader_id
+            changes += 1
+        elif row.reader_id and incoming.reader_id and row.reader_id != incoming.reader_id:
             row.observed_to = observed_at
             changes += 1
 
@@ -256,7 +328,7 @@ def apply_current_snapshot(
             identity.source_card_id,
             identity.credential_id,
         )
-        existing = active_exact.get(key)
+        existing = active_base.get(key)
         if existing is not None and existing.observed_to is None:
             continue
         db.add(
@@ -267,6 +339,7 @@ def apply_current_snapshot(
                 person_id=identity.person_id,
                 source_card_id=identity.source_card_id,
                 credential_id=identity.credential_id,
+                reader_id=identity.reader_id,
                 observed_from=observed_at,
                 observed_to=None,
                 first_seen_at=observed_at,

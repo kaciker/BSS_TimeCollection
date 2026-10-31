@@ -8,7 +8,7 @@ from sqlalchemy import or_, select, update
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.domain.enums import DeliveryStatus
-from app.integrations.oracle.client import OracleClient
+from app.integrations.oracle.client import OracleClient, OracleMappingError
 from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
 from app.models.worker_runtime_metrics import WorkerRuntimeMetrics
@@ -93,6 +93,10 @@ def claim_next_event() -> str | None:
         event = db.scalar(
             select(TimeEvent)
             .where(TimeEvent.delivery_status.in_([DeliveryStatus.PENDING.value, DeliveryStatus.RETRY.value]))
+            .where(TimeEvent.person_id.is_not(None))
+            .where(TimeEvent.workshop_code.is_not(None))
+            .where(TimeEvent.subworkshop_code.is_not(None))
+            .where(TimeEvent.project_line_code.is_not(None))
             .where(or_(TimeEvent.next_attempt_at.is_(None), TimeEvent.next_attempt_at <= now))
             .order_by(TimeEvent.created_at)
             .with_for_update(skip_locked=True)
@@ -113,7 +117,27 @@ def deliver(event_id: str, client: OracleClient) -> None:
         if event is None:
             return
         started_at = datetime.now(timezone.utc)
-        result = client.send(event)
+        try:
+            result = client.send(event)
+        except OracleMappingError as exc:
+            event.delivery_status = DeliveryStatus.REJECTED.value
+            event.next_attempt_at = None
+            db.add(TransmissionAttempt(
+                event_id=event.id,
+                attempt_number=event.attempt_count,
+                started_at=started_at,
+                finished_at=datetime.now(timezone.utc),
+                endpoint=client.endpoint,
+                http_status=None,
+                result=DeliveryStatus.REJECTED.value,
+                duration_ms=0,
+                request_payload={},
+                response_payload=None,
+                error_message=str(exc),
+            ))
+            db.commit()
+            logger.error("Event mapping requires reconciliation event=%s reason=%s", event.id, exc)
+            return
         finished_at = datetime.now(timezone.utc)
 
         db.add(
@@ -171,6 +195,18 @@ def main() -> None:
         client = OracleClient()
         while True:
             now_monotonic = time.monotonic()
+
+            # Refresh the local PERSON ID / reader / card mapping first so any
+            # perimeter movement inserted in this cycle can freeze that identity.
+            if now_monotonic >= next_person_badge_sync:
+                try:
+                    changes = sync_enabled_person_badges()
+                    if changes:
+                        logger.info("Recorded %s person/badge assignment change(s)", changes)
+                except Exception:
+                    logger.exception("Unhandled person/badge synchronization failure")
+                next_person_badge_sync = now_monotonic + max(settings.person_badge_sync_seconds, 30.0)
+
             if now_monotonic >= next_external_sync:
                 try:
                     mirrored = sync_enabled_external_perimeters()
@@ -188,15 +224,6 @@ def main() -> None:
                 except Exception:
                     logger.exception("Unhandled external perimeter reconciliation failure")
                 next_external_reconciliation = now_monotonic + 180.0
-
-            if now_monotonic >= next_person_badge_sync:
-                try:
-                    changes = sync_enabled_person_badges()
-                    if changes:
-                        logger.info("Recorded %s person/badge assignment change(s)", changes)
-                except Exception:
-                    logger.exception("Unhandled person/badge synchronization failure")
-                next_person_badge_sync = now_monotonic + max(settings.person_badge_sync_seconds, 30.0)
 
             if not settings.oracle_enabled:
                 time.sleep(max(settings.worker_poll_seconds, 1.0))

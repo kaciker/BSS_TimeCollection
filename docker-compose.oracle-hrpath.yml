@@ -1,0 +1,66 @@
+services:
+  api:
+    volumes:
+      - ${ORACLE_CREDENTIALS_HOST_DIR:-/opt/BSSTimeCollection-secrets/oracle}:/run/secrets/oracle
+      - ${PERIMETER_SQLSERVER_SECRET_HOST_PATH:-/opt/BSSTimeCollection/sql/perimeter_sqlserver.json}:/run/secrets/perimeter_sqlserver.json:ro
+    image: bsstimecollection-api:oracle-auth-20261030
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.corp-offline
+    environment:
+      HTTP_PROXY: "http://10.42.252.16:3128"
+      HTTPS_PROXY: "http://10.42.252.16:3128"
+      ALL_PROXY: "http://10.42.252.16:3128"
+      http_proxy: "http://10.42.252.16:3128"
+      https_proxy: "http://10.42.252.16:3128"
+      all_proxy: "http://10.42.252.16:3128"
+      NO_PROXY: "localhost,127.0.0.1,::1,api,worker,web,db,.local,.emea.hut.chem.corp.local"
+      no_proxy: "localhost,127.0.0.1,::1,api,worker,web,db,.local,.emea.hut.chem.corp.local"
+      ORACLE_ENABLED: "false"
+      ORACLE_BASE_URL: https://fa-eocc-dev2-saasfaprod1.fa.ocs.oraclecloud.com
+      ORACLE_API_PATH: /hcmRestApi/resources/11.13.18.05/timeEventRequests
+      ORACLE_SOURCE_ID: HUT_TCD_SUPP1
+      ORACLE_AUTH_MODE: basic
+      ORACLE_PERSON_REPORTER_ID_TYPE: PERSON
+      ORACLE_REPORTER_ID_TYPE: BADGE
+      ORACLE_REST_FRAMEWORK_VERSION: "4"
+      ORACLE_TIMEOUT_SECONDS: "15"
+      ORACLE_CREDENTIALS_FILE: /run/secrets/oracle/oracle_credentials.json
+      ORACLE_USERNAME: ""
+      ORACLE_PASSWORD: ""
+      ORACLE_BEARER_TOKEN: ""
+  worker:
+    volumes:
+      - ${ORACLE_CREDENTIALS_HOST_DIR:-/opt/BSSTimeCollection-secrets/oracle}:/run/secrets/oracle:ro
+      - ${PERIMETER_SQLSERVER_SECRET_HOST_PATH:-/opt/BSSTimeCollection/sql/perimeter_sqlserver.json}:/run/secrets/perimeter_sqlserver.json:ro
+    image: bsstimecollection-api:oracle-auth-20261030
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.corp-offline
+    environment:
+      HTTP_PROXY: "http://10.42.252.16:3128"
+      HTTPS_PROXY: "http://10.42.252.16:3128"
+      ALL_PROXY: "http://10.42.252.16:3128"
+      http_proxy: "http://10.42.252.16:3128"
+      https_proxy: "http://10.42.252.16:3128"
+      all_proxy: "http://10.42.252.16:3128"
+      NO_PROXY: "localhost,127.0.0.1,::1,api,worker,web,db,.local,.emea.hut.chem.corp.local"
+      no_proxy: "localhost,127.0.0.1,::1,api,worker,web,db,.local,.emea.hut.chem.corp.local"
+      ORACLE_ENABLED: "false"
+      ORACLE_BASE_URL: https://fa-eocc-dev2-saasfaprod1.fa.ocs.oraclecloud.com
+      ORACLE_API_PATH: /hcmRestApi/resources/11.13.18.05/timeEventRequests
+      ORACLE_SOURCE_ID: HUT_TCD_SUPP1
+      ORACLE_AUTH_MODE: basic
+      ORACLE_PERSON_REPORTER_ID_TYPE: PERSON
+      ORACLE_REPORTER_ID_TYPE: BADGE
+      ORACLE_REST_FRAMEWORK_VERSION: "4"
+      ORACLE_TIMEOUT_SECONDS: "15"
+      ORACLE_CREDENTIALS_FILE: /run/secrets/oracle/oracle_credentials.json
+      ORACLE_USERNAME: ""
+      ORACLE_PASSWORD: ""
+      ORACLE_BEARER_TOKEN: ""
+  web:
+    image: bsstimecollection-web:oracle-auth-20261030
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.corp-offline

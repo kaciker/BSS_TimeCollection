@@ -20,6 +20,7 @@ class TimeEvent(Base):
     action_code: Mapped[str] = mapped_column(String(64))
     action_label: Mapped[str] = mapped_column(String(120))
     supplier_device_event: Mapped[str] = mapped_column(String(128))
+    oracle_supplier_event: Mapped[str | None] = mapped_column(String(40), nullable=True)
     state_effect: Mapped[str] = mapped_column(String(16))
 
     # reporter_id remains the raw identifier received from the terminal for
@@ -36,6 +37,8 @@ class TimeEvent(Base):
 
     event_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     event_timezone: Mapped[str] = mapped_column(String(64))
+    oracle_payroll_time_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    oracle_mapping_error: Mapped[str | None] = mapped_column(String(255), nullable=True)
     oracle_attributes: Mapped[dict] = mapped_column(JSON, default=dict)
     workshop_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     workshop_description: Mapped[str | None] = mapped_column(String(255), nullable=True)
