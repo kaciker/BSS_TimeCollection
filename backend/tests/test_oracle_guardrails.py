@@ -11,6 +11,7 @@ from app.db.base import Base
 from app.models.time_event import TimeEvent
 from app.schemas.admin import ActionCreate, TerminalCreate
 from app.schemas.terminal import ScanRequest
+from app.services.event_service import _oracle_request_number
 
 
 def test_oracle_field_limits_are_enforced_before_capture():
@@ -38,6 +39,14 @@ def test_oracle_field_limits_are_enforced_before_capture():
     assert ScanRequest(reporter_id="R" * 80, identification_method="KEYPAD").reporter_id == "R" * 80
 
 
+def test_generated_request_number_fits_oracle_limit_and_retains_full_event_uuid():
+    event_id = "12345678-1234-5678-1234-567812345678"
+    request_number = _oracle_request_number("T" * 64, event_id)
+    assert request_number == f"BSS-{'T' * 39}-{event_id}"
+    assert len(request_number) == 80
+    assert event_id in request_number
+
+
 def test_stale_sending_event_requires_reconciliation(monkeypatch):
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     Base.metadata.create_all(engine)
@@ -62,6 +71,8 @@ def test_stale_sending_event_requires_reconciliation(monkeypatch):
                 event_datetime=old_attempt,
                 event_timezone="Europe/Madrid",
                 oracle_attributes={},
+                person_id="123", oracle_reporter_id="123", oracle_reporter_id_type="PERSON",
+                workshop_code="439", subworkshop_code="4393", project_line_code="54A",
                 delivery_status="SENDING",
                 attempt_count=1,
                 last_attempt_at=old_attempt,

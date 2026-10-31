@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
 from app.domain.enums import IdentificationMode, StateEffect
 
@@ -75,11 +75,26 @@ class TerminalPairingApproval(BaseModel):
     pairing_code: str = Field(min_length=8, max_length=16)
 
 
+class OracleCredentialsUpdate(BaseModel):
+    auth_mode: Literal["none", "basic", "bearer"]
+    username: str | None = Field(default=None, max_length=256)
+    password: SecretStr | None = Field(default=None, max_length=4096)
+    bearer_token: SecretStr | None = Field(default=None, max_length=8192)
+    clear_credentials: bool = False
+
+    @field_validator("username")
+    @classmethod
+    def strip_username(cls, value):
+        return value.strip() if value is not None else value
+
+
 class ActionSettings(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     label: str = Field(min_length=1, max_length=120)
     supplier_device_event: str = Field(min_length=1, max_length=40)
+    oracle_supplier_event: str | None = Field(default=None, min_length=1, max_length=40)
     state_effect: StateEffect
+    oracle_payroll_time_type: str | None = Field(default=None, max_length=120)
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
     display_order: int = Field(default=100, ge=0, le=100000)
     visual_key: str | None = Field(default=None, max_length=64, pattern=r"^[a-z0-9-]+$")
@@ -97,7 +112,9 @@ class ActionRead(BaseModel):
     code: str
     label: str
     supplier_device_event: str
+    oracle_supplier_event: str
     state_effect: str
+    oracle_payroll_time_type: str | None = None
     oracle_attributes: dict[str, Any]
     display_order: int
     requires_subaction: bool
@@ -116,6 +133,7 @@ class EventRead(BaseModel):
     action_code: str
     action_label: str
     supplier_device_event: str
+    oracle_supplier_event: str | None = None
     state_effect: str
     reporter_id: str
     reporter_id_type: str
@@ -125,6 +143,8 @@ class EventRead(BaseModel):
     credential_id: str | None = None
     oracle_reporter_id: str | None = None
     oracle_reporter_id_type: str | None = None
+    oracle_payroll_time_type: str | None = None
+    oracle_mapping_error: str | None = None
     event_datetime: datetime
     oracle_attributes: dict[str, Any]
     workshop_code: str | None = None

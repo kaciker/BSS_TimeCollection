@@ -13,6 +13,8 @@ from app.models import (
     TimeEvent,
     TransmissionAttempt,
     WorkerRuntimeMetrics,
+    FactoryPerimeterEvent,
+    FactoryPerimeterSettings,
 )  # noqa: F401
 
 config = context.config

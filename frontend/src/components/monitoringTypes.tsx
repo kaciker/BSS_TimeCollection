@@ -11,6 +11,7 @@ export interface EventSnapshot extends AdminEvent {
   device_id: string | null;
   action_code: string;
   supplier_device_event: string | null;
+  oracle_supplier_event?: string | null;
   state_effect: string;
   reporter_id_type: string | null;
   identification_method: string | null;
@@ -19,6 +20,8 @@ export interface EventSnapshot extends AdminEvent {
   credential_id?: string | null;
   oracle_reporter_id?: string | null;
   oracle_reporter_id_type?: string | null;
+  oracle_mapping_error?: string | null;
+  oracle_payroll_time_type?: string | null;
   event_timezone: string;
   oracle_attributes: Record<string, unknown>;
   created_at: string;
@@ -54,7 +57,7 @@ export interface CardState {
   event: EventSnapshot;
 }
 export interface Page<T> { items: T[]; total: number; factory_perimeter_enabled?: boolean }
-export interface EventDetail { event: EventSnapshot; attempts: Attempt[]; oracle_enabled: boolean; oracle_payload_preview: Record<string, unknown> | null }
+export interface EventDetail { event: EventSnapshot; attempts: Attempt[]; oracle_enabled: boolean; oracle_payload_preview: Record<string, unknown> | null; oracle_mapping_error?: string | null }
 export const dateLabel = (value: string | null) => value ? new Date(value).toLocaleString("en-GB") : "—";
 export function Status({ value }: { value: string }) {
   return <span className={`status status-${value.toLowerCase()}`}>{value === "LOCAL_ONLY" ? "Solo local" : value}</span>;

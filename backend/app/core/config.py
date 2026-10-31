@@ -10,16 +10,19 @@ class Settings(BaseSettings):
     database_admin_test_enabled: bool = False
 
     oracle_enabled: bool = False
-    oracle_base_url: str = ""
+    oracle_base_url: str = "https://fa-eocc-dev2-saasfaprod1.fa.ocs.oraclecloud.com"
     oracle_api_path: str = "/hcmRestApi/resources/11.13.18.05/timeEventRequests"
-    oracle_source_id: str = "HWM_CLOCK_TIME"
+    oracle_source_id: str = "HUT_TCD_SUPP1"
+    # Preserve the local capture identity value; OracleClient always emits PERSON.
     oracle_reporter_id_type: str = "BADGE"
     oracle_person_reporter_id_type: str = "PERSON"
-    oracle_auth_mode: str = "none"
+    oracle_auth_mode: str = "basic"
     oracle_username: str = ""
     oracle_password: str = ""
     oracle_bearer_token: str = ""
     oracle_timeout_seconds: float = 15.0
+    oracle_rest_framework_version: str = "4"
+    oracle_credentials_file: str = "/run/secrets/oracle/oracle_credentials.json"
 
     terminal_cookie_secure: bool = False
     terminal_session_days: int = 365
