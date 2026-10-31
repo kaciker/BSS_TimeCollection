@@ -86,7 +86,7 @@ def test_postgres_concurrent_policy_upserts_and_persistence(pg_schema):
         with ThreadPoolExecutor(max_workers=12) as pool:list(pool.map(save,range(12)))
     round(None)
     with Session(engine) as db:
-        terminal=Terminal(code='OVERRIDE',name='Override',external_device_id='OVERRIDE',active=False)
+        terminal=Terminal(code='OVERRIDE',name='Override',external_device_id='OVERRIDE',factory_code='ARGANDA',active=False)
         db.add(terminal);db.commit();terminal_id=terminal.id
     round(terminal_id)
     with Session(engine) as db:
@@ -106,8 +106,8 @@ def test_postgres_concurrent_capture_serializes_badge_and_rejects_without_oracle
     with Session(engine) as db:
         enter=Action(code='ENTER',label='Entry',supplier_device_event='ENTER',state_effect='ENTER')
         leave=Action(code='EXIT',label='Exit',supplier_device_event='EXIT',state_effect='EXIT')
-        a=Terminal(code='A',name='A',external_device_id='A',actions=[enter,leave])
-        b=Terminal(code='B',name='B',external_device_id='B',actions=[enter,leave])
+        a=Terminal(code='A',name='A',external_device_id='A',factory_code='ARGANDA',actions=[enter,leave])
+        b=Terminal(code='B',name='B',external_device_id='B',factory_code='ARGANDA',actions=[enter,leave])
         db.add_all([a,b]);db.commit();aid=a.id;bid=b.id
         save_mode(db,aid,'SAME_TERMINAL');save_mode(db,bid,'SAME_TERMINAL')
     barrier=Barrier(8)

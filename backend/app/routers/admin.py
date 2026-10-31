@@ -3,6 +3,7 @@ from time import monotonic
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field
 import httpx
 import ssl
 from sqlalchemy import select
@@ -14,7 +15,10 @@ from app.core.oracle_credentials import configure_oracle_credentials, credential
 from app.db.session import get_db
 from app.domain.enums import DeliveryStatus
 from app.models.action import Action
+from app.models.factory import Factory, InstallationSettings
 from app.models.terminal import Terminal
+from app.models.perimeter import FactoryPerimeterSettings, FactoryPerimeterEvent, TerminalBadgeRead
+from app.models.person_badge_assignment import PersonBadgeAssignment
 from app.models.structure import ProjectLine
 from app.models.terminal_pairing_request import TerminalPairingRequest
 from app.models.time_event import TimeEvent
@@ -23,6 +27,8 @@ from app.schemas.admin import (
     ActionRead,
     ActionSettings,
     EventRead,
+    FactoryInput,
+    FactoryUpdate,
     TerminalActionsUpdate,
     TerminalCreate,
     TerminalPairingApproval,
@@ -47,6 +53,89 @@ from app.services.terminal_identity_service import issue_activation_token
 from app.services.terminal_pairing_service import approve_pairing_request
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
+
+
+def _factory_dict(factory: Factory) -> dict:
+    return {"id": factory.id, "code": factory.code, "name": factory.name, "location": factory.location,
+            "country": factory.country, "timezone": factory.timezone, "active": factory.active,
+            "created_at": factory.created_at, "updated_at": factory.updated_at}
+
+
+@router.get("/factories")
+def list_factories(db: Session = Depends(get_db)):
+    return [_factory_dict(row) for row in db.scalars(select(Factory).order_by(Factory.code)).all()]
+
+
+@router.get("/installation-settings")
+def get_installation_settings(db: Session = Depends(get_db)):
+    config = db.get(InstallationSettings, 1)
+    factory = db.scalar(select(Factory).where(Factory.code == config.default_factory_code)) if config and config.default_factory_code else None
+    error = None if factory is not None and factory.active else "Configure an active installation default factory in Administration."
+    return {"default_factory_code": factory.code if factory and factory.active else None,
+            "default_factory": _factory_dict(factory) if factory else None, "configuration_error": error}
+
+
+class InstallationDefaultUpdate(BaseModel):
+    factory_code: str = Field(min_length=1, max_length=64)
+
+
+@router.put("/installation-settings/default-factory")
+def set_default_factory(payload: InstallationDefaultUpdate, db: Session = Depends(get_db)):
+    code = payload.factory_code
+    factory = db.scalar(select(Factory).where(Factory.code == code, Factory.active.is_(True))) if isinstance(code, str) else None
+    if factory is None:
+        raise HTTPException(422, "Select an existing active factory as the installation default")
+    config = db.get(InstallationSettings, 1)
+    if config is None:
+        config = InstallationSettings(id=1)
+        db.add(config)
+    config.default_factory_code = factory.code
+    db.commit()
+    return get_installation_settings(db)
+
+
+@router.post("/factories", status_code=status.HTTP_201_CREATED)
+def create_factory(payload: FactoryInput, db: Session = Depends(get_db)):
+    values = payload.model_dump()
+    code = values.get("code")
+    name = values.get("name")
+    if not isinstance(code, str) or not 1 <= len(code.strip()) <= 64 or not code.strip().replace("_", "").replace("-", "").isalnum():
+        raise HTTPException(422, "Factory code must contain only letters, numbers, underscore or hyphen")
+    code = code.strip().upper()
+    if not isinstance(name, str) or not name.strip():
+        raise HTTPException(422, "Factory name is required")
+    row = Factory(code=code, name=name.strip(), location=values.get("location"), country=values.get("country"), timezone=values.get("timezone") or "UTC", active=bool(values.get("active", True)))
+    db.add(row)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Factory code already exists")
+    return _factory_dict(row)
+
+
+@router.put("/factories/{factory_id}")
+def update_factory(factory_id: int, payload: FactoryUpdate, db: Session = Depends(get_db)):
+    row = db.get(Factory, factory_id)
+    if row is None:
+        raise HTTPException(404, "Factory not found")
+    values = payload.model_dump(exclude_unset=True)
+    if values.get("code", row.code) != row.code:
+        raise HTTPException(422, "Factory code is immutable")
+    if "active" in values and values["active"] is not None:
+        if not values["active"] and db.get(InstallationSettings, 1) and db.get(InstallationSettings, 1).default_factory_code == row.code:
+            raise HTTPException(409, "Choose another installation default before deactivating this factory")
+        row.active = bool(values["active"])
+    if values.get("name") is not None:
+        row.name = str(values["name"]).strip()
+    if "location" in values:
+        row.location = values["location"]
+    if "country" in values:
+        row.country = values["country"]
+    if values.get("timezone") is not None:
+        row.timezone = str(values["timezone"])
+    db.commit()
+    return _factory_dict(row)
 
 
 
@@ -307,6 +396,10 @@ def list_terminals(db: Session = Depends(get_db)):
 
 @router.post("/terminals", response_model=TerminalRead, status_code=status.HTTP_201_CREATED)
 def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
+    code = payload.factory_code
+    factory = db.scalar(select(Factory).where(Factory.code == code, Factory.active.is_(True))) if code else None
+    if factory is None:
+        raise HTTPException(422, "Select an existing active factory")
     terminal_code = payload.code or allocate_terminal_code(db)
     if db.scalar(select(Terminal).where(Terminal.code == terminal_code)):
         raise HTTPException(status_code=409, detail="Terminal code already exists")
@@ -326,6 +419,7 @@ def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
         name=payload.name,
         external_device_id=device_id,
         terminal_role="PERIMETER_BOTH" if payload.perimeter_only else "CELL",
+        factory_code=factory.code,
         identification_mode=payload.identification_mode.value,
         exit_menu_timeout_seconds=payload.exit_menu_timeout_seconds if payload.exit_menu_timeout_seconds is not None else 5,
         reporter_id_type=settings.oracle_person_reporter_id_type,
@@ -350,6 +444,10 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
     terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)).with_for_update())
     if terminal is None:
         raise HTTPException(404, "Terminal not found")
+    factory_code = payload.factory_code or terminal.factory_code
+    factory = db.scalar(select(Factory).where(Factory.code == factory_code))
+    if factory is None or (factory.code != terminal.factory_code and not factory.active):
+        raise HTTPException(422, "Select an existing active factory")
     perimeter = payload.perimeter_only if payload.perimeter_only is not None else terminal.terminal_role != "CELL"
     role = (terminal.terminal_role if terminal.terminal_role != "CELL" else "PERIMETER_BOTH") if perimeter else "CELL"
     device_id = payload.external_device_id or (terminal.external_device_id if perimeter else None)
@@ -362,6 +460,7 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
     leaf = None if perimeter else _resolve_structure(db, payload.project_line_id, payload.workshop_id, payload.subworkshop_id, required=terminal.terminal_role != "CELL")
     terminal.project_line_id = None if perimeter else (leaf.id if leaf else terminal.project_line_id)
     terminal.terminal_role = role
+    terminal.factory_code = factory.code
     terminal.name = payload.name
     terminal.external_device_id = device_id
     terminal.identification_mode = payload.identification_mode.value

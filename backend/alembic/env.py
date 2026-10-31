@@ -15,6 +15,8 @@ from app.models import (
     WorkerRuntimeMetrics,
     FactoryPerimeterEvent,
     FactoryPerimeterSettings,
+    Factory,
+    InstallationSettings,
 )  # noqa: F401
 
 config = context.config

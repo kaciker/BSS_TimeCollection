@@ -14,6 +14,7 @@ from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
 from app.models.terminal import Terminal
 from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
+from app.models.factory import Factory
 from app.services.external_perimeter import reader_number_to_attr_value
 from app.services.external_perimeter_sync import (
     attr_value_to_reader_number,
@@ -35,6 +36,8 @@ def db():
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     Base.metadata.create_all(engine)
     with Session(engine) as session:
+        session.add(Factory(code="ARGANDA", name="Arganda"))
+        session.commit()
         yield session
     engine.dispose()
 

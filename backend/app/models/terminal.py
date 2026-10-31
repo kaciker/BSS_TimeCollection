@@ -18,7 +18,7 @@ class Terminal(Base):
     __table_args__ = (CheckConstraint("terminal_role IN ('CELL', 'PERIMETER_ENTER', 'PERIMETER_EXIT', 'PERIMETER_BOTH')", name="ck_terminal_role"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    factory_code: Mapped[str] = mapped_column(String(64), default='DEFAULT')
+    factory_code: Mapped[str] = mapped_column(String(64), ForeignKey("factories.code", ondelete="RESTRICT"), nullable=False)
     terminal_role: Mapped[str] = mapped_column(String(16), default='CELL')
     code: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(160))

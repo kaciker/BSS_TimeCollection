@@ -4,6 +4,7 @@ from app.core.config import settings
 from app.db.session import SessionLocal
 from app.models.action import Action
 from app.models.terminal import Terminal
+from app.models.factory import Factory, InstallationSettings
 
 
 def bootstrap() -> None:
@@ -48,11 +49,14 @@ def bootstrap() -> None:
                 action.parent_action = parent
 
         terminal = db.scalar(select(Terminal).where(Terminal.code == "DEMO-01"))
-        if terminal is None:
+        installation = db.get(InstallationSettings, 1)
+        default_factory = db.scalar(select(Factory).where(Factory.code == installation.default_factory_code, Factory.active.is_(True))) if installation and installation.default_factory_code else None
+        if terminal is None and default_factory is not None and default_factory.active:
             terminal = Terminal(
                 code="DEMO-01",
                 name="Demo terminal",
                 external_device_id="DEMO-01",
+                factory_code=default_factory.code,
                 identification_mode="BOTH",
             )
             db.add(terminal)

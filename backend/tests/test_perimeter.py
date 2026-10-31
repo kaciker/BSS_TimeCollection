@@ -13,8 +13,8 @@ def scan(client, badge="RFID-0001"):
 def setup_factory(client):
     cell, payload = configured_terminal(client)
     gate = client.post("/api/v1/admin/terminals", json={**payload, "code": "GATE", "external_device_id": "GATE"}).json()
-    assert client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "DEFAULT", "role": "PERIMETER_BOTH"}).status_code == 200
-    result = client.put("/api/v1/admin/perimeter/DEFAULT", json={
+    assert client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "ARGANDA", "role": "PERIMETER_BOTH"}).status_code == 200
+    result = client.put("/api/v1/admin/perimeter/ARGANDA", json={
         "enabled": True, "badge_source": "OPEN", "dedup_enabled": True,
         "dedup_seconds": 5, "auto_exit_action_code": "STOP",
     })
@@ -37,7 +37,7 @@ def test_perimeter_required_and_cascade_queues_only_cell_exit(monitor):
     assert scan(client).json()["flow"] == "ENTRY_RECORDED"
     token = client.post('/api/v1/admin/terminals/GATE/provision').json()['activation_token']
     assert client.post('/api/v1/terminal/activate', json={'token': token}).status_code == 200
-    assert client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "DEFAULT", "role": "PERIMETER_EXIT"}).status_code == 200
+    assert client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "ARGANDA", "role": "PERIMETER_EXIT"}).status_code == 200
     result = scan(client)
     assert result.status_code == 200, result.text
     assert result.json()["flow"] == "FACTORY_EXIT_RECORDED"
@@ -58,23 +58,23 @@ def test_perimeter_required_and_cascade_queues_only_cell_exit(monitor):
 def test_duplicate_and_open_uid(monitor):
     client, db = monitor
     cell, gate = setup_factory(client)
-    client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "DEFAULT", "role": "PERIMETER_ENTER"})
+    client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "ARGANDA", "role": "PERIMETER_ENTER"})
     activate_created_terminal(client, gate)
     assert scan(client, "0000").json()["flow"] == "FACTORY_ENTRY_RECORDED"
     assert scan(client, "0000").json()["flow"] == "DUPLICATE_IGNORED"
     assert len(db.scalars(select(FactoryPerimeterEvent)).all()) == 1
-    assert client.get("/api/v1/admin/perimeter/DEFAULT/presence").json()["inside"] == ["0000"]
+    assert client.get("/api/v1/admin/perimeter/ARGANDA/presence").json()["inside"] == ["0000"]
 
 
 def test_external_badge_source_not_activated(monitor):
     client, db = monitor
     configured_terminal(client)
-    response = client.put("/api/v1/admin/perimeter/DEFAULT", json={
+    response = client.put("/api/v1/admin/perimeter/OTHER", json={
         "enabled": True, "badge_source": "EXTERNAL", "dedup_enabled": True,
         "dedup_seconds": 5, "auto_exit_action_code": "STOP",
     })
     assert response.status_code == 422
-    assert client.get("/api/v1/admin/perimeter/DEFAULT").json()["enabled"] is False
+    assert client.get("/api/v1/admin/perimeter/ARGANDA").json()["enabled"] is False
 
 
 def test_bidirectional_repeated_reads_do_not_toggle_presence(monitor):
@@ -83,7 +83,7 @@ def test_bidirectional_repeated_reads_do_not_toggle_presence(monitor):
     activate_created_terminal(client, gate)
     assert scan(client, "00001234").json()["flow"] == "FACTORY_ENTRY_RECORDED"
     assert scan(client, "00001234").json()["flow"] == "DUPLICATE_IGNORED"
-    assert client.get("/api/v1/admin/perimeter/DEFAULT/presence").json()["inside"] == ["00001234"]
+    assert client.get("/api/v1/admin/perimeter/ARGANDA/presence").json()["inside"] == ["00001234"]
     assert len(db.scalars(select(FactoryPerimeterEvent)).all()) == 1
 
 
@@ -102,7 +102,7 @@ def test_cascade_preserves_entry_snapshots_after_cell_configuration_change(monit
     cell.oracle_attributes = {"Workshop": "Changed"}
     cell.project_line.active = False
     db.commit()
-    client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "DEFAULT", "role": "PERIMETER_EXIT"})
+    client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "ARGANDA", "role": "PERIMETER_EXIT"})
     token = client.post('/api/v1/admin/terminals/GATE/provision').json()['activation_token']
     client.post('/api/v1/terminal/activate', json={'token': token})
     assert scan(client).json()["flow"] == "FACTORY_EXIT_RECORDED"
@@ -122,7 +122,7 @@ def test_cascade_commit_failure_rolls_back_both_movements(monitor, monkeypatch):
     activate_created_terminal(client, gate)
     scan(client)
     capture(db, 'CLOCK-A', 'RFID-0001', IdentificationMethod.KEYPAD)
-    client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "DEFAULT", "role": "PERIMETER_EXIT"})
+    client.put("/api/v1/admin/perimeter/terminals/GATE/role", json={"factory_code": "ARGANDA", "role": "PERIMETER_EXIT"})
     def fail():
         raise RuntimeError("simulated commit failure")
     with monkeypatch.context() as patch:
@@ -153,7 +153,7 @@ def test_disabled_perimeter_preserves_legacy_cell_capture(monitor):
     from app.domain.enums import IdentificationMethod as Method
     client, db = monitor
     configured_terminal(client)
-    assert client.get('/api/v1/admin/perimeter/DEFAULT').json()['enabled'] is False
+    assert client.get('/api/v1/admin/perimeter/ARGANDA').json()['enabled'] is False
     assert capture(db, 'CLOCK-A', 'legacy', Method.KEYPAD).flow == 'ENTRY_RECORDED'
     assert capture(db, 'CLOCK-A', 'legacy', Method.KEYPAD).flow == 'EXIT_REQUIRED'
     assert record_exit(db, 'CLOCK-A', 'legacy', Method.KEYPAD, 'STOP').flow == 'EXIT_RECORDED'
@@ -171,7 +171,7 @@ def test_factory_presence_isolated_and_external_source_fails_closed(monitor):
     activate_created_terminal(client, gate)
     scan(client, '0000')
     assert client.get('/api/v1/admin/perimeter/OTHER/presence').json()['inside'] == []
-    config = db.get(FactoryPerimeterSettings, 'DEFAULT')
+    config = db.get(FactoryPerimeterSettings, 'ARGANDA')
     config.badge_source = 'EXTERNAL'
     db.commit()
     with pytest.raises(HTTPException) as error:
@@ -186,5 +186,5 @@ def test_clone_preserves_factory_role_and_does_not_copy_identity(monitor):
     _, gate = setup_factory(client)
     clone = client.post('/api/v1/admin/terminals/GATE/clone')
     assert clone.status_code == 201, clone.text
-    assert clone.json()['factory_code'] == 'DEFAULT'
+    assert clone.json()['factory_code'] == 'ARGANDA'
     assert clone.json()['terminal_role'] == 'PERIMETER_BOTH'

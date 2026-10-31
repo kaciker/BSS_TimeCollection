@@ -62,6 +62,13 @@ jobs:
           curl -fsS -c /tmp/admin-cookies.txt -H 'Content-Type: application/json' \
             -d '{"username":"admin","password":"ci-admin-password"}' \
             http://127.0.0.1:8080/api/v1/admin/auth/login | grep -q 'authenticated'
+          curl -fsS -b /tmp/admin-cookies.txt -H 'Content-Type: application/json' \
+            -d '{"code":"CI","name":"CI Factory","location":"GitHub Actions","country":"CI","timezone":"UTC","active":true}' \
+            http://127.0.0.1:8080/api/v1/admin/factories | grep -q '"code":"CI"'
+          curl -fsS -b /tmp/admin-cookies.txt -X PUT -H 'Content-Type: application/json' \
+            -d '{"factory_code":"CI"}' \
+            http://127.0.0.1:8080/api/v1/admin/installation-settings/default-factory | grep -q '"default_factory_code":"CI"'
+          docker compose exec -T api python -m app.bootstrap
           TOKEN=$(curl -fsS -b /tmp/admin-cookies.txt -X POST http://127.0.0.1:8080/api/v1/admin/terminals/DEMO-01/provision | python3 -c 'import json,sys; print(json.load(sys.stdin)["activation_token"])')
           curl -fsS -c /tmp/bss-cookies.txt -H 'Content-Type: application/json' \
             -d "{\"token\":\"${TOKEN}\"}" \

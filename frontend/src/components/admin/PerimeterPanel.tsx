@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../api";
-import type { AdminAction, AdminTerminal } from "../../types";
+import type { AdminAction, AdminTerminal, Factory, InstallationSettings } from "../../types";
 import { useLanguage } from "../../i18n";
 
 type Config = {
@@ -15,26 +15,16 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
   const { t: tr, language } = useLanguage();
   const [terminalRows, setTerminalRows] = useState(terminals);
   useEffect(() => { setTerminalRows(terminals); }, [terminals]);
+  const [factories, setFactories] = useState<Factory[]>([]);
+  const [factory, setFactory] = useState("");
+  useEffect(() => { let active = true; void Promise.all([api.get<Factory[]>("/api/v1/admin/factories"), api.get<InstallationSettings>("/api/v1/admin/installation-settings")]).then(([rows, settings]) => { if (!active) return; setFactories(rows.filter(row => row.active)); setFactory(settings.default_factory_code ?? ""); }).catch(err => setError((err as Error).message)); return () => { active = false; }; }, []);
   const exitActions = actions.filter(a => a.active && a.state_effect === "EXIT" && !a.requires_subaction);
-  const [factory, setFactory] = useState(() => {
-    const query = new URLSearchParams(window.location.search).get("factory");
-    if (query) return query;
-    try { return localStorage.getItem("bss-perimeter-factory") || "DEFAULT"; }
-    catch { return "DEFAULT"; }
-  });
-  useEffect(() => {
-    if (!factory) return;
-    try { localStorage.setItem("bss-perimeter-factory", factory); }
-    catch { /* Storage can be disabled by browser policy. */ }
-  }, [factory]);
   const requestVersion = useRef(0);
   const changeFactory = (value: string) => {
     // Invalidate pending responses before rendering the next factory.
     requestVersion.current += 1;
     setConfig(null); setPresence(null);
     setFactory(value);
-    try { if (value) localStorage.setItem("bss-perimeter-factory", value); }
-    catch { /* URL selection still works when browser storage is unavailable. */ }
     const url = new URL(window.location.href);
     if (value) url.searchParams.set("factory", value);
     else url.searchParams.delete("factory");
@@ -124,7 +114,7 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
         {config && <span className={`resource-status ${config.enabled ? "is-active" : "is-inactive"}`}><span />{config.enabled ? tr("enabled") : tr("disabled")}</span>}
       </div>
       <div className="form-grid">
-        <label>{tr("factoryCode")}<input disabled={busy} value={factory} maxLength={64} onChange={e => changeFactory(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""))} /></label>
+        <label>{tr("factoryCode")}<select disabled={busy} value={factory} onChange={e => changeFactory(e.target.value)}><option value="">Select factory</option>{factories.map(row => <option key={row.code} value={row.code}>{row.name} · {row.code}</option>)}</select><small>Selected factory: <strong>{factories.find(row => row.code === factory)?.name ?? "Not configured"} ({factory || "—"})</strong></small></label>
         {config && <label>{tr("presenceSource")}<select value={config.badge_source} onChange={e => setConfig({...config, badge_source:e.target.value as Config["badge_source"]})}><option value="OPEN">{tr("openAnyUid")}</option><option value="EXTERNAL" disabled={factory.toUpperCase() !== "ARGANDA"}>{tr("externalArganda")}</option></select></label>}
       </div>
       {config && <>
@@ -142,12 +132,12 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
     <section className="admin-card">
       <div className="section-heading"><div><h3>{tr("terminalRoles")}</h3><p>{tr("terminalRolesHelp")}</p></div></div>
       <div className="perimeter-terminal-list">{terminalRows.map(terminal => <div key={terminal.code} className="perimeter-terminal-row">
-        <div className="perimeter-terminal-name"><strong>{terminal.name}</strong><div className="cell-secondary">{terminal.code}<br />{tr("savedFactory")}: <strong>{terminal.factory_code ?? "DEFAULT"}</strong><br />{tr("savedRole")}: {terminal.terminal_role === "CELL" ? tr("cell") : terminal.terminal_role === "PERIMETER_ENTER" ? tr("factoryEntrance") : terminal.terminal_role === "PERIMETER_EXIT" ? tr("factoryExit") : tr("factoryEntranceExit")}</div></div>
+        <div className="perimeter-terminal-name"><strong>{terminal.name}</strong><div className="cell-secondary">{terminal.code}<br />{tr("savedFactory")}: <strong>{terminal.factory_code}</strong><br />{tr("savedRole")}: {terminal.terminal_role === "CELL" ? tr("cell") : terminal.terminal_role === "PERIMETER_ENTER" ? tr("factoryEntrance") : terminal.terminal_role === "PERIMETER_EXIT" ? tr("factoryExit") : tr("factoryEntranceExit")}</div></div>
         <label className="perimeter-role-control"><span className="field-label">{tr("roleToSave")}</span><select aria-label={`${tr("roleToSave")} ${terminal.code}`} value={roles[terminal.code] ?? terminal.terminal_role ?? "CELL"} onChange={e => setRoles({...roles, [terminal.code]:e.target.value as Role})}>
           <option value="CELL">{tr("cell")}</option><option value="PERIMETER_ENTER">{tr("factoryEntrance")}</option>
           <option value="PERIMETER_EXIT">{tr("factoryExit")}</option><option value="PERIMETER_BOTH">{tr("factoryEntranceExit")}</option>
         </select></label>
-        <button className="secondary" disabled={busy || !factory || ((terminal.factory_code ?? "DEFAULT") === factory && (roles[terminal.code] ?? terminal.terminal_role ?? "CELL") === terminal.terminal_role)} onClick={() => void saveRole(terminal.code)}>{(terminal.factory_code ?? "DEFAULT") !== factory ? `${tr("assignTo")} ${factory}` : (roles[terminal.code] ?? terminal.terminal_role) !== terminal.terminal_role ? tr("saveRole") : tr("assignmentSaved")}</button>
+        <button className="secondary" disabled={busy || !factory || (terminal.factory_code === factory && (roles[terminal.code] ?? terminal.terminal_role ?? "CELL") === terminal.terminal_role)} onClick={() => void saveRole(terminal.code)}>{terminal.factory_code !== factory ? `${tr("assignTo")} ${factory}` : (roles[terminal.code] ?? terminal.terminal_role) !== terminal.terminal_role ? tr("saveRole") : tr("assignmentSaved")}</button>
       </div>)}</div>
       {!terminalRows.length && <div className="empty-state">{tr("noTerminalsConfigured")}</div>}
     </section>

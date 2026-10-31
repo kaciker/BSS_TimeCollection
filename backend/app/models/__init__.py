@@ -8,6 +8,7 @@ from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
 from app.models.worker_runtime_metrics import WorkerRuntimeMetrics
 from app.models.perimeter import FactoryPerimeterSettings, FactoryPerimeterEvent, TerminalBadgeRead
+from app.models.factory import Factory, InstallationSettings
 
 __all__ = [
     "Action",
@@ -18,4 +19,6 @@ __all__ = [
     "TimeEvent",
     "TransmissionAttempt",
     "WorkerRuntimeMetrics",
+    "Factory",
+    "InstallationSettings",
 ]

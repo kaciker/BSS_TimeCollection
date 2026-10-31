@@ -9,6 +9,7 @@ import app.models  # noqa: F401 - register mapped tables
 from app.db.base import Base
 from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
 from app.models.person_badge_assignment import PersonBadgeAssignment
+from app.models.factory import Factory
 from app.services.external_perimeter_sync import ensure_virtual_terminal, mirror_external_event
 
 
@@ -17,6 +18,8 @@ def db():
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     Base.metadata.create_all(engine)
     with Session(engine) as session:
+        session.add(Factory(code="ARGANDA", name="Arganda"))
+        session.commit()
         yield session
     engine.dispose()
 

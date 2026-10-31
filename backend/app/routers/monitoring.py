@@ -114,7 +114,7 @@ def cards(
         TimeEvent.terminal_code.label("clock"), TimeEvent.state_effect.label("effect"),
         TimeEvent.event_datetime.label("at"), TimeEvent.created_at.label("created"),
         literal("CELL").label("kind"), literal(0).label("final_movement"),
-        func.coalesce(Terminal.factory_code, "DEFAULT").label("factory"),
+        Terminal.factory_code.label("factory"),
     ).outerjoin(Terminal, Terminal.id == TimeEvent.terminal_id).where(TimeEvent.state_effect.in_(["ENTER", "EXIT"]))
     perimeter = select(
         FactoryPerimeterEvent.id.label("id"), FactoryPerimeterEvent.reporter_id.label("badge"),

@@ -16,7 +16,7 @@ def test_hidden_action_is_available_to_perimeter_but_not_worker(monitor):
     assert result.json()["show_on_terminal"] is False
     actions = client.get("/api/v1/admin/actions").json()
     assert next(a for a in actions if a["code"] == "AUTO_GATE_EXIT")["show_on_terminal"] is False
-    assert client.put("/api/v1/admin/perimeter/DEFAULT", json={
+    assert client.put("/api/v1/admin/perimeter/ARGANDA", json={
         "enabled": True, "badge_source": "OPEN", "dedup_enabled": True,
         "dedup_seconds": 5, "auto_exit_action_code": "AUTO_GATE_EXIT",
     }).status_code == 200
@@ -55,9 +55,9 @@ def test_hidden_assigned_exit_is_internal_only_and_cascade_works(monitor):
     assert client.put('/api/v1/admin/actions/AUTO_GATE', json={**hidden,'show_on_terminal':False}).status_code == 200
     cell = db.scalar(select(Terminal).where(Terminal.code=='CLOCK-A'))
     cell.actions.append(db.scalar(select(Action).where(Action.code=='AUTO_GATE')))
-    gate = Terminal(code='GATE',name='Gate',external_device_id='GATE',terminal_role='PERIMETER_ENTER')
+    gate = Terminal(code='GATE',name='Gate',external_device_id='GATE',terminal_role='PERIMETER_ENTER',factory_code='ARGANDA')
     db.add(gate); db.commit()
-    assert client.put('/api/v1/admin/perimeter/DEFAULT',json={'enabled':True,'auto_exit_action_code':'AUTO_GATE','dedup_enabled':True,'dedup_seconds':5}).status_code==200
+    assert client.put('/api/v1/admin/perimeter/ARGANDA',json={'enabled':True,'auto_exit_action_code':'AUTO_GATE','dedup_enabled':True,'dedup_seconds':5}).status_code==200
     assert scan(db,'GATE','000-test',IdentificationMethod.RFID).flow=='FACTORY_ENTRY_RECORDED'
     assert scan(db,'CLOCK-A','000-test',IdentificationMethod.RFID).flow=='ENTRY_RECORDED'
     activate_created_terminal(client,terminal)
