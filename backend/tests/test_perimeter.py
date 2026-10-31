@@ -176,7 +176,7 @@ def test_factory_presence_isolated_and_external_source_fails_closed(monitor):
     db.commit()
     with pytest.raises(HTTPException) as error:
         capture(db, 'CLOCK-A', '0000', Method.RFID)
-    assert error.value.status_code == 503
+    assert error.value.status_code == 409
     db.rollback()
     assert len(db.scalars(select(TimeEvent)).all()) == 0
 

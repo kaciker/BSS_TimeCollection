@@ -1,8 +1,63 @@
 # Oracle Time Event Contract
 
-## Verified DEV2 transport and resource contract
+## Verified DEV2 create test - 31 October 2026
 
-Evidence is the authenticated, read-only Oracle HCM Time and Labor metadata request made on 2026-10-30:
+A controlled real create test succeeded in CORP against Oracle tenant DEV2. The POST was made once and was not retried. Authenticated GETs then reconciled the request number and generated request/event IDs. This verifies create permission and the exact controlled values below; the sample Person ID and structure values are not global defaults.
+
+| Contract item | Verified value |
+| --- | --- |
+| Environment / tenant | CORP / DEV2 |
+| Endpoint | `https://fa-eocc-dev2-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/11.13.18.05/timeEventRequests` |
+| Request number | `BSS-POC-20261031T112527Z-a9effbeeb3e24d8aa48299735bf314e9` |
+| `sourceId` | `HUT_TCD_SUPP1` |
+| `reporterIdType` | `PERSON` |
+| Controlled test Person ID | `23703` |
+| `supplierDeviceEvent` | `HUT_TCD_SUPP1_IN_2` accepted |
+| `PayrollTimeType` | `Workshop Entry ES` accepted |
+| `WORK_AREA` | `439` |
+| `MACHINE` | `4393` |
+| `CELL` | `54A` |
+| Matching request/event timestamp | `2026-10-31T11:25:27.600Z` accepted |
+| Oracle request ID / event ID | `300001304070001` / `300001304070002` |
+| Reconciliation | GET returned HTTP 200 and matching request number and IDs |
+
+Sanitized successful request:
+
+```json
+{
+  "requestNumber": "BSS-POC-20261031T112527Z-a9effbeeb3e24d8aa48299735bf314e9",
+  "sourceId": "HUT_TCD_SUPP1",
+  "requestTimestamp": "2026-10-31T11:25:27.600Z",
+  "timeEvents": [{
+    "eventDateTime": "2026-10-31T11:25:27.600Z",
+    "supplierDeviceEvent": "HUT_TCD_SUPP1_IN_2",
+    "reporterId": "23703",
+    "reporterIdType": "PERSON",
+    "timeEventAttributes": [
+      {"name": "PayrollTimeType", "value": "Workshop Entry ES"},
+      {"name": "WORK_AREA", "value": "439"},
+      {"name": "MACHINE", "value": "4393"},
+      {"name": "CELL", "value": "54A"}
+    ]
+  }]
+}
+```
+
+`deviceId` was not sent; Oracle GET returned `deviceId: null`.
+
+### Read-only reconciliation findings
+
+Authenticated GETs returned HTTP 200 for the request resource, `timeEvents` child, event item, and `timeEventAttributes` child. Request fields: `timeEventRequestId=300001304070001`, the request number above, `requestTimestamp=2026-10-31T11:25:27.600Z`, `sourceId=HUT_TCD_SUPP1`. Request links: `self`, `canonical`, child collection `timeEvents`.
+
+Event fields: `timeEventId=300001304070002`, `timeEventRequestId=300001304070001`, `eventDateTime=2026-10-31T11:25:27.600Z`, `deviceId=null`, `supplierDeviceEvent=HUT_TCD_SUPP1_IN_2`, `reporterId=23703`, `reporterIdType=PERSON`. Event links: `self`, `canonical`, `parent`, two LOV collections, child collection `timeEventAttributes`.
+
+The attributes child returned four rows, each with `facet=null`: `PayrollTimeType=Workshop Entry ES` (`timeEventAttributeId=300001304070003`), `WORK_AREA=439` (`...004`), `MACHINE=4393` (`...005`), `CELL=54A` (`...006`). Each row links to `self`, `canonical`, and parent event resources.
+
+No returned field indicated processing status, validation status, processing result, error/rejection reason, downstream Time and Labor state, or created/updated timestamps. No provided link identified a processing-outcome resource. The actual observed value is **NOT_EXPOSED**; HTTP 200 and resource reconciliation do not establish downstream functional processing.
+
+## Verified transport and authentication
+
+Read-only metadata uses:
 
 ```http
 GET /hcmRestApi/resources/11.13.18.05/timeEventRequests/describe
@@ -10,93 +65,39 @@ REST-Framework-Version: 4
 Accept: application/json
 ```
 
-The configured DEV2 tenant returned HTTP 200. This verifies authentication and metadata-read access only; it does not verify time-event create permission. Oracle resource metadata advertises `POST` on `/hcmRestApi/resources/11.13.18.05/timeEventRequests`, with `application/json` and Oracle ADF resource-item JSON media types. No time-event POST was made.
+Configured DEV2 Basic credentials returned HTTP 200 for metadata validation. Basic and Bearer credential modes are supported. JSON requests use `Accept: application/json`, `Content-Type: application/json`, and `REST-Framework-Version: 4`. Credentials stay outside source and logs.
 
-The API supports HTTP Basic and Bearer credential configuration. CORP has validated the configured Basic authentication against the read-only metadata endpoint. The required REST framework header is `REST-Framework-Version: 4`; requests also use JSON `Accept` and `Content-Type` headers.
+## Current serializer contract
 
-## Metadata fields
+One local BSS event is sent per request:
 
-| Object | Field | Metadata requirement | Limit / format |
-| --- | --- | --- | --- |
-| Request | `requestNumber` | Required, input-required | 80 characters; described as unique identifier |
-| Request | `requestTimestamp` | Required, input-required | Timestamp |
-| Request | `sourceId` | Required, input-required | 40 characters |
-| Request | `timeEvents` | Child collection, 1..many | BSS sends one event per request |
-| Event | `eventDateTime` | Required, input-required | ISO 8601 with timezone offset; 150 characters |
-| Event | `reporterId` | Required, input-required | 80 characters |
-| Event | `reporterIdType` | Required, input-required | 30 characters |
-| Event | `deviceId` | Optional in generic metadata | 40 characters |
-| Event | `supplierDeviceEvent` | Optional in generic metadata | 40 characters |
-| Event attribute | `name` | Required when attribute supplied | 240 characters |
-| Event attribute | `value` | Required when attribute supplied | 150 characters |
-| Response | `timeEventRequestId`, `timeEventId` | Generated identifiers | Metadata lists generated identifiers |
+- `requestNumber`: stable, locally unique BSS value, maximum 80 characters; unchanged between attempts.
+- `sourceId`: configured `HUT_TCD_SUPP1`.
+- `requestTimestamp` and `timeEvents[0].eventDateTime`: one UTC ISO timestamp with millisecond precision derived from captured `event_datetime`, serialized once for both fields. Delivery delay does not change it.
+- `deviceId`: omitted from Oracle serialization; retained locally.
+- `reporterId`: frozen resolved Person ID and `reporterIdType=PERSON`; raw RFID/card is never a fallback.
+- ENTER maps to `HUT_TCD_SUPP1_IN_2`; EXIT maps to `HUT_TCD_SUPP1_OUT_2`. Missing or direction-mismatched mapping blocks delivery.
+- Exactly four attributes, in order: `PayrollTimeType`, `WORK_AREA`, `MACHINE`, `CELL`, from the frozen action mapping and workshop/subworkshop/project-line snapshots. Generic/local `oracle_attributes` remain local.
+- All four values, Person ID, structure fields, and safe request number are required. Missing mappings retain the event locally for existing reconciliation/rejection handling; no defaults are invented.
 
-The metadata reporter-type LOV lists `BADGE`, `PERSON`, `PERSONID`, and `ASSIGNMENT`. This is the available type list, not a decision that each type is valid for this CORP tenant's functional flow.
+The Person ID and mapping values in the validation table are for that controlled DEV2 test and are not production defaults.
 
-## Explicit CORP mapping
+## Remaining Oracle decisions
 
-- Environment and base URL: Oracle DEV2, `https://fa-eocc-dev2-saasfaprod1.fa.ocs.oraclecloud.com`.
-- Resource path: `/hcmRestApi/resources/11.13.18.05/timeEventRequests`.
-- `sourceId`: `HUT_TCD_SUPP1`.
-- `reporterIdType`: `PERSON`; `reporterId` is the resolved Person ID frozen on the captured event. Badge/card identity remains local audit data and is never a fallback.
-- Workshop / Subworkshop / Project-Line snapshots map to `WORK_AREA` / `MACHINE` / `CELL` respectively. The BSS structure is authoritative; do not import the old HR-Path workbook.
-- ENTER uses `HUT_TCD_SUPP1_IN_2`; EXIT uses `HUT_TCD_SUPP1_OUT_2`. These are configured CORP values and still require HR-Path confirmation that the tenant recognizes them.
-- `PayrollTimeType` is an explicit per-action mapping. No value is inferred or populated automatically.
-- Captured `eventDateTime` is serialized in its recorded local timezone with offset. `requestTimestamp` is generated at transmission time in UTC.
+1. Full production supplier-event and workshop/subworkshop/project-line code catalogue.
+2. Approved `PayrollTimeType` mapping for every action.
+3. Live EXIT acceptance, not yet tested.
+4. Oracle duplicate/idempotency behavior and request-number uniqueness scope.
+5. Downstream functional processing semantics and how to establish application in Time and Labor.
 
-The first implementation used sample values (`HWM_CLOCK_TIME`, `BSS_START_WORK`, `BADGE`) and an example badge identifier. Those were illustrative placeholders and are not the CORP DEV2 mapping. The payload example below reflects the current configured mapping; the unresolved values remain subject to HR-Path approval.
-
-## Payload generated by the current adapter
-
-One local event is sent per request:
-
-```json
-{
-  "requestNumber": "BSS-J35-01H...",
-  "sourceId": "HUT_TCD_SUPP1",
-  "requestTimestamp": "2026-10-30T12:45:12.000+00:00",
-  "timeEvents": [
-    {
-      "deviceId": "J35",
-      "eventDateTime": "2026-10-30T14:45:10.321+02:00",
-      "supplierDeviceEvent": "HUT_TCD_SUPP1_IN_2",
-      "reporterId": "<resolved Person ID>",
-      "reporterIdType": "PERSON",
-      "timeEventAttributes": [
-        {"name": "PayrollTimeType", "value": "<confirmed action mapping>"},
-        {"name": "WORK_AREA", "value": "<workshop code>"},
-        {"name": "MACHINE", "value": "<subworkshop code>"},
-        {"name": "CELL", "value": "<project-line code>"}
-      ]
-    }
-  ]
-}
-```
-
-The angle-bracket values are placeholders, not Oracle codes. Events without a frozen Person ID, complete BSS structure, directional supplier event, or valid field lengths are retained locally for reconciliation and are not sent.
-
-## Unresolved HR-Path / Oracle decisions
-
-Metadata and the read-only GET do **not** answer the following. These are acceptance blockers before any controlled create request:
-
-1. Grant and verify `POST` create privilege in DEV2, and confirm the approved target tenant/base URL.
-2. Confirm `sourceId` `HUT_TCD_SUPP1` and accepted supplier event lookup codes/directions, including `HUT_TCD_SUPP1_IN_2` and `HUT_TCD_SUPP1_OUT_2`.
-3. Approve `PERSON` as the reporter type and confirm the authoritative Person ID source, lifecycle, and behavior when the badge maps to no active person or multiple persons.
-4. Confirm `WORK_AREA`, `MACHINE`, and `CELL` semantics, accepted code sets, and whether all three are required by this tenant.
-5. Provide an approved `PayrollTimeType` for every transmitted action and confirm whether other action attributes are needed.
-6. Decide whether `requestTimestamp` must equal `eventDateTime`; the adapter currently records transmission time separately from captured event time.
-7. Provide representative success, validation-error, and server-error response schemas, including which response field means the event was accepted for processing.
-8. Confirm duplicate behavior and idempotency for repeated `requestNumber` or another key, including retention/uniqueness scope. No idempotency guarantee is assumed.
-9. Confirm business validation and downstream processing semantics; a successful HTTP response is only a transport acknowledgement in current code.
-
-Do not invent mappings or infer answers from generic Oracle metadata. HR-Path must supply written decisions for the tenant.
+Do not generalize the controlled test values or infer unresolved decisions from generic metadata.
 
 ## Duplicate safety, retry and audit
 
-The adapter uses one locally unique `requestNumber` per event. Oracle metadata describes it as a unique identifier but does not specify enforcement scope or replay behavior. Until Oracle confirms idempotency, the adapter does not automatically replay ambiguous outcomes: HTTP 408/5xx, read/write timeouts, post-send protocol failures, and recovered stale `SENDING` events become `UNKNOWN` for manual reconciliation. Pre-connect failures and HTTP 425/429 are retryable; other nonretryable responses become `REJECTED`. Do not retry an `UNKNOWN` event until its Oracle-side result is reconciled.
+One local request number is preserved across attempts; no Oracle idempotency guarantee is assumed. HTTP 2xx becomes `SENT`; 400-class functional response becomes `REJECTED`; 425/429 and pre-connect failure follow retry policy. HTTP 408, 5xx, read/write timeouts, other post-send ambiguous protocol failures, and recovered stale `SENDING` events become `UNKNOWN` and are never blindly replayed.
 
-Each attempt records the request payload, response payload when received, HTTP status, duration, classification, and Oracle request/event IDs when present. Secrets are not included in these records. `ORACLE_ENABLED=false` prevents the worker from claiming or transmitting pending events.
+Each attempt records endpoint, HTTP status, duration, sanitized request payload, response or bounded raw body, classification, applicable error, and returned Oracle IDs. Secrets are excluded. `ORACLE_ENABLED=false` prevents worker claims and transmissions.
 
-## Local-only data and limits
+## Local-only fields and limits
 
-Internal UUID, RFID/KEYPAD identification method, local action code/label, delivery status, retry counters, and technical logs remain local. `deviceId`, `supplierDeviceEvent`, `reporterId`, request identifiers, and event attributes are checked against the metadata limits above before transmission. Historical database snapshots retain their existing capacity for compatibility.
+Internal UUID, RFID/KEYPAD method, local action code/label, raw badge/card identifier, terminal/device identity, delivery status, retry counters, technical logs, and generic/local `oracle_attributes` stay in BSS. Oracle metadata limits include request number 80, source ID 40, reporter ID 80, attribute name 240, and attribute value 150 characters. Historical snapshots retain their database capacity.

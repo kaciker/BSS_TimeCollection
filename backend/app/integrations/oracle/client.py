@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import timezone
 from time import monotonic
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -39,66 +39,72 @@ class OracleClient:
         if not event.request_number or len(event.request_number) > 80:
             event.oracle_mapping_error = "Oracle requestNumber exceeds the described 80-character limit"
             raise OracleMappingError(event.oracle_mapping_error)
-        # oracle_reporter_id used to fall back to the badge. Only the frozen
-        # resolved Person ID is valid for this POC.
+        if len(settings.oracle_source_id) > 40:
+            event.oracle_mapping_error = "Configured Oracle sourceId exceeds the described 40-character limit"
+            raise OracleMappingError(event.oracle_mapping_error)
+
+        # Only the frozen resolved Person ID is valid for this contract. Keep
+        # the terminal's raw identifier locally for audit; never send it here.
         reporter_id = event.person_id
         if not reporter_id or not reporter_id.strip():
             event.oracle_mapping_error = "Resolved Person ID is missing; event requires identity reconciliation"
             raise OracleMappingError(event.oracle_mapping_error)
-        if not all((event.workshop_code, event.subworkshop_code, event.project_line_code)):
+
+        if not all(value and value.strip() for value in (event.workshop_code, event.subworkshop_code, event.project_line_code)):
             event.oracle_mapping_error = "Workshop / Subworkshop / Project-Line snapshot is incomplete"
             raise OracleMappingError(event.oracle_mapping_error)
-        expected_supplier = event.oracle_supplier_event
-        if not expected_supplier:
-            event.oracle_mapping_error = "Oracle supplier device event is missing; action mapping requires reconciliation"
+        if not event.oracle_payroll_time_type or not event.oracle_payroll_time_type.strip():
+            event.oracle_mapping_error = "PayrollTimeType is missing; action mapping requires reconciliation"
             raise OracleMappingError(event.oracle_mapping_error)
-        expected_effect = {"HUT_TCD_SUPP1_IN_2": "ENTER", "HUT_TCD_SUPP1_OUT_2": "EXIT"}.get(expected_supplier)
-        if expected_effect and event.state_effect != expected_effect:
-            event.oracle_mapping_error = f"{expected_supplier} is incompatible with {event.state_effect} direction"
+
+        expected_supplier = {
+            "ENTER": "HUT_TCD_SUPP1_IN_2",
+            "EXIT": "HUT_TCD_SUPP1_OUT_2",
+        }.get(event.state_effect)
+        if expected_supplier is None or event.oracle_supplier_event != expected_supplier:
+            event.oracle_mapping_error = (
+                f"Oracle supplier device event is incompatible with {event.state_effect} direction"
+            )
             raise OracleMappingError(event.oracle_mapping_error)
-        local_time = event.event_datetime.astimezone(ZoneInfo(event.event_timezone))
-        oracle_event: dict[str, Any] = {
-            "deviceId": event.device_id,
-            "eventDateTime": local_time.isoformat(timespec="milliseconds"),
-            "supplierDeviceEvent": expected_supplier,
-            "reporterId": reporter_id,
-            "reporterIdType": settings.oracle_person_reporter_id_type,
-        }
-        attributes = {key: value for key, value in (event.oracle_attributes or {}).items()
-                      if key not in {"work_cell", "WORK_AREA", "MACHINE", "CELL", "PayrollTimeType"}}
-        if event.oracle_payroll_time_type:
-            attributes["PayrollTimeType"] = event.oracle_payroll_time_type
-        attributes.update({"WORK_AREA": event.workshop_code,
-                           "MACHINE": event.subworkshop_code,
-                           "CELL": event.project_line_code})
+
+        # event_datetime is the captured business timestamp. Interpret legacy
+        # naive values in the event's captured timezone, then serialize one UTC
+        # instant for both Oracle timestamp fields.
+        captured_time = event.event_datetime
+        if captured_time.tzinfo is None:
+            captured_time = captured_time.replace(tzinfo=ZoneInfo(event.event_timezone))
+        oracle_timestamp = captured_time.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+        attributes = [
+            {"name": "PayrollTimeType", "value": str(event.oracle_payroll_time_type)},
+            {"name": "WORK_AREA", "value": str(event.workshop_code)},
+            {"name": "MACHINE", "value": str(event.subworkshop_code)},
+            {"name": "CELL", "value": str(event.project_line_code)},
+        ]
         invalid_attributes = [
-            (name, len(str(value)))
-            for name, value in attributes.items()
-            if len(str(name)) > 240 or len(str(value)) > 150
+            (row["name"], len(row["value"]))
+            for row in attributes
+            if len(row["name"]) > 240 or len(row["value"]) > 150
         ]
         if invalid_attributes:
             name, value_length = invalid_attributes[0]
             event.oracle_mapping_error = (
-                f"Oracle time-event attribute exceeds the described schema limit "
-                f"(name length {len(str(name))}/240, value length {value_length}/150)"
+                "Oracle time-event attribute exceeds the described schema limit "
+                f"(name length {len(name)}/240, value length {value_length}/150)"
             )
             raise OracleMappingError(event.oracle_mapping_error)
-        oracle_event["timeEventAttributes"] = [
-            {"name": key, "value": str(value)} for key, value in attributes.items()
-        ]
-        request_number = event.request_number
-        if len(request_number) > 80:
-            event.oracle_mapping_error = f"Oracle requestNumber exceeds the described 80-character limit ({len(request_number)})"
-            raise OracleMappingError(event.oracle_mapping_error)
-        if len(settings.oracle_source_id) > 40:
-            event.oracle_mapping_error = "Configured Oracle sourceId exceeds the described 40-character limit"
-            raise OracleMappingError(event.oracle_mapping_error)
+
+        oracle_event = {
+            "eventDateTime": oracle_timestamp,
+            "supplierDeviceEvent": expected_supplier,
+            "reporterId": reporter_id,
+            "reporterIdType": "PERSON",
+            "timeEventAttributes": attributes,
+        }
         return {
-            "requestNumber": request_number,
+            "requestNumber": event.request_number,
             "sourceId": settings.oracle_source_id,
-            # Timestamp equality is pending HR-Path confirmation. Keep capture
-            # time in eventDateTime and actual transmission time in this field.
-            "requestTimestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+            "requestTimestamp": oracle_timestamp,
             "timeEvents": [oracle_event],
         }
 

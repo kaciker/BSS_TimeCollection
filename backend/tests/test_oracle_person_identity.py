@@ -28,6 +28,7 @@ def test_oracle_payload_uses_frozen_person_identity_when_available():
         event_datetime=datetime(2026, 10, 28, 10, 0, tzinfo=timezone.utc),
         event_timezone="Europe/Madrid",
         oracle_attributes={},
+        oracle_payroll_time_type="Workshop Entry ES",
         workshop_code="439",
         subworkshop_code="4393",
         project_line_code="54A",

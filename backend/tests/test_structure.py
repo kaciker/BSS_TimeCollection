@@ -71,6 +71,7 @@ def test_terminal_path_snapshot_and_oracle_attributes(structure_client):
     action=db.scalar(select(Action).where(Action.code=="IN"))
     event=_create_event(db,terminal,action,"TEST-BADGE",IdentificationMethod.KEYPAD)
     event.person_id = "104582"
+    event.oracle_payroll_time_type = "Test Entry"
     event.oracle_reporter_id = "104582"
     event.oracle_reporter_id_type = "PERSON"
     assert (event.workshop_code,event.subworkshop_code,event.project_line_code)==("W","S","P")
@@ -79,7 +80,7 @@ def test_terminal_path_snapshot_and_oracle_attributes(structure_client):
     assert event.oracle_supplier_event == "HUT_TCD_SUPP1_IN_2"
     assert event.oracle_attributes=={"Plant":"legacy","unknown":"preserved"}
     payload = OracleClient().build_payload(event)["timeEvents"][0]
-    assert {x["name"] for x in payload["timeEventAttributes"]} == {"Plant", "unknown", "WORK_AREA", "MACHINE", "CELL"}
+    assert [x["name"] for x in payload["timeEventAttributes"]] == ["PayrollTimeType", "WORK_AREA", "MACHINE", "CELL"]
     attributes = {x["name"]: x["value"] for x in payload["timeEventAttributes"]}
     assert (attributes["WORK_AREA"], attributes["MACHINE"], attributes["CELL"]) == ("W", "S", "P")
     db.get(ProjectLine,leaf["id"]).description="Changed";db.commit();db.refresh(event)
