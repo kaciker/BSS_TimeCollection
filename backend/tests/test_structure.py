@@ -11,6 +11,7 @@ from app.models.structure import Workshop, Subworkshop, ProjectLine
 from app.models.terminal import Terminal
 from app.models.time_event import TimeEvent
 from app.models.action import Action
+from app.models.factory import Factory, InstallationSettings
 from app.domain.enums import IdentificationMethod
 from app.services.event_service import _create_event
 from app.integrations.oracle.client import OracleClient
@@ -20,6 +21,8 @@ def structure_client():
     engine=create_engine("sqlite://",connect_args={"check_same_thread":False},poolclass=StaticPool)
     Base.metadata.create_all(engine)
     with Session(engine) as db:
+        db.add_all([Factory(code="ARGANDA", name="Arganda"), InstallationSettings(id=1, default_factory_code="ARGANDA")])
+        db.commit()
         app.dependency_overrides[get_db]=lambda:db
         with TestClient(app) as client: yield client,db
         app.dependency_overrides.clear()
@@ -57,7 +60,7 @@ def test_terminal_path_snapshot_and_oracle_attributes(structure_client):
     for code,effect in [("IN","ENTER"),("OUT","EXIT")]:
         response=client.post("/api/v1/admin/actions",json={"code":code,"label":code,"supplier_device_event":code,"state_effect":effect})
         assert response.status_code==201,response.text
-    body={"code":"TEST","name":"Test","external_device_id":"DEV-TEST","identification_mode":"BOTH","active":True,"action_codes":["IN","OUT"],"oracle_attributes":{"Plant":"legacy","unknown":"preserved","work_cell":"A"},"workshop_id":w["id"],"subworkshop_id":s["id"],"project_line_id":leaf["id"]}
+    body={"code":"TEST","factory_code":"ARGANDA","name":"Test","external_device_id":"DEV-TEST","identification_mode":"BOTH","active":True,"action_codes":["IN","OUT"],"oracle_attributes":{"Plant":"legacy","unknown":"preserved","work_cell":"A"},"workshop_id":w["id"],"subworkshop_id":s["id"],"project_line_id":leaf["id"]}
     assert client.post("/api/v1/admin/terminals",json={**body,"project_line_id":None}).status_code==422
     assert client.post("/api/v1/admin/terminals",json={**body,"workshop_id":other["id"]}).status_code==422
     created=client.post("/api/v1/admin/terminals",json=body)
@@ -96,7 +99,7 @@ def test_actions_may_share_directional_supplier_event_and_payroll_type(structure
 
 def test_legacy_terminal_and_event_remain_readable(structure_client):
     client,db=structure_client
-    t=Terminal(code="LEGACY",name="Legacy",external_device_id="LEGACY",oracle_attributes={"work_cell":"C","custom":"keep"},active=False)
+    t=Terminal(code="LEGACY",name="Legacy",external_device_id="LEGACY",factory_code="ARGANDA",oracle_attributes={"work_cell":"C","custom":"keep"},active=False)
     db.add(t);db.commit()
     row=next(x for x in client.get("/api/v1/admin/terminals").json() if x["code"]=="LEGACY")
     assert row["project_line_id"] is None

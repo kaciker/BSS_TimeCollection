@@ -22,7 +22,7 @@ def monitor():
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     Base.metadata.create_all(engine)
     with Session(engine) as seed:
-        for code in ("ARGANDA", "OTHER"):
+        for code in ("ARGANDA", "OTHER", "LEGACY"):
             seed.add(Factory(code=code, name=code, active=True))
         seed.add(InstallationSettings(id=1, default_factory_code="ARGANDA"))
         seed.commit()
@@ -124,10 +124,10 @@ def test_events_filters_and_pagination_preserve_leading_zeros(monitor):
 
 def test_perimeter_event_freezes_current_identity(monitor):
     _, db = monitor
-    add_current_identity(db, reader_id="0582609699", person_id="104582", credential_id="CARD-A")
+    assignment = add_current_identity(db, reader_id="0582609699", person_id="104582", credential_id="CARD-A")
     event = FactoryPerimeterEvent(
         id="perimeter-identity",
-        factory_code="ARGANDA",
+        factory_code=assignment.factory_code,
         reporter_id="0582609699",
         terminal_id=999,
         direction="ENTER",

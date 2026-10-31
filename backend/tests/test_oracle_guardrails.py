@@ -16,7 +16,7 @@ from app.services.event_service import _oracle_request_number
 
 def test_oracle_field_limits_are_enforced_before_capture():
     with pytest.raises(ValidationError):
-        TerminalCreate(name="Clock", external_device_id="D" * 41)
+        TerminalCreate(name="Clock", factory_code="ARGANDA", external_device_id="D" * 41)
 
     with pytest.raises(ValidationError):
         ActionCreate(
@@ -29,7 +29,7 @@ def test_oracle_field_limits_are_enforced_before_capture():
     with pytest.raises(ValidationError):
         ScanRequest(reporter_id="R" * 81, identification_method="KEYPAD")
 
-    assert TerminalCreate(name="Clock", external_device_id="D" * 40).external_device_id == "D" * 40
+    assert TerminalCreate(name="Clock", factory_code="ARGANDA", external_device_id="D" * 40).external_device_id == "D" * 40
     assert ActionCreate(
         code="START",
         label="Start",

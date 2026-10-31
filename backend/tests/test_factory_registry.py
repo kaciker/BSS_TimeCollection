@@ -8,7 +8,7 @@ def test_factory_registry_crud_and_persisted_default(monitor):
     client, db = monitor
     factories = client.get("/api/v1/admin/factories")
     assert factories.status_code == 200
-    assert {item["code"] for item in factories.json()} == {"ARGANDA", "OTHER"}
+    assert {item["code"] for item in factories.json()} == {"ARGANDA", "LEGACY", "OTHER"}
 
     created = client.post("/api/v1/admin/factories", json={
         "code": "PLANT-2", "name": "Plant Two", "location": "Site 2",

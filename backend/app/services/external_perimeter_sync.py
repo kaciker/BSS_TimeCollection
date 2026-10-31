@@ -334,8 +334,10 @@ def _virtual_device_id(factory_code: str) -> str:
 
 def ensure_virtual_terminal(db: Session, factory_code: str) -> Terminal:
     factory = db.scalar(select(Factory).where(Factory.code == factory_code))
-    if factory is None or not factory.active:
-        raise ValueError("External perimeter factory does not exist or is inactive")
+    if factory is None:
+        raise ValueError("External perimeter factory does not exist")
+    if not factory.active:
+        raise ValueError("External perimeter factory is inactive")
     code = _virtual_terminal_code(factory_code)
     terminal = db.scalar(select(Terminal).where(Terminal.code == code))
     if terminal is not None:
