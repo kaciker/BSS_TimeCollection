@@ -21,6 +21,8 @@ class EventSnapshot(EventRead):
     identification_method: str | None = None
     event_timezone: str
     oracle_attributes: dict[str, Any]
+    oracle_payroll_time_type: str | None = None
+    oracle_mapping_error: str | None = None
     created_at: datetime
     next_attempt_at: datetime | None
     last_attempt_at: datetime | None
@@ -79,3 +81,4 @@ class EventDetail(BaseModel):
     attempts: list[AttemptRead]
     oracle_enabled: bool
     oracle_payload_preview: dict[str, Any] | None
+    oracle_mapping_error: str | None = None

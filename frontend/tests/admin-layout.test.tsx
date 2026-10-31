@@ -1,0 +1,72 @@
+// @vitest-environment jsdom
+import { afterEach, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { AdminPage } from '../src/pages/AdminPage';
+import { MonitoringPanel } from '../src/components/MonitoringPanel';
+import { api } from '../src/api';
+vi.mock('../src/api', () => ({ api: { get: vi.fn() } }));
+afterEach(() => { cleanup(); vi.clearAllMocks(); localStorage.clear(); });
+const event = { id: 'event-1', event_kind: 'CELL', person_id: '104582', reporter_id: '000123', credential_id: 'CARD-A', terminal_code: 'CLOCK', event_datetime: '2026-10-29T10:00:00Z', action_label: 'Exit', state_effect: 'EXIT', delivery_status: 'PENDING', attempt_count: 0 };
+it('expands the identity snapshot beneath its event and closes it when filters change', async () => {
+ vi.mocked(api.get).mockImplementation(async url => url.includes('/clocks') ? [] : url.endsWith('/event-1') ? { event, attempts: [], oracle_enabled: false, oracle_payload_preview: null } : { total: 1, items: [event] } as never);
+ render(<MonitoringPanel terminals={[]} initialView="events" />);
+ fireEvent.click(await screen.findByRole('button', { name: 'Details' }));
+ await waitFor(() => expect(document.querySelector('.event-detail-row .event-inspector')).toBeTruthy());
+ expect(document.querySelector('.event-detail-row')?.previousElementSibling?.textContent).toContain('104582');
+ expect(screen.queryByRole('dialog')).toBeNull();
+ expect(screen.getAllByRole('button', { name: 'Close details' })[0].getAttribute('aria-expanded')).toBe('true');
+ fireEvent.click(screen.getByRole('button', { name: 'Apply filters' }));
+ await waitFor(() => expect(document.querySelector('.event-detail-row')).toBeNull());
+});
+it('ignores details arriving after the event is collapsed', async () => {
+ let resolveDetail!: (value: unknown) => void;
+ vi.mocked(api.get).mockImplementation(async url => url.includes('/clocks') ? [] : url.endsWith('/event-1') ? new Promise(resolve => { resolveDetail = resolve; }) : { total: 1, items: [event] } as never);
+ render(<MonitoringPanel terminals={[]} initialView="events" />);
+ fireEvent.click(await screen.findByRole('button', { name: 'Details' }));
+ fireEvent.click(screen.getAllByRole('button', { name: 'Close details' })[0]);
+ resolveDetail({ event, attempts: [], oracle_enabled: false, oracle_payload_preview: null });
+ await waitFor(() => expect(document.querySelector('.event-detail-row')).toBeNull());
+});
+it('keeps icon navigation accessible and remembers the collapsed menu after remount', async () => {
+ vi.mocked(api.get).mockResolvedValue([] as never);
+ const first = render(<AdminPage />);
+ fireEvent.click(screen.getByRole('button', { name: 'Collapse menu' }));
+ expect(localStorage.getItem('bss-admin-sidebar-collapsed')).toBe('true');
+ expect(screen.getByRole('link', { name: 'Event logs' }).getAttribute('title')).toBe('Event logs');
+ first.unmount();
+ render(<AdminPage />);
+ expect(screen.getByRole('button', { name: 'Expand menu' }).getAttribute('aria-expanded')).toBe('false');
+ fireEvent.click(screen.getByRole('button', { name: 'Expand menu' }));
+ expect(localStorage.getItem('bss-admin-sidebar-collapsed')).toBe('false');
+});
+it('hides columns, keeps employee ID locked and preserves hidden snapshot data after remount', async () => {
+ vi.mocked(api.get).mockImplementation(async url => url.includes('/clocks') ? [] : url.endsWith('/event-1') ? { event, attempts: [], oracle_enabled: false, oracle_payload_preview: null } : { total: 1, items: [event] } as never);
+ const first=render(<MonitoringPanel terminals={[]} initialView="events" />);
+ await screen.findByText('104582');
+ const toggle=(name:string)=>fireEvent.click(screen.getByRole('checkbox',{name:`Show column: ${name}`,hidden:true}));
+ expect((screen.getByRole('checkbox',{name:'Show column: Employee ID',hidden:true}) as HTMLInputElement).disabled).toBe(true);
+ toggle('Card'); toggle('Event time');
+ expect(screen.queryByRole('columnheader',{name:'Card'})).toBeNull();
+ expect(screen.queryByRole('columnheader',{name:'Event time'})).toBeNull();
+ expect(screen.getByRole('columnheader',{name:'Employee ID'})).toBeTruthy();
+ fireEvent.click(screen.getByRole('button',{name:'Details'}));
+ await waitFor(()=>expect(document.querySelector('.event-detail-row td')?.getAttribute('colspan')).toBe('8'));
+ expect(document.querySelector('.event-inspector')?.textContent).toContain('CARD-A');
+ first.unmount();
+ render(<MonitoringPanel terminals={[]} initialView="events" />);
+ await screen.findByText('104582');
+ expect(screen.queryByRole('columnheader',{name:'Card'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Show all',hidden:true}));
+ expect(screen.getByRole('columnheader',{name:'Card'})).toBeTruthy();
+});
+it('uses independent column preferences in Badge Status and ignores corrupt stored settings',async()=>{
+ localStorage.setItem('bss-admin-hidden-columns',JSON.stringify({events:['card'],cards:['employee','card']}));
+ vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:{total:1,items:[{reporter_id:'000123',person_id:'104582',credential_id:'CARD-A',worker_state:'OUTSIDE',event}]} as never);
+ const first=render(<MonitoringPanel terminals={[]} initialView="cards"/>);
+ await screen.findByText('104582');
+ expect(screen.getByRole('columnheader',{name:'Employee ID'})).toBeTruthy();
+ expect(screen.queryByRole('columnheader',{name:'Card'})).toBeNull();
+ first.unmount();localStorage.setItem('bss-admin-hidden-columns','broken JSON');
+ render(<MonitoringPanel terminals={[]} initialView="cards"/>);
+ await screen.findByText('104582');expect(screen.getByRole('columnheader',{name:'Card'})).toBeTruthy();
+});
