@@ -30,7 +30,7 @@ def test_perimeter_upgrade_downgrade_preserves_legacy_data(pg_schema):
         before = c.execute(text('SELECT row_to_json(t)::text FROM terminals t')).scalar_one()
     migrate(url)
     with engine.connect() as c:
-        assert c.execute(text('SELECT terminal_role,factory_code FROM terminals')).one() == ('CELL','DEFAULT')
+        assert c.execute(text('SELECT terminal_role,factory_code FROM terminals')).one() == ('CELL','ARGANDA')
         assert c.execute(text('SELECT count(*) FROM factory_perimeter_settings WHERE enabled')).scalar_one() == 0
     result = subprocess.run(['alembic','downgrade','0009_operational_structure'], env={**os.environ,'DATABASE_URL':url.render_as_string(hide_password=False)},capture_output=True,text=True)
     assert result.returncode == 0, result.stderr
@@ -49,7 +49,7 @@ def test_concurrent_gate_and_cell_scans_are_atomic(pg_schema):
             Terminal(code='CELL',name='Cell',external_device_id='CELL',actions=[enter,leave]),
             Terminal(code='GATE',name='Gate',external_device_id='GATE',terminal_role='PERIMETER_BOTH'),
             Terminal(code='EXIT',name='Exit',external_device_id='EXIT',terminal_role='PERIMETER_EXIT'),
-            FactoryPerimeterSettings(factory_code='DEFAULT',enabled=True,dedup_enabled=True,dedup_seconds=5,auto_exit_action_code=leave.code),
+            FactoryPerimeterSettings(factory_code='ARGANDA',enabled=True,dedup_enabled=True,dedup_seconds=5,auto_exit_action_code=leave.code),
         ])
         db.commit()
     def round(terminals):
@@ -73,7 +73,7 @@ def test_concurrent_gate_and_cell_scans_are_atomic(pg_schema):
     results = round(['EXIT'] * 4 + ['CELL'] * 4)
     assert results.count('FACTORY_EXIT_RECORDED') == 1
     with Session(engine) as db:
-        assert not is_inside(db,'DEFAULT','00000001')
+        assert not is_inside(db,'ARGANDA','00000001')
         events = db.scalars(select(TimeEvent).order_by(TimeEvent.event_datetime)).all()
         assert [e.state_effect for e in events] == ['ENTER','EXIT']
         assert all(e.delivery_status == 'PENDING' for e in events)

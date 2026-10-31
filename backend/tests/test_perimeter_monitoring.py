@@ -13,9 +13,9 @@ import pytest
 def test_combined_log_lists_and_inspects_local_perimeter_events(monitor):
     client,db=monitor
     configured_terminal(client)
-    gate=Terminal(code='GATE',name='Gate',external_device_id='GATE',terminal_role='PERIMETER_BOTH')
+    gate=Terminal(code='GATE',name='Gate',external_device_id='GATE',terminal_role='PERIMETER_BOTH',factory_code='ARGANDA')
     db.add(gate);db.commit()
-    client.put('/api/v1/admin/perimeter/DEFAULT',json={'enabled':True,'auto_exit_action_code':'STOP','dedup_enabled':False})
+    client.put('/api/v1/admin/perimeter/ARGANDA',json={'enabled':True,'auto_exit_action_code':'STOP','dedup_enabled':False})
     scan(db,'GATE','0001',IdentificationMethod.RFID)
     scan(db,'CLOCK-A','0001',IdentificationMethod.RFID)
     scan(db,'GATE','0001',IdentificationMethod.RFID)
@@ -57,10 +57,10 @@ def test_presence_must_be_in_the_same_factory_and_entry_rejected_without_events(
 def test_cards_include_perimeter_only_badges_with_local_details(monitor):
     from datetime import datetime, timezone
     client, db = monitor
-    gate = Terminal(code='GATE', name='Main Entry', external_device_id='GATE', terminal_role='PERIMETER_BOTH')
+    gate = Terminal(code='GATE', name='Main Entry', external_device_id='GATE', terminal_role='PERIMETER_BOTH', factory_code='ARGANDA')
     db.add(gate); db.flush()
     for badge, direction in [('0001', 'ENTER'), ('0002', 'EXIT')]:
-        db.add(FactoryPerimeterEvent(id='gate-'+badge, factory_code='DEFAULT', reporter_id=badge,
+        db.add(FactoryPerimeterEvent(id='gate-'+badge, factory_code='ARGANDA', reporter_id=badge,
             terminal_id=gate.id, direction=direction, event_datetime=datetime(2026,10,9,12,0,tzinfo=timezone.utc), correlation_id=badge))
     db.commit()
     response = client.get('/api/v1/admin/monitoring/cards?terminal_code=GATE&reporter_id=0001')
@@ -84,10 +84,10 @@ def test_cards_rank_across_gate_and_cell_before_clock_filter(monitor):
     from datetime import datetime, timezone
     from test_monitoring import add_event
     client, db = monitor
-    gate = Terminal(code='GATE', name='Gate', external_device_id='GATE', terminal_role='PERIMETER_BOTH')
+    gate = Terminal(code='GATE', name='Gate', external_device_id='GATE', terminal_role='PERIMETER_BOTH', factory_code='ARGANDA')
     db.add(gate); db.flush()
     for badge, minute, direction in [('0001', 0, 'ENTER'), ('0002', 2, 'EXIT')]:
-        db.add(FactoryPerimeterEvent(id='gate-'+badge, factory_code='DEFAULT', reporter_id=badge,
+        db.add(FactoryPerimeterEvent(id='gate-'+badge, factory_code='ARGANDA', reporter_id=badge,
             terminal_id=gate.id, direction=direction, event_datetime=datetime(2026,10,9,12,minute,tzinfo=timezone.utc), correlation_id=badge))
     db.commit()
     add_event(db, '0001', 'CELL', 'ENTER', 1)
@@ -103,10 +103,10 @@ def test_cards_cascade_shared_timestamp_finishes_at_perimeter(monitor):
     from datetime import datetime, timedelta, timezone
     from test_monitoring import add_event
     client, db = monitor
-    gate = Terminal(code='GATE', name='Gate', external_device_id='GATE', terminal_role='PERIMETER_BOTH')
+    gate = Terminal(code='GATE', name='Gate', external_device_id='GATE', terminal_role='PERIMETER_BOTH', factory_code='ARGANDA')
     db.add(gate); db.flush()
     at = datetime(2026,10,9,12,2,tzinfo=timezone.utc)
-    db.add(FactoryPerimeterEvent(id='gate-last', factory_code='DEFAULT', reporter_id='0001',
+    db.add(FactoryPerimeterEvent(id='gate-last', factory_code='ARGANDA', reporter_id='0001',
         terminal_id=gate.id, direction='EXIT', event_datetime=at, correlation_id='cascade'))
     db.commit()
     add_event(db, '0001', 'CELL', 'ENTER', 0)

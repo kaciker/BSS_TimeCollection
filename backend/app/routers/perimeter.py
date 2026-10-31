@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
 from app.models.terminal import Terminal
 from app.models.action import Action
+from app.models.factory import Factory
 from app.services.perimeter_service import settings_for, is_inside
 from app.services.external_perimeter import connector_status, test_external_connection, check_external_presence
 
@@ -39,20 +40,37 @@ def _external_factory(factory_code: str) -> None:
         raise HTTPException(404, "External perimeter is available only for ARGANDA")
 
 
+def _require_factory(db: Session, factory_code: str) -> Factory:
+    factory = db.scalar(select(Factory).where(Factory.code == factory_code))
+    if factory is None:
+        raise HTTPException(422, "Factory does not exist")
+    return factory
+
+
+def _require_active_factory(db: Session, factory_code: str) -> Factory:
+    factory = _require_factory(db, factory_code)
+    if not factory.active:
+        raise HTTPException(422, "Factory is inactive")
+    return factory
+
+
 @router.get("/{factory_code}/external/status")
-def external_status(factory_code: str):
+def external_status(factory_code: str, db: Session = Depends(get_db)):
+    _require_active_factory(db, factory_code)
     _external_factory(factory_code)
     return connector_status()
 
 
 @router.post("/{factory_code}/external/check")
-def external_check(factory_code: str):
+def external_check(factory_code: str, db: Session = Depends(get_db)):
+    _require_active_factory(db, factory_code)
     _external_factory(factory_code)
     return test_external_connection()
 
 
 @router.post("/{factory_code}/external/test-badge")
-def external_test_badge(factory_code: str, payload: ExternalBadgeTest):
+def external_test_badge(factory_code: str, payload: ExternalBadgeTest, db: Session = Depends(get_db)):
+    _require_active_factory(db, factory_code)
     _external_factory(factory_code)
     result = check_external_presence(payload.badge)
     return {
@@ -65,6 +83,7 @@ def external_test_badge(factory_code: str, payload: ExternalBadgeTest):
 
 @router.get("/{factory_code}")
 def get_config(factory_code: str, db: Session = Depends(get_db)):
+    _require_factory(db, factory_code)
     c = settings_for(db, factory_code)
     return {"factory_code": factory_code, "enabled": c.enabled, "badge_source": c.badge_source,
             "dedup_enabled": c.dedup_enabled, "dedup_seconds": c.dedup_seconds,
@@ -73,6 +92,7 @@ def get_config(factory_code: str, db: Session = Depends(get_db)):
 
 @router.put("/{factory_code}")
 def set_config(factory_code: str, payload: FactoryConfigUpdate, db: Session = Depends(get_db)):
+    _require_active_factory(db, factory_code)
     if payload.enabled and not payload.auto_exit_action_code:
         raise HTTPException(422, 'Configure the automatic cell EXIT action before enabling perimeter control')
     if payload.auto_exit_action_code:
@@ -96,13 +116,14 @@ def set_terminal_role(terminal_code: str, payload: TerminalRoleUpdate, db: Sessi
     terminal = db.scalar(select(Terminal).where(Terminal.code == terminal_code, Terminal.deleted_at.is_(None)).with_for_update())
     if terminal is None:
         raise HTTPException(404, "Terminal not found")
+    factory = _require_active_factory(db, payload.factory_code)
     if payload.role == "CELL" and terminal.terminal_role != "CELL":
         from app.services.configuration_service import validate_actions
         validate_actions(terminal.actions, terminal.code)
         leaf = terminal.project_line
         if leaf is None or not leaf.active or not leaf.subworkshop.active or not leaf.subworkshop.workshop.active:
             raise HTTPException(422, "Configure cell structure and actions in Terminals before selecting the Cell role")
-    terminal.factory_code = payload.factory_code
+    terminal.factory_code = factory.code
     terminal.terminal_role = payload.role
     db.commit()
     return {"code": terminal.code, "factory_code": terminal.factory_code, "role": terminal.terminal_role}
@@ -110,6 +131,7 @@ def set_terminal_role(terminal_code: str, payload: TerminalRoleUpdate, db: Sessi
 
 @router.get("/{factory_code}/presence")
 def presence(factory_code: str, limit: int = Query(200, ge=1, le=1000), db: Session = Depends(get_db)):
+    _require_factory(db, factory_code)
     rows = db.scalars(select(FactoryPerimeterEvent).where(
         FactoryPerimeterEvent.factory_code == factory_code,
     ).order_by(FactoryPerimeterEvent.event_datetime.desc()).limit(limit)).all()

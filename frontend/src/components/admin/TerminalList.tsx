@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../api";
 import type { AdminAction, AdminTerminal, TerminalProvisioning } from "../../types";
+import type { Factory, InstallationSettings } from "../../types";
 import { TerminalEditor } from "./TerminalEditor";
 
 export function TerminalList({ terminals, actions, onChanged }: {
@@ -14,6 +15,9 @@ export function TerminalList({ terminals, actions, onChanged }: {
   const [copied, setCopied] = useState(false);
   const [cloning, setCloning] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [factories, setFactories] = useState<Factory[]>([]);
+  const [defaultFactory, setDefaultFactory] = useState<string | null>(null);
+  useEffect(() => { void Promise.all([api.get<Factory[]>("/api/v1/admin/factories"), api.get<InstallationSettings>("/api/v1/admin/installation-settings")]).then(([rows, settings]) => { setFactories(rows.filter(row => row.active)); setDefaultFactory(settings.default_factory_code); }).catch(err => setProvisionError((err as Error).message)); }, []);
   const [pairingOpen, setPairingOpen] = useState(false);
   const [pairingCode, setPairingCode] = useState("");
   const [pairingTerminal, setPairingTerminal] = useState("");
@@ -115,7 +119,7 @@ export function TerminalList({ terminals, actions, onChanged }: {
       </tr>)}</tbody></table></div>
       {!filtered.length && <div className="empty-state"><h3>No terminals found</h3><p>{terminals.length ? "Try a different search or status filter." : "Create a terminal to configure a factory clock."}</p></div>}
     </section>
-    {editor && <TerminalEditor terminal={editor.terminal} actions={actions} onClose={() => setEditor(null)} onSaved={terminal => {
+    {editor && <TerminalEditor terminal={editor.terminal} actions={actions} factories={factories} initialFactory={defaultFactory} onClose={() => setEditor(null)} onSaved={terminal => {
       setEditor(null);
       if (terminal.activation_token) { setProvisioning({code: terminal.code, activation_token: terminal.activation_token}); setCopied(false); }
       onChanged(`Terminal ${terminal.code} ${editor.terminal ? "updated" : "created"} successfully.`);

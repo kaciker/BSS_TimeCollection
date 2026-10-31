@@ -45,7 +45,7 @@ export interface ScanResponse {
 }
 
 export interface AdminTerminal {
-  factory_code?: string;
+  factory_code: string;
   terminal_role?: string;
   code: string;
   name: string;
@@ -64,6 +64,9 @@ export interface AdminTerminal {
   activation_token?: string | null;
   project_line_id?: number | null; workshop_id?: number | null; subworkshop_id?: number | null; structure_path?: string | null;
 }
+
+export interface Factory { id: number; code: string; name: string; location?: string | null; country?: string | null; timezone: string; active: boolean; created_at: string; updated_at: string }
+export interface InstallationSettings { default_factory_code: string | null; default_factory: Factory | null; configuration_error: string | null }
 
 export interface TerminalProvisioning {
   code: string;

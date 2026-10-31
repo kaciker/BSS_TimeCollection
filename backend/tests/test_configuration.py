@@ -25,6 +25,7 @@ def configured_terminal(client, code="CLOCK-A"):
     project = client.post("/api/v1/admin/structure/project-lines", json={"subworkshop_id":subworkshop["id"],"code":"TEST-P","description":"Test Project"}).json()
     payload = {
         "code": code,
+        "factory_code": "ARGANDA",
         "name": "North gate",
         "external_device_id": code,
         "identification_mode": "BOTH",
@@ -201,6 +202,7 @@ def test_terminal_and_action_oracle_attributes_are_merged_for_new_events(monitor
     project = client.post("/api/v1/admin/structure/project-lines", json={"subworkshop_id":subworkshop["id"],"code":"CELL-P","description":"Cell Project"}).json()
     payload = {
         "code": "CELL-07",
+        "factory_code": "ARGANDA",
         "name": "Cell 07",
         "external_device_id": "CELL-07",
         "identification_mode": "KEYPAD",

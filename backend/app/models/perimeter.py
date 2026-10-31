@@ -8,7 +8,7 @@ from app.models.person_badge_assignment import PersonBadgeAssignment
 
 class FactoryPerimeterSettings(Base):
     __tablename__ = "factory_perimeter_settings"
-    factory_code: Mapped[str] = mapped_column(String(64), primary_key=True)
+    factory_code: Mapped[str] = mapped_column(String(64), ForeignKey("factories.code", ondelete="RESTRICT"), primary_key=True)
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     badge_source: Mapped[str] = mapped_column(String(16), default="OPEN")
     dedup_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -30,7 +30,7 @@ class FactoryPerimeterSettings(Base):
 class FactoryPerimeterEvent(Base):
     __tablename__ = "factory_perimeter_events"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    factory_code: Mapped[str] = mapped_column(String(64), index=True)
+    factory_code: Mapped[str] = mapped_column(String(64), ForeignKey("factories.code", ondelete="RESTRICT"), index=True)
     reporter_id: Mapped[str] = mapped_column(String(160), index=True)
     source_person_id: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     person_id: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
@@ -89,7 +89,7 @@ def snapshot_current_person_badge_identity(session, flush_context, instances) ->
 
 class TerminalBadgeRead(Base):
     __tablename__ = "terminal_badge_reads"
-    factory_code: Mapped[str] = mapped_column(String(64), primary_key=True)
+    factory_code: Mapped[str] = mapped_column(String(64), ForeignKey("factories.code", ondelete="RESTRICT"), primary_key=True)
     terminal_id: Mapped[int] = mapped_column(ForeignKey("terminals.id"), primary_key=True)
     reporter_id: Mapped[str] = mapped_column(String(160), primary_key=True)
     last_recorded_at: Mapped[object] = mapped_column(DateTime(timezone=True))

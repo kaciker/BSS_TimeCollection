@@ -13,12 +13,19 @@ from app.models.person_badge_assignment import PersonBadgeAssignment
 from app.models.perimeter import FactoryPerimeterEvent
 from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
+from app.models.factory import Factory, InstallationSettings
+from app.models.terminal import Terminal
 
 
 @pytest.fixture
 def monitor():
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     Base.metadata.create_all(engine)
+    with Session(engine) as seed:
+        for code in ("ARGANDA", "OTHER"):
+            seed.add(Factory(code=code, name=code, active=True))
+        seed.add(InstallationSettings(id=1, default_factory_code="ARGANDA"))
+        seed.commit()
     with Session(engine) as db:
         app.dependency_overrides[get_db] = lambda: db
         with TestClient(app) as client:
@@ -28,10 +35,15 @@ def monitor():
 
 
 def add_event(db, badge, clock, effect, minute):
+    terminal = db.scalar(select(Terminal).where(Terminal.code == clock))
+    if terminal is None:
+        terminal = Terminal(code=clock, name=f"Clock {clock}", external_device_id=f"DEVICE-{clock}", factory_code="ARGANDA")
+        db.add(terminal)
+        db.flush()
     timestamp = datetime(2026, 10, 9, 12, minute, tzinfo=timezone.utc)
     event = TimeEvent(
         id=f"{badge}-{clock}-{minute}", request_number=f"BSS-{badge}-{clock}-{minute}",
-        terminal_id=1, action_id=1, terminal_code=clock, device_id=f"DEVICE-{clock}",
+        terminal_id=terminal.id, action_id=1, terminal_code=clock, device_id=f"DEVICE-{clock}",
         action_code=effect, action_label=effect, supplier_device_event=f"BSS-{effect}",
         oracle_supplier_event="HUT_TCD_SUPP1_IN_2" if effect == "ENTER" else "HUT_TCD_SUPP1_OUT_2",
         state_effect=effect, reporter_id=badge, reporter_id_type="BADGE",
@@ -49,7 +61,7 @@ def add_event(db, badge, clock, effect, minute):
 def add_current_identity(db, reader_id="001", person_id="104582", credential_id="CARD-A"):
     timestamp = datetime(2026, 10, 9, 11, 0, tzinfo=timezone.utc)
     row = PersonBadgeAssignment(
-        factory_code="DEFAULT",
+        factory_code="ARGANDA",
         source_system="SQLSERVER_SECURITY_DB",
         source_person_id="PERSON-PK-1",
         person_id=person_id,
@@ -115,7 +127,7 @@ def test_perimeter_event_freezes_current_identity(monitor):
     add_current_identity(db, reader_id="0582609699", person_id="104582", credential_id="CARD-A")
     event = FactoryPerimeterEvent(
         id="perimeter-identity",
-        factory_code="DEFAULT",
+        factory_code="ARGANDA",
         reporter_id="0582609699",
         terminal_id=999,
         direction="ENTER",

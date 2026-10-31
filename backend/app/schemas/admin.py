@@ -9,6 +9,7 @@ from app.domain.enums import IdentificationMode, StateEffect
 class TerminalSettings(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     name: str = Field(min_length=1, max_length=160)
+    factory_code: str | None = Field(default=None, min_length=1, max_length=64)
     perimeter_only: bool | None = None
     external_device_id: str | None = Field(default=None, min_length=1, max_length=40)
     identification_mode: IdentificationMode = IdentificationMode.BOTH
@@ -33,13 +34,14 @@ class TerminalSettings(BaseModel):
 
 
 class TerminalCreate(TerminalSettings):
+    factory_code: str = Field(min_length=1, max_length=64)
     # Optional only for migration/test compatibility. Normal administration omits it
     # and the backend allocates an immutable application-managed code.
     code: str | None = Field(default=None, min_length=1, max_length=64)
 
 
 class TerminalRead(BaseModel):
-    factory_code: str = 'DEFAULT'
+    factory_code: str
     terminal_role: str = 'CELL'
     code: str
     name: str
@@ -60,6 +62,26 @@ class TerminalRead(BaseModel):
     exit_policy_mode: str
     effective_exit_policy_mode: str
     global_exit_policy_mode: str
+
+
+class FactoryInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    code: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
+    name: str = Field(min_length=1, max_length=160)
+    location: str | None = Field(default=None, max_length=160)
+    country: str | None = Field(default=None, max_length=80)
+    timezone: str = Field(default="UTC", min_length=1, max_length=64)
+    active: bool = True
+
+
+class FactoryUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    code: str | None = Field(default=None, min_length=1, max_length=64)
+    name: str | None = Field(default=None, min_length=1, max_length=160)
+    location: str | None = Field(default=None, max_length=160)
+    country: str | None = Field(default=None, max_length=80)
+    timezone: str | None = Field(default=None, min_length=1, max_length=64)
+    active: bool | None = None
 
 
 class TerminalActionsUpdate(BaseModel):

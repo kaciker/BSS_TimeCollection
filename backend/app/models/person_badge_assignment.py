@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Index, Integer, String
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -12,7 +12,7 @@ class PersonBadgeAssignment(Base):
     __tablename__ = "person_badge_assignments"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    factory_code: Mapped[str] = mapped_column(String(64), index=True)
+    factory_code: Mapped[str] = mapped_column(String(64), ForeignKey("factories.code", ondelete="RESTRICT"), index=True)
     source_system: Mapped[str] = mapped_column(String(64), default="SQLSERVER_SECURITY_DB")
 
     source_person_id: Mapped[str] = mapped_column(String(50), index=True)
