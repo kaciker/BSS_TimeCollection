@@ -146,6 +146,8 @@ def test_perimeter_event_freezes_current_identity(monitor):
 def test_detail_preserves_actual_attempt_payload_and_does_not_write(monitor):
     client, db = monitor
     event = add_event(db, "001", "A", "ENTER", 0)
+    event.oracle_payroll_time_type = "Test Entry"
+    db.commit()
     actual = {"sourceId": "HISTORICAL-SOURCE", "requestTimestamp": "2026-10-09T12:04:00Z", "timeEvents": [{"reporterId": "001"}]}
     attempt = TransmissionAttempt(
         event_id=event.id, attempt_number=1, started_at=event.event_datetime,
@@ -159,7 +161,7 @@ def test_detail_preserves_actual_attempt_payload_and_does_not_write(monitor):
     assert result["attempts"][0]["request_payload"] == actual
     assert result["attempts"][0]["response_payload"]["timeEventRequestId"] == "42"
     assert "requestTimestamp" not in result["oracle_payload_preview"]
-    assert result["oracle_payload_preview"]["timeEvents"][0]["eventDateTime"].endswith("+02:00")
+    assert result["oracle_payload_preview"]["timeEvents"][0]["eventDateTime"] == "2026-10-09T10:00:00.000Z"
     assert result["event"]["oracle_attributes"] == {"reason": "meal"}
     assert db.scalar(select(func.count()).select_from(TimeEvent)) == 1
     assert db.scalar(select(func.count()).select_from(TransmissionAttempt)) == 1
