@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy import create_engine, func, select
@@ -79,8 +79,22 @@ def test_keypad_person_uses_current_unique_physical_credential_and_is_idempotent
     row = session.scalar(select(FactoryPresenceProjection))
     assert (row.person_id, row.credential_id, row.state, row.resolution_code) == ("3627", "CARD-3627", "INSIDE", "CANONICAL_PERSON_CURRENT_CREDENTIAL")
     assert row.reader_id is None
+    verified_at = row.verified_at
+    by_reader, cards, _movement = source
+    equivalent_utc = {"CARD-3627": {"state": "INSIDE", "at": datetime(2026, 11, 2, 7, tzinfo=timezone.utc)}}
+    source = (by_reader, cards, lambda credential: equivalent_utc[credential])
     assert reconcile_factory_presence(session, session.get(FactoryPerimeterSettings, "ARGANDA"), source=source) == 0
+    assert row.verified_at == verified_at
     assert session.scalar(select(func.count()).select_from(FactoryPerimeterEvent)) == before
+
+
+def test_projection_datetime_comparison_uses_utc_instant():
+    from app.services.factory_presence import _same_projection_value
+
+    assert _same_projection_value(
+        datetime(2026, 11, 2, 9, tzinfo=timezone(timedelta(hours=2))),
+        datetime(2026, 11, 2, 7, tzinfo=timezone.utc),
+    )
 
 
 def test_rfid_resolves_person_then_reads_movement_by_physical_credential(session):

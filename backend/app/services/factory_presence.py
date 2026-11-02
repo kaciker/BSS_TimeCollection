@@ -128,6 +128,16 @@ def _same_value(left, right) -> bool:
     return left == right
 
 
+def _same_projection_value(left, right) -> bool:
+    if isinstance(left, datetime) and isinstance(right, datetime):
+        if left.tzinfo is None:
+            left = left.replace(tzinfo=timezone.utc)
+        if right.tzinfo is None:
+            right = right.replace(tzinfo=timezone.utc)
+        return left.astimezone(timezone.utc) == right.astimezone(timezone.utc)
+    return left == right
+
+
 def _movement_from_row(row) -> dict | None:
     try:
         transaction_index = 0 if len(row) == 3 else 1
@@ -854,8 +864,12 @@ def reconcile_factory_presence(
                         row.tracking_key = tracking_key
                         existing.pop(key, None)
                         existing[tracking_key] = row
-                if row is not None and all(_same_value(getattr(row, name), value) for name, value in row_values.items()):
+                if row is not None and all(_same_projection_value(getattr(row, name), value) for name, value in row_values.items()):
                     continue
+                differs = row is None or any(
+                    not _same_projection_value(getattr(row, name), value)
+                    for name, value in row_values.items()
+                )
                 if tracking_key.startswith("READER:"):
                     row_values["reader_id"] = tracking_key.removeprefix("READER:")
                 if row is None:
@@ -865,8 +879,9 @@ def reconcile_factory_presence(
                 else:
                     for name, value in row_values.items():
                         setattr(row, name, value)
-                row.verified_at = verified_at
-                changed += 1
+                if differs:
+                    row.verified_at = verified_at
+                    changed += 1
         db.commit()
         return changed
     except Exception as exc:
