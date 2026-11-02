@@ -153,6 +153,33 @@ def test_snapshot_resolver_batches_latest_movements_by_physical_card_no():
     assert "WHERE t.card_no = ?" not in sql
 
 
+def test_snapshot_resolver_batches_historical_card_movements():
+    from app.services.factory_presence import _LATEST_SELECTED_CARD_MOVEMENTS_SQL, _source_resolver_from_snapshot
+
+    class Cursor:
+        def __init__(self):
+            self.sql = None
+            self.params = ()
+        def execute(self, sql, *params):
+            self.sql, self.params = sql, params
+            return self
+        def fetchall(self):
+            if "WHERE pc.card_no IN" in (self.sql or ""):
+                return []
+            if "t.card_no IN" in (self.sql or ""):
+                return [("OLD-CARD", "txn-old", datetime.now(timezone.utc), 1)]
+            return []
+
+    cursor = Cursor()
+    _by_reader, _cards, movement, orphan = _source_resolver_from_snapshot(
+        cursor, [], historical_credentials={"OLD-CARD"}
+    )
+    assert movement("OLD-CARD")["state"] == "OUTSIDE"
+    assert orphan("OLD-CARD") is False
+    assert cursor.sql is None or "TOP (1)" not in cursor.sql
+    assert "WITH latest AS" in _LATEST_SELECTED_CARD_MOVEMENTS_SQL
+
+
 def test_presence_snapshot_respects_attribute_first_sql_column_order():
     from app.services.factory_presence import _PRESENCE_CURRENT_IDENTITIES_SQL
 

@@ -68,6 +68,17 @@ WITH current_cards AS (
 SELECT card_no, transaction_id, event_time, acc_zone_code
 FROM latest WHERE position = 1
 """
+_LATEST_SELECTED_CARD_MOVEMENTS_SQL = """
+WITH latest AS (
+    SELECT t.card_no, CAST(t.id AS nvarchar(128)) AS transaction_id,
+           t.event_time, t.acc_zone_code,
+           ROW_NUMBER() OVER (PARTITION BY t.card_no ORDER BY t.event_time DESC, t.id DESC) AS position
+    FROM dbo.acc_transaction AS t
+    WHERE t.card_no IN ({placeholders}) AND t.acc_zone_code IN (1, 2)
+)
+SELECT card_no, transaction_id, event_time, acc_zone_code
+FROM latest WHERE position = 1
+"""
 _NORMALIZED_READER_SQL = """
 SELECT DISTINCT pae.attr_value4, p.id, p.pin, pc.id, pc.card_no, pc.person_pin
 FROM dbo.pers_attribute_ext AS pae
@@ -115,6 +126,31 @@ def _same_value(left, right) -> bool:
             right = right.replace(tzinfo=timezone.utc)
         return left.astimezone(timezone.utc) == right.astimezone(timezone.utc)
     return left == right
+
+
+def _movement_from_row(row) -> dict | None:
+    try:
+        transaction_index = 0 if len(row) == 3 else 1
+        when_index = transaction_index + 1
+        zone_index = transaction_index + 2
+        zone = int(row[zone_index])
+        when = row[when_index]
+        if zone not in (1, 2) or not isinstance(when, datetime):
+            return None
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=ZoneInfo(settings.event_timezone))
+        age = datetime.now(timezone.utc) - when.astimezone(timezone.utc)
+        if age < -timedelta(seconds=60):
+            state = "UNKNOWN"
+        elif zone == 1:
+            state = "OUTSIDE"
+        elif age > timedelta(hours=settings.perimeter_external_max_age_hours):
+            state = "UNKNOWN"
+        else:
+            state = "INSIDE"
+        return {"state": state, "at": when, "transaction_id": _safe_text(row[transaction_index])}
+    except (TypeError, ValueError, IndexError):
+        return None
 
 
 def _candidate_key(person_id: str | None, reader_id: str | None, credential_id: str | None) -> str | None:
@@ -229,6 +265,7 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], his
     # may prove card presence after their person row is gone, but an N+1 ODBC
     # lookup across old card history makes reconciliation prohibitively slow.
     old_credentials = sorted(set(historical_credentials) - set(current_by_credential))
+    snapshot_credentials = set(historical_credentials) | set(current_by_credential)
     for offset in range(0, len(old_credentials), 400):
         chunk = old_credentials[offset:offset + 400]
         if not chunk:
@@ -250,6 +287,27 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], his
             for credential in chunk:
                 orphan_cache[credential] = error
 
+    # Batch movements for historic credentials too. A cold bootstrap may have
+    # hundreds of old card numbers; one SECURITY_DB round trip per credential
+    # would make reconciliation appear stalled for hours.
+    for offset in range(0, len(old_credentials), 400):
+        chunk = old_credentials[offset:offset + 400]
+        if not chunk:
+            continue
+        try:
+            query = _LATEST_SELECTED_CARD_MOVEMENTS_SQL.format(
+                placeholders=",".join("?" for _ in chunk)
+            )
+            rows = cursor.execute(query, *chunk).fetchall()
+            for row in rows:
+                credential = _safe_text(row[0])
+                if credential:
+                    movement_cache[credential] = _movement_from_row(row[1:])
+        except Exception as exc:
+            error = PresenceSourceError(_safe_odbc_category(exc, phase="query"))
+            for credential in chunk:
+                movement_cache[credential] = error
+
     # Resolve the latest movement for all current credentials in one indexed
     # SECURITY_DB query. Per-card round trips made a full reconciliation scale
     # with the number of employees and could take several minutes.
@@ -259,25 +317,7 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], his
             credential = _safe_text(row[0])
             if not credential:
                 continue
-            zone = int(row[3])
-            when = row[2]
-            if zone not in (1, 2) or not isinstance(when, datetime):
-                movement_cache[credential] = None
-                continue
-            if when.tzinfo is None:
-                when = when.replace(tzinfo=ZoneInfo(settings.event_timezone))
-            age = datetime.now(timezone.utc) - when.astimezone(timezone.utc)
-            if age < -timedelta(seconds=60):
-                state = "UNKNOWN"
-            elif zone == 1:
-                state = "OUTSIDE"
-            elif age > timedelta(hours=settings.perimeter_external_max_age_hours):
-                state = "UNKNOWN"
-            else:
-                state = "INSIDE"
-            movement_cache[credential] = {
-                "state": state, "at": when, "transaction_id": _safe_text(row[1]),
-            }
+            movement_cache[credential] = _movement_from_row(row)
     except Exception as exc:
         error = PresenceSourceError(_safe_odbc_category(exc, phase="query"))
         for identity in identities:
@@ -331,10 +371,15 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], his
 
     def latest_movement(credential_id: str):
         if credential_id not in movement_cache:
-            try:
-                movement_cache[credential_id] = _movement(cursor, credential_id)
-            except PresenceSourceError as exc:
-                movement_cache[credential_id] = exc
+            if credential_id in snapshot_credentials:
+                # The batch query covered this credential and returned no
+                # applicable movement; do not fall back to a per-card query.
+                movement_cache[credential_id] = None
+            else:
+                try:
+                    movement_cache[credential_id] = _movement(cursor, credential_id)
+                except PresenceSourceError as exc:
+                    movement_cache[credential_id] = exc
         result = movement_cache[credential_id]
         if isinstance(result, Exception):
             raise result
