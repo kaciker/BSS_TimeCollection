@@ -866,6 +866,10 @@ def reconcile_factory_presence(
                         existing[tracking_key] = row
                 if row is not None and all(_same_projection_value(getattr(row, name), value) for name, value in row_values.items()):
                     continue
+                differs = row is None or any(
+                    not _same_projection_value(getattr(row, name), value)
+                    for name, value in row_values.items()
+                )
                 if tracking_key.startswith("READER:"):
                     row_values["reader_id"] = tracking_key.removeprefix("READER:")
                 if row is None:
@@ -875,8 +879,9 @@ def reconcile_factory_presence(
                 else:
                     for name, value in row_values.items():
                         setattr(row, name, value)
-                row.verified_at = verified_at
-                changed += 1
+                if differs:
+                    row.verified_at = verified_at
+                    changed += 1
         db.commit()
         return changed
     except Exception as exc:
