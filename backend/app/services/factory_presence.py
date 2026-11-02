@@ -367,6 +367,23 @@ def _identity_from_person_row(row) -> PersonIdentity | None:
     return PersonIdentity(source_id, pin, card_id, card_no, None)
 
 
+def _reader_ids_from_attribute(value: str | None) -> set[str]:
+    """Return only the deterministic exact and byte-swapped Reader aliases."""
+    representation = _safe_text(value)
+    if not representation or not representation.isascii() or not representation.isdecimal():
+        return set()
+    number = int(representation)
+    if number >= 2 ** 32:
+        return set()
+    readers = {representation, _attr_value_to_reader_number(representation)}
+    # SQL Server numeric storage can strip leading zeros from a canonical
+    # 10-digit Reader ID; restoring that width is deterministic within the
+    # established reader contract and is still checked for identity collisions.
+    if len(representation) <= 10:
+        readers.add(f"{number:010d}")
+    return readers
+
+
 def _movement(cursor, credential_id: str) -> dict | None:
     try:
         row = cursor.execute(_LATEST_CARD_MOVEMENT_SQL, credential_id).fetchone()
@@ -711,16 +728,19 @@ def reconcile_factory_presence(
                 if not all((source_id, person_pin, source_card_id, credential, card_pin)) or person_pin != card_pin:
                     continue
                 identity = PersonIdentity(source_id, person_pin, source_card_id, credential)
-                reader_id = None
-                if representation:
-                    try:
-                        reader_id = _attr_value_to_reader_number(representation)
-                    except ValueError:
-                        pass
-                identities.append(PersonIdentity(
-                    identity.source_person_id, identity.person_id,
-                    identity.source_card_id, identity.credential_id, reader_id,
-                ))
+                # SECURITY_DB contains both exact canonical Reader IDs and
+                # byte-swapped numeric values, sometimes without leading
+                # zeroes after numeric conversion.
+                reader_ids = _reader_ids_from_attribute(representation)
+                if reader_ids:
+                    identities.extend(PersonIdentity(
+                        identity.source_person_id, identity.person_id,
+                        identity.source_card_id, identity.credential_id, reader_id,
+                    ) for reader_id in reader_ids)
+                else:
+                    # A malformed optional badge attribute does not discard a
+                    # valid current person/card relationship.
+                    identities.append(identity)
             source = _source_resolver_from_snapshot(cursor, identities, candidates_credentials := {
                 credential for item in candidates.values() for credential in item.credential_ids
             })
