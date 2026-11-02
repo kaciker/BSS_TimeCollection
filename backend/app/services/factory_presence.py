@@ -17,7 +17,8 @@ from app.models.time_event import TimeEvent
 from app.services.external_perimeter import ExternalPerimeterError, _connection_string, _credentials, _safe_odbc_category
 from app.services.person_identity import (
     PersonIdentity, PersonIdentityError, _CURRENT_SQL, _RESOLVE_SQL,
-    _normalize_row, fetch_current_person_badges, resolve_person_identity,
+    _attr_value_to_reader_number, _normalize_row, fetch_current_person_badges,
+    resolve_person_identity,
 )
 from app.services.external_perimeter import reader_number_to_attr_value
 
