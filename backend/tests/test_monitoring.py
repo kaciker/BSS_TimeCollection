@@ -80,9 +80,13 @@ def add_current_identity(db, reader_id="001", person_id="104582", credential_id=
 
 def test_card_state_is_global_before_clock_filter(monitor):
     client, db = monitor
-    add_event(db, "001", "A", "ENTER", 0)
-    add_event(db, "002", "A", "ENTER", 1)
-    add_event(db, "001", "B", "EXIT", 2)
+    for badge, clock, effect, minute in (("001", "A", "ENTER", 0), ("002", "A", "ENTER", 1), ("001", "B", "EXIT", 2)):
+        event = add_event(db, badge, clock, effect, minute)
+        if badge == "001":
+            event.person_id = None
+            event.oracle_reporter_id = None
+            event.oracle_reporter_id_type = None
+            db.commit()
     add_current_identity(db)
     result = client.get("/api/v1/admin/monitoring/cards?terminal_code=A&worker_state=INSIDE").json()
     assert result["total"] == 1

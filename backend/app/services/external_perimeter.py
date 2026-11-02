@@ -22,6 +22,15 @@ WHERE pae.attr_value4 = ? AND t.acc_zone_code IN (1, 2)
 ORDER BY t.event_time DESC, t.log_id DESC
 """
 
+PERSON_SQL = """
+SELECT TOP (1) t.event_time, t.acc_zone_code
+FROM dbo.pers_person AS p
+JOIN dbo.pers_card AS pc ON pc.person_id = p.id
+JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no
+WHERE p.id = ? AND t.acc_zone_code IN (1, 2)
+ORDER BY t.event_time DESC, t.log_id DESC
+"""
+
 logger = logging.getLogger(__name__)
 PROVIDER = "SQLSERVER_SECURITY_DB"
 DRIVER = "ODBC Driver 18 for SQL Server"
@@ -185,6 +194,41 @@ def check_external_presence(badge: str, *, now: datetime | None = None, query=No
             row = query(converted)
         except Exception:
             return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": "QUERY_FAILED"}
+    return _presence_from_row(row, now=now)
+
+
+def check_external_person_presence(source_person_id: str, *, now: datetime | None = None, query=None) -> dict:
+    """Resolve physical movement via a person's SECURITY_DB card relation."""
+    person_id = str(source_person_id).strip()
+    if not person_id:
+        return {"status": "UNKNOWN", "event_time": None, "zone_code": None, "error_category": "INVALID_RESPONSE"}
+    if query is None:
+        connection = None
+        try:
+            config = _credentials()
+            import pyodbc
+            connection = pyodbc.connect(_connection_string(config), timeout=3, autocommit=True)
+            try:
+                row = connection.cursor().execute(PERSON_SQL, person_id).fetchone()
+            finally:
+                connection.close()
+        except ExternalPerimeterError as exc:
+            return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": exc.category}
+        except ImportError:
+            return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": "ODBC_DRIVER_UNAVAILABLE"}
+        except Exception as exc:
+            category = _safe_odbc_category(exc, phase="connect" if connection is None else "query")
+            logger.warning("Arganda external person presence lookup failed (%s)", category)
+            return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": category}
+    else:
+        try:
+            row = query(person_id)
+        except Exception:
+            return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": "QUERY_FAILED"}
+    return _presence_from_row(row, now=now)
+
+
+def _presence_from_row(row, *, now: datetime | None = None) -> dict:
     if row is None:
         return {"status": "UNKNOWN", "event_time": None, "zone_code": None, "error_category": None}
     try:

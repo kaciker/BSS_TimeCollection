@@ -42,11 +42,30 @@ def is_inside(db: Session, factory_code: str, badge: str) -> bool:
     return last is not None and last.direction == "ENTER"
 
 
-def check_badge_source(config: FactoryPerimeterSettings, badge: str) -> None:
-    if config.badge_source == "EXTERNAL":
-        from app.services.external_perimeter import check_external_presence
+def is_person_inside(db: Session, factory_code: str, identity) -> bool:
+    if identity is None:
+        return False
+    last = db.scalar(
+        select(FactoryPerimeterEvent)
+        .where(
+            FactoryPerimeterEvent.factory_code == factory_code,
+            FactoryPerimeterEvent.person_id == identity.person_id,
+        )
+        .order_by(FactoryPerimeterEvent.event_datetime.desc(), FactoryPerimeterEvent.id.desc())
+        .limit(1)
+    )
+    return last is not None and last.direction == "ENTER"
 
-        result = check_external_presence(badge)
+
+def check_badge_source(config: FactoryPerimeterSettings, badge: str, *, identity=None) -> None:
+    if config.badge_source == "EXTERNAL":
+        from app.services.external_perimeter import check_external_person_presence, check_external_presence
+
+        result = (
+            check_external_person_presence(identity.source_person_id)
+            if identity is not None and identity.source_person_id
+            else check_external_presence(badge)
+        )
         if result["status"] != "INSIDE":
             detail = "External perimeter presence: " + result["status"]
             if result.get("error_category"):
@@ -56,10 +75,26 @@ def check_badge_source(config: FactoryPerimeterSettings, badge: str) -> None:
         raise HTTPException(503, "Badge validator is not configured")
 
 
-def is_duplicate(db: Session, config: FactoryPerimeterSettings, terminal: Terminal, badge: str, now: datetime) -> bool:
+def _read_identity_key(badge: str, person_id: str | None) -> str:
+    return f"person:{person_id}" if person_id else badge
+
+
+def is_duplicate(
+    db: Session,
+    config: FactoryPerimeterSettings,
+    terminal: Terminal,
+    badge: str,
+    now: datetime,
+    *,
+    person_id: str | None = None,
+) -> bool:
     if not config.dedup_enabled or config.dedup_seconds <= 0:
         return False
-    previous = db.get(TerminalBadgeRead, (terminal.factory_code, terminal.id, badge))
+    previous = db.get(TerminalBadgeRead, (terminal.factory_code, terminal.id, _read_identity_key(badge, person_id)))
+    if person_id:
+        legacy_read = db.get(TerminalBadgeRead, (terminal.factory_code, terminal.id, badge))
+        if legacy_read is not None and (previous is None or legacy_read.last_recorded_at > previous.last_recorded_at):
+            previous = legacy_read
     if previous is None:
         return False
     timestamp = previous.last_recorded_at
@@ -68,15 +103,22 @@ def is_duplicate(db: Session, config: FactoryPerimeterSettings, terminal: Termin
     return now - timestamp < timedelta(seconds=config.dedup_seconds)
 
 
-def remember_read(db: Session, terminal: Terminal, badge: str, now: datetime) -> None:
-    key = (terminal.factory_code, terminal.id, badge)
+def remember_read(
+    db: Session,
+    terminal: Terminal,
+    badge: str,
+    now: datetime,
+    *,
+    person_id: str | None = None,
+) -> None:
+    key = (terminal.factory_code, terminal.id, _read_identity_key(badge, person_id))
     previous = db.get(TerminalBadgeRead, key)
     if previous is None:
         db.add(
             TerminalBadgeRead(
                 factory_code=terminal.factory_code,
                 terminal_id=terminal.id,
-                reporter_id=badge,
+                reporter_id=key[2],
                 last_recorded_at=now,
             )
         )
@@ -99,20 +141,26 @@ def create_auto_cell_exit_for_factory_exit(
     from app.services.event_service import _create_event
     from app.services.person_identity import (
         PersonIdentityError,
-        observe_identity,
         resolve_person_identity,
+        resolve_person_identity_by_employee_id,
     )
 
     identity = None
-    if config.badge_source == "EXTERNAL" and method == IdentificationMethod.RFID:
+    if config.badge_source == "EXTERNAL":
         try:
-            identity = resolve_person_identity(badge)
-            observe_identity(db, factory_code, identity, observed_at=event_time)
+            identity = (
+                resolve_person_identity_by_employee_id(badge)
+                if method == IdentificationMethod.KEYPAD
+                else resolve_person_identity(badge)
+            )
         except PersonIdentityError as exc:
             logger.warning(
                 "External factory exit identity unresolved category=%s",
                 exc.category,
             )
+
+    from app.services.event_service import _lock_badge
+    _lock_badge(db, badge, identity.person_id if identity else None)
 
     identity_condition = TimeEvent.reporter_id == badge
     if identity is not None:

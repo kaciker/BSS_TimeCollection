@@ -19,6 +19,7 @@ from app.services.person_identity import (
     PersonIdentityError,
     observe_identity,
     resolve_person_identity,
+    resolve_person_identity_by_employee_id,
 )
 from app.services.state_service import derive_worker_state
 
@@ -28,11 +29,12 @@ def _oracle_request_number(terminal_code: str, event_id: str) -> str:
     return f"BSS-{terminal_code[:39]}-{event_id}"
 
 
-def _lock_badge(db: Session, reporter_id: str) -> None:
+def _lock_badge(db: Session, reporter_id: str, person_id: str | None = None) -> None:
     # Serialize state evaluation and capture across all PostgreSQL terminals.
     # A transaction advisory lock also covers a badge with no existing events.
     if db.get_bind().dialect.name == "postgresql":
-        key = int.from_bytes(sha256(reporter_id.encode()).digest()[:8], "big", signed=True)
+        identity = f"person:{person_id}" if person_id else f"reporter:{reporter_id}"
+        key = int.from_bytes(sha256(identity.encode()).digest()[:8], "big", signed=True)
         db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": key})
 
 
@@ -67,10 +69,13 @@ def _resolve_capture_identity(
     method: IdentificationMethod,
     observed_at: datetime,
 ) -> PersonIdentity | None:
-    if config.badge_source != "EXTERNAL" or method != IdentificationMethod.RFID:
+    if config.badge_source != "EXTERNAL":
         return None
     try:
-        identity = resolve_person_identity(reporter_id)
+        if method == IdentificationMethod.KEYPAD:
+            identity = resolve_person_identity_by_employee_id(reporter_id)
+        else:
+            identity = resolve_person_identity(reporter_id)
     except PersonIdentityError as exc:
         unavailable = {
             "ODBC_DRIVER_UNAVAILABLE",
@@ -79,11 +84,14 @@ def _resolve_capture_identity(
             "CONNECTION_FAILED",
             "QUERY_FAILED",
         }
+        if exc.category in {"PERSON_NOT_FOUND", "AMBIGUOUS_PERSON"}:
+            status_code = 404 if exc.category == "PERSON_NOT_FOUND" else 409
+        else:
+            status_code = 503 if exc.category in unavailable else 409
         raise HTTPException(
-            status_code=503 if exc.category in unavailable else 409,
+            status_code=status_code,
             detail=f"External person identity: {exc.category}",
         ) from None
-    observe_identity(db, config.factory_code, identity, observed_at=observed_at)
     return identity
 
 
@@ -206,12 +214,17 @@ def _event_response(event: TimeEvent) -> CapturedEvent:
     )
 
 
-def scan(db: Session, terminal_code: str, reporter_id: str, method: IdentificationMethod) -> ScanResponse:
-    _lock_badge(db, reporter_id)
-    terminal = _get_terminal(db, terminal_code)
-    _validate_method(terminal, method)
+def scan(
+    db: Session,
+    terminal_code: str,
+    reporter_id: str,
+    method: IdentificationMethod,
+    *,
+    commit: bool = True,
+) -> ScanResponse:
     from app.services.perimeter_service import (
         settings_for,
+        is_person_inside,
         is_inside,
         is_duplicate,
         remember_read,
@@ -219,23 +232,46 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
         check_badge_source,
     )
 
+    terminal = _get_terminal(db, terminal_code)
+    _validate_method(terminal, method)
+
     if terminal.terminal_role != "CELL":
         return ScanResponse(**perimeter_scan(db, terminal, reporter_id, method))
     config = settings_for(db, terminal.factory_code)
     now = datetime.now(timezone.utc)
     identity = _resolve_capture_identity(db, config, reporter_id, method, now)
+    _lock_badge(db, reporter_id, identity.person_id if identity else None)
+    if identity is not None and method == IdentificationMethod.RFID:
+        observe_identity(db, config.factory_code, identity, observed_at=now)
     current_state = derive_worker_state(
         db,
         reporter_id,
         terminal.factory_code,
         person_id=identity.person_id if identity else None,
     )
-    if current_state == WorkerState.OUTSIDE and config.enabled:
-        check_badge_source(config, reporter_id)
-        if config.badge_source != "EXTERNAL" and not is_inside(db, terminal.factory_code, reporter_id):
+    if config.enabled:
+        if config.badge_source == "EXTERNAL":
+            check_badge_source(config, reporter_id, identity=identity)
+            if current_state == WorkerState.OUTSIDE and not is_person_inside(db, terminal.factory_code, identity):
+                raise HTTPException(409, "Employee has not entered the factory perimeter")
+        elif current_state == WorkerState.OUTSIDE and not is_inside(db, terminal.factory_code, reporter_id):
             raise HTTPException(409, "Badge has not entered the factory perimeter")
-    if is_duplicate(db, config, terminal, reporter_id, now):
-        return ScanResponse(flow="DUPLICATE_IGNORED", worker_state=current_state.value)
+    if is_duplicate(db, config, terminal, reporter_id, now, person_id=identity.person_id if identity else None):
+        if current_state == WorkerState.OUTSIDE:
+            return ScanResponse(flow="DUPLICATE_IGNORED", worker_state=current_state.value)
+        if identity is not None:
+            from app.models.time_event import TimeEvent
+            previous = db.scalar(
+                select(TimeEvent)
+                .where(TimeEvent.person_id == identity.person_id)
+                .where(TimeEvent.state_effect == StateEffect.ENTER.value)
+                .order_by(TimeEvent.event_datetime.desc(), TimeEvent.created_at.desc(), TimeEvent.id.desc())
+                .limit(1)
+            )
+            if previous is not None and previous.reporter_id == reporter_id:
+                return ScanResponse(flow="DUPLICATE_IGNORED", worker_state=current_state.value)
+        else:
+            return ScanResponse(flow="DUPLICATE_IGNORED", worker_state=current_state.value)
 
     if current_state == WorkerState.OUTSIDE:
         entry_actions = _active_actions(terminal, StateEffect.ENTER)
@@ -244,13 +280,14 @@ def scan(db: Session, terminal_code: str, reporter_id: str, method: Identificati
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Terminal must have exactly one active ENTER action for automatic entry",
             )
-        remember_read(db, terminal, reporter_id, now)
+        remember_read(db, terminal, reporter_id, now, person_id=identity.person_id if identity else None)
         event = _create_event(
             db,
             terminal,
             entry_actions[0],
             reporter_id,
             method,
+            commit=commit,
             identity=identity,
         )
         return ScanResponse(flow="ENTRY_RECORDED", worker_state=WorkerState.INSIDE.value, event=_event_response(event))
@@ -279,8 +316,9 @@ def record_exit(
     reporter_id: str,
     method: IdentificationMethod,
     action_code: str,
+    *,
+    commit: bool = True,
 ) -> ScanResponse:
-    _lock_badge(db, reporter_id)
     terminal = _get_terminal(db, terminal_code)
     _validate_method(terminal, method)
     if terminal.terminal_role != "CELL":
@@ -290,13 +328,14 @@ def record_exit(
     config = settings_for(db, terminal.factory_code)
     now = datetime.now(timezone.utc)
     identity = _resolve_capture_identity(db, config, reporter_id, method, now)
+    _lock_badge(db, reporter_id, identity.person_id if identity else None)
     current_state = derive_worker_state(
         db,
         reporter_id,
         terminal.factory_code,
         person_id=identity.person_id if identity else None,
     )
-    if current_state != WorkerState.INSIDE and is_duplicate(db, config, terminal, reporter_id, now):
+    if current_state != WorkerState.INSIDE and is_duplicate(db, config, terminal, reporter_id, now, person_id=identity.person_id if identity else None):
         return ScanResponse(flow="DUPLICATE_IGNORED", worker_state=current_state.value)
     if current_state != WorkerState.INSIDE:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Worker is not currently inside according to local TCD events")
@@ -330,13 +369,14 @@ def record_exit(
         if parent is not None and not parent.requires_subaction:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Sub-action parent is not enabled on this terminal")
 
-    remember_read(db, terminal, reporter_id, now)
+    remember_read(db, terminal, reporter_id, now, person_id=identity.person_id if identity else None)
     event = _create_event(
         db,
         terminal,
         action,
         reporter_id,
         method,
+        commit=commit,
         identity=identity,
     )
     return ScanResponse(flow="EXIT_RECORDED", worker_state=WorkerState.OUTSIDE.value, event=_event_response(event))
