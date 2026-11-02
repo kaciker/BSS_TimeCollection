@@ -33,6 +33,16 @@ WHERE p.pin = ? AND pc.card_state = 1
   AND (pc.end_time IS NULL OR pc.end_time > GETDATE())
 ORDER BY pc.id
 """
+_PRESENCE_CURRENT_IDENTITIES_SQL = """
+SELECT pae.attr_value4, p.id, p.pin, pc.id, pc.card_no, pc.person_pin
+FROM dbo.pers_person AS p
+JOIN dbo.pers_card AS pc ON pc.person_id = p.id
+LEFT JOIN dbo.pers_attribute_ext AS pae ON pae.person_id = p.id
+WHERE pc.card_state = 1
+  AND (pc.start_time IS NULL OR pc.start_time <= GETDATE())
+  AND (pc.end_time IS NULL OR pc.end_time > GETDATE())
+ORDER BY p.id, pc.id, pae.attr_value4
+"""
 _LATEST_CARD_MOVEMENT_SQL = """
 SELECT TOP (1) CAST(t.id AS nvarchar(128)), t.event_time, t.acc_zone_code
 FROM dbo.acc_transaction AS t
@@ -199,7 +209,7 @@ def _collect_candidates(db: Session, factory_code: str) -> dict[str, _IdentityCa
     return candidates
 
 
-def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity]):
+def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], historical_credentials=()):
     """Resolve the local population from one SECURITY_DB snapshot efficiently."""
     by_reader_index: dict[str, set[PersonIdentity]] = {}
     current_by_person: dict[str, list[PersonIdentity]] = {}
@@ -213,6 +223,31 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity]):
     reader_cache: dict[str, PersonIdentity | PersonIdentityError] = {}
     movement_cache: dict[str, dict | None | PresenceSourceError] = {}
     orphan_cache: dict[str, bool | PresenceSourceError] = {}
+
+    # Check local historical credentials in batches too. Retained credentials
+    # may prove card presence after their person row is gone, but an N+1 ODBC
+    # lookup across old card history makes reconciliation prohibitively slow.
+    old_credentials = sorted(set(historical_credentials) - set(current_by_credential))
+    for offset in range(0, len(old_credentials), 400):
+        chunk = old_credentials[offset:offset + 400]
+        if not chunk:
+            continue
+        try:
+            placeholders = ",".join("?" for _ in chunk)
+            query = _CURRENT_CREDENTIAL_SQL.replace("WHERE pc.card_no = ?", f"WHERE pc.card_no IN ({placeholders})")
+            rows = cursor.execute(query, *chunk).fetchall()
+            grouped: dict[str, set[tuple[str | None, str | None, str | None]]] = {}
+            for row in rows:
+                card_no = _safe_text(row[1])
+                if card_no:
+                    grouped.setdefault(card_no, set()).add((_safe_text(row[0]), card_no, _safe_text(row[2])))
+            for credential in chunk:
+                values = grouped.get(credential, set())
+                orphan_cache[credential] = len(values) == 1 and next(iter(values))[2] is None
+        except Exception as exc:
+            error = PresenceSourceError(_safe_odbc_category(exc, phase="query"))
+            for credential in chunk:
+                orphan_cache[credential] = error
 
     # Resolve the latest movement for all current credentials in one indexed
     # SECURITY_DB query. Per-card round trips made a full reconciliation scale
@@ -661,10 +696,39 @@ def reconcile_factory_presence(
             connection = _connect()
             cursor = connection.cursor()
             try:
-                identities = fetch_current_person_badges(query=lambda: cursor.execute(_CURRENT_SQL).fetchall())
-            except PersonIdentityError as exc:
-                raise PresenceSourceError(exc.category) from None
-            source = _source_resolver_from_snapshot(cursor, identities)
+                rows = cursor.execute(_PRESENCE_CURRENT_IDENTITIES_SQL).fetchall()
+            except Exception as exc:
+                raise PresenceSourceError(_safe_odbc_category(exc, phase="query")) from None
+            identities = []
+            for row in rows:
+                representation = _safe_text(row[0])
+                identity = _normalize_row(row[1:])
+                if identity is None:
+                    # Bad attribute formatting must not erase valid person/card
+                    # identity; it only prevents a direct Reader ID link.
+                    try:
+                        source_id, person_pin, source_card_id, credential, card_pin = (
+                            _safe_text(value) for value in row[1:6]
+                        )
+                        if all((source_id, person_pin, source_card_id, credential, card_pin)) and person_pin == card_pin:
+                            identity = PersonIdentity(source_id, person_pin, source_card_id, credential)
+                    except (TypeError, ValueError):
+                        identity = None
+                if identity is None:
+                    continue
+                reader_id = None
+                if representation:
+                    try:
+                        reader_id = _attr_value_to_reader_number(representation)
+                    except ValueError:
+                        pass
+                identities.append(PersonIdentity(
+                    identity.source_person_id, identity.person_id,
+                    identity.source_card_id, identity.credential_id, reader_id,
+                ))
+            source = _source_resolver_from_snapshot(cursor, identities, candidates_credentials := {
+                credential for item in candidates.values() for credential in item.credential_ids
+            })
         by_reader, current_credentials, movement = source[:3]
         if len(source) > 3:
             movement.current_orphan_credential = source[3]
