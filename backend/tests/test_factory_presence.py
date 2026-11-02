@@ -168,6 +168,71 @@ def test_presence_snapshot_respects_attribute_first_sql_column_order():
     assert row[1] == "SEC-3627" and row[2] == "3627" and row[4] == "CARD-1"
 
 
+@pytest.mark.parametrize(
+    ("representation", "expected_reader"),
+    [
+        ("0537312724", "0537312724"),
+        ("602650914", "0582609699"),
+        ("0009768692", "0009768692"),
+    ],
+)
+def test_presence_identity_snapshot_indexes_exact_and_swapped_reader_forms(representation, expected_reader):
+    from app.services.factory_presence import _source_resolver_from_snapshot
+    from app.services.factory_presence import _reader_ids_from_attribute
+
+    sql_queries = []
+
+    class RecordingCursor:
+        def execute(self, sql, *_params):
+            sql_queries.append(sql)
+            return self
+        def fetchall(self):
+            return []
+
+    readers = _reader_ids_from_attribute(representation)
+    assert expected_reader in readers
+    identities = [PersonIdentity("SEC-3627", "3627", "ROW-1", "CARD-1", reader) for reader in readers]
+    by_reader, _cards, _movement, _orphan = _source_resolver_from_snapshot(RecordingCursor(), identities)
+    assert by_reader(expected_reader).person_id == "3627"
+
+
+def test_presence_reconciliation_snapshot_keeps_canonical_reader_representation(session, monkeypatch):
+    import app.services.factory_presence as service
+
+    class Cursor:
+        def execute(self, sql, *_params):
+            self.sql = sql
+            return self
+        def fetchall(self):
+            if self.sql == service._PRESENCE_CURRENT_IDENTITIES_SQL:
+                return [("0537312724", "SEC-3627", "3627", "ROW-1", "CARD-1", "3627")]
+            if self.sql == service._LATEST_CURRENT_CARD_MOVEMENTS_SQL:
+                return [("CARD-1", "txn-1", datetime.now(timezone.utc), 2)]
+            return []
+
+    class Connection:
+        def cursor(self):
+            return Cursor()
+        def close(self):
+            pass
+
+    monkeypatch.setattr(service, "_connect", Connection)
+    at = datetime(2026, 11, 2, 9, tzinfo=timezone.utc)
+    session.add(PersonBadgeAssignment(factory_code="ARGANDA", source_system="SQLSERVER_SECURITY_DB",
+        source_person_id="SEC-3627", person_id="3627", source_card_id="ROW-1",
+        credential_id="CARD-1", reader_id="0537312724", observed_from=at,
+        first_seen_at=at, last_seen_at=at))
+    session.commit()
+
+    changed = service.reconcile_factory_presence(
+        session, session.get(FactoryPerimeterSettings, "ARGANDA")
+    )
+    assert changed >= 1
+    rows = session.scalars(select(FactoryPresenceProjection)).all()
+    assert any(row.tracking_key == "READER:0537312724" and row.person_id == "3627"
+               and row.state == "INSIDE" for row in rows)
+
+
 def test_historical_reader_resolves_person_then_uses_replacement_current_card(session):
     at = datetime(2026, 11, 2, 9, tzinfo=timezone.utc)
     session.add(PersonBadgeAssignment(factory_code="ARGANDA", source_system="SQLSERVER_SECURITY_DB",
