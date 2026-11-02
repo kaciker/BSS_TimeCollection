@@ -123,13 +123,17 @@ def test_cards_cascade_shared_timestamp_finishes_at_perimeter(monitor):
 def test_cell_and_factory_state_are_independent_and_filters_compose(monitor):
     from datetime import datetime, timezone
     from test_monitoring import add_event
-    from app.models.perimeter import FactoryPerimeterSettings
+    from app.models.perimeter import FactoryPerimeterSettings, FactoryPresenceProjection
     client, db = monitor
     gate=Terminal(code='GATE',name='Gate',external_device_id='GATE',terminal_role='PERIMETER_BOTH',factory_code='ARGANDA')
     db.add(gate); db.flush()
     db.add(FactoryPerimeterSettings(factory_code='ARGANDA',enabled=True))
     for badge in ['001','002']:
         db.add(FactoryPerimeterEvent(id='entry-'+badge,factory_code='ARGANDA',reporter_id=badge,terminal_id=gate.id,direction='ENTER',event_datetime=datetime(2026,10,9,12,0,tzinfo=timezone.utc),correlation_id=badge))
+        tracking_key=('PERSON:'+badge) if badge == '001' else ('READER:'+badge)
+        db.add(FactoryPresenceProjection(factory_code='ARGANDA',tracking_key=tracking_key,
+            person_id=badge if badge == '001' else None,reader_id=None if badge == '001' else badge,credential_id=None,state='INSIDE',source_system='test',
+            resolution_code='RETAINED_CREDENTIAL',verified_at=datetime(2026,10,10,tzinfo=timezone.utc)))
     db.commit()
     add_event(db,'001','CELL','ENTER',1)
     add_event(db,'001','CELL','EXIT',2)
@@ -138,6 +142,14 @@ def test_cell_and_factory_state_are_independent_and_filters_compose(monitor):
     assert all(c['worker_state']=='OUTSIDE' and c['factory_state']=='INSIDE' and c['factory_code']=='ARGANDA' for c in page['items'])
     assert client.get('/api/v1/admin/monitoring/cards?worker_state=INSIDE&factory_state=INSIDE').json()['total']==0
     db.add(FactoryPerimeterEvent(id='exit-001',factory_code='ARGANDA',reporter_id='001',terminal_id=gate.id,direction='EXIT',event_datetime=datetime(2026,10,9,12,3,tzinfo=timezone.utc),correlation_id='exit'))
+    projection=db.scalar(select(FactoryPresenceProjection).where(FactoryPresenceProjection.tracking_key=='PERSON:001'))
+    projection.state='OUTSIDE'
+    projection.tracking_key='PERSON:001'
+    projection.person_id='001'
+    projection.reader_id=None
+    db.add(FactoryPresenceProjection(factory_code='ARGANDA',tracking_key='READER:001',person_id=None,
+        reader_id='001',credential_id=None,state='OUTSIDE',source_system='test',resolution_code='TEST',
+        verified_at=datetime(2026,10,10,tzinfo=timezone.utc)))
     db.commit()
     outside=client.get('/api/v1/admin/monitoring/cards?factory_state=OUTSIDE').json()
     assert outside['total']==1 and outside['items'][0]['reporter_id']=='001'
@@ -151,13 +163,14 @@ def test_cell_and_factory_state_are_independent_and_filters_compose(monitor):
 
 def test_factory_state_does_not_leak_from_another_factory(monitor):
     from datetime import datetime, timezone
-    from app.models.perimeter import FactoryPerimeterSettings
+    from app.models.perimeter import FactoryPerimeterSettings, FactoryPresenceProjection
     client,db=monitor
     for factory,minute in [('ARGANDA',0),('OTHER',1)]:
         gate=Terminal(code=factory,name=factory,external_device_id=factory,terminal_role='PERIMETER_BOTH',factory_code=factory)
         db.add(gate);db.flush()
         db.add(FactoryPerimeterSettings(factory_code=factory,enabled=factory=='ARGANDA'))
         db.add(FactoryPerimeterEvent(id=factory,factory_code=factory,reporter_id='001',terminal_id=gate.id,direction='ENTER',event_datetime=datetime(2026,10,9,12,minute,tzinfo=timezone.utc),correlation_id=factory))
+        db.add(FactoryPresenceProjection(factory_code=factory,tracking_key='READER:001',person_id=None,reader_id='001',credential_id=None,state='INSIDE',source_system='test',resolution_code='TEST',verified_at=datetime(2026,10,10,tzinfo=timezone.utc)))
     db.commit()
     page=client.get('/api/v1/admin/monitoring/cards').json()
     assert page['factory_perimeter_enabled'] is True

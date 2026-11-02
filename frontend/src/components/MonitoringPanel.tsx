@@ -128,7 +128,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
       onNavigate("events", `?badge=${encodeURIComponent(badge)}&clock=${encodeURIComponent(filters.clock)}`);
     } else { setDraft(next); setFilters(next); selectView("events"); }
   };
-  const badgeStatus = (value: string) => <span className={`status ${value === "INSIDE" ? "status-sent" : ""}`}>{value === "INSIDE" ? t("inside") : t("outside")}</span>;
+  const badgeStatus = (value: string) => <span className={`status ${value === "INSIDE" ? "status-sent" : ""}`}>{value === "INSIDE" ? t("inside") : value === "OUTSIDE" ? t("outside") : t("unknown")}</span>;
 
   type Column = { id: string; label: string; width: number; locked?: boolean; render: (item: any) => ReactNode };
   const detailButton = (id: string) => <button aria-expanded={view === "events" ? selectedEventId === id : undefined} aria-controls={selectedEventId === id ? "event-inline-details" : undefined} onClick={() => void inspect(id)}>{view === "events" && selectedEventId === id ? t("closeDetails") : t("details")}</button>;
@@ -148,7 +148,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
     {id:"reader",label:readerIdLabel,width:160,render:c=>c.reporter_id},
     {id:"card",label:cardLabel,width:330,render:c=>c.credential_id ?? c.event.credential_id ?? "—"},
     {id:"cellState",label:t("cellState"),width:110,render:c=>badgeStatus(c.worker_state)},
-    ...(factoryEnabled ? [{id:"factoryState",label:t("factoryState"),width:140,render:(c: CardState)=>c.factory_state ? <>{badgeStatus(c.factory_state)}<div className="cell-secondary">{c.factory_code}</div></> : <span className="muted">{t("notActivated")}</span>}] : []),
+    ...(factoryEnabled ? [{id:"factoryState",label:t("factoryState"),width:180,render:(c: CardState)=>c.factory_state ? <>{badgeStatus(c.factory_state)}{c.factory_state === "UNKNOWN" && <div className="cell-secondary">{t("factoryPresenceUnknown")}</div>}<div className="cell-secondary">{c.factory_code}</div></> : <span className="muted">{t("notActivated")}</span>}] : []),
     {id:"clock",label:t("latestClock"),width:140,render:c=>c.event.terminal_code},
     {id:"time",label:t("latestEvent"),width:190,render:c=>dateLabel(c.event.event_datetime)},
     {id:"action",label:t("action"),width:240,render:c=>c.event.action_label},
@@ -174,7 +174,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
         <label>{t("clock")}<select value={draft.clock} onChange={e => setDraft({ ...draft, clock: e.target.value })}><option value="">{t("allClocks")}</option>{terminals.map(terminal => <option key={terminal.code} value={terminal.code}>{terminal.code} · {terminal.name}</option>)}{removedCodes.map(code => <option key={code} value={code}>{code} · {t("removed")}</option>)}</select></label>
         <label>{identitySearchLabel}<input value={draft.badge} placeholder={identitySearchPlaceholder} onChange={e => setDraft({ ...draft, badge: e.target.value })} /></label>
         {view === "cards" ? <label>{t("cellState")}<select value={draft.state} onChange={e => setDraft({ ...draft, state: e.target.value })}><option value="">{t("all")}</option><option value="INSIDE">{t("inside")}</option><option value="OUTSIDE">{t("outside")}</option></select></label> : <label>{view === "events" ? t("delivery") : t("attemptResult")}<select value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value })}><option value="">{t("all")}</option>{(view === "events" ? [...statuses,"LOCAL_ONLY"] : statuses).map(status => <option key={status} value={status}>{status === "LOCAL_ONLY" ? t("localOnly") : status}</option>)}</select></label>}
-        {view === "cards" && factoryEnabled && <label>{t("factoryState")}<select value={draft.factoryState} onChange={e => setDraft({ ...draft, factoryState: e.target.value })}><option value="">{t("all")}</option><option value="INSIDE">{t("inside")}</option><option value="OUTSIDE">{t("outside")}</option></select></label>}
+        {view === "cards" && factoryEnabled && <label>{t("factoryState")}<select value={draft.factoryState} onChange={e => setDraft({ ...draft, factoryState: e.target.value })}><option value="">{t("all")}</option><option value="INSIDE">{t("inside")}</option><option value="OUTSIDE">{t("outside")}</option><option value="UNKNOWN">{t("unknown")}</option></select></label>}
         {view === "events" && <><label>{t("from")}<input type="datetime-local" value={draft.start} onChange={e => setDraft({ ...draft, start: e.target.value })} /></label><label>{t("to")}<input type="datetime-local" value={draft.end} onChange={e => setDraft({ ...draft, end: e.target.value })} /></label></>}
         <button className="primary" type="submit">{t("applyFilters")}</button>
         <button className="secondary" type="button" onClick={() => { closeDetail(); setDraft(initialFilters); setFilters({ ...initialFilters }); setOffset(0); }}>{t("reset")}</button>

@@ -16,6 +16,7 @@ from app.services.external_perimeter_sync import (
     reconcile_enabled_external_perimeters,
     sync_enabled_external_perimeters,
 )
+from app.services.factory_presence import reconcile_enabled_factory_presence
 from app.services.person_identity import sync_enabled_person_badges
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -189,6 +190,7 @@ def main() -> None:
     heartbeat.start()
     next_external_sync = 0.0
     next_external_reconciliation = 0.0
+    next_factory_presence_reconciliation = 0.0
     next_person_badge_sync = 0.0
     try:
         recover_stale_events()
@@ -224,6 +226,15 @@ def main() -> None:
                 except Exception:
                     logger.exception("Unhandled external perimeter reconciliation failure")
                 next_external_reconciliation = now_monotonic + 180.0
+
+            if now_monotonic >= next_factory_presence_reconciliation:
+                try:
+                    changed = reconcile_enabled_factory_presence()
+                    if changed:
+                        logger.info("Updated %s authoritative factory presence projection row(s)", changed)
+                except Exception:
+                    logger.exception("Unhandled authoritative factory presence reconciliation failure")
+                next_factory_presence_reconciliation = now_monotonic + 180.0
 
             if not settings.oracle_enabled:
                 time.sleep(max(settings.worker_poll_seconds, 1.0))

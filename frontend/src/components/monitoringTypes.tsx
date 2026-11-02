@@ -53,7 +53,11 @@ export interface CardState {
   credential_id?: string | null;
   worker_state: "INSIDE" | "OUTSIDE";
   factory_code?: string | null;
-  factory_state?: "INSIDE" | "OUTSIDE" | null;
+  factory_state?: "INSIDE" | "OUTSIDE" | "UNKNOWN" | null;
+  factory_verified_at?: string | null;
+  factory_movement_at?: string | null;
+  factory_resolution?: string | null;
+  factory_reason?: string | null;
   event: EventSnapshot;
 }
 export interface Page<T> { items: T[]; total: number; factory_perimeter_enabled?: boolean }
