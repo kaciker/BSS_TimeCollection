@@ -16,8 +16,8 @@ from app.models.person_badge_assignment import PersonBadgeAssignment
 from app.models.time_event import TimeEvent
 from app.services.external_perimeter import ExternalPerimeterError, _connection_string, _credentials, _safe_odbc_category
 from app.services.person_identity import (
-    PersonIdentity, PersonIdentityError, _RESOLVE_SQL, _normalize_row,
-    resolve_person_identity,
+    PersonIdentity, PersonIdentityError, _CURRENT_SQL, _RESOLVE_SQL,
+    _normalize_row, fetch_current_person_badges, resolve_person_identity,
 )
 from app.services.external_perimeter import reader_number_to_attr_value
 
@@ -179,6 +179,81 @@ def _collect_candidates(db: Session, factory_code: str) -> dict[str, _IdentityCa
         if credential:
             candidates[key].credential_ids.add(credential)
     return candidates
+
+
+def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity]):
+    """Resolve the local population from one SECURITY_DB snapshot efficiently."""
+    by_reader_index: dict[str, set[PersonIdentity]] = {}
+    current_by_person: dict[str, list[PersonIdentity]] = {}
+    current_by_credential: dict[str, list[PersonIdentity]] = {}
+    for identity in identities:
+        current_by_person.setdefault(identity.person_id, []).append(identity)
+        if identity.credential_id:
+            current_by_credential.setdefault(identity.credential_id, []).append(identity)
+        if identity.reader_id:
+            by_reader_index.setdefault(identity.reader_id, set()).add(identity)
+    reader_cache: dict[str, PersonIdentity | PersonIdentityError] = {}
+    movement_cache: dict[str, dict | None | PresenceSourceError] = {}
+    orphan_cache: dict[str, bool | PresenceSourceError] = {}
+
+    def by_reader(reader_id: str) -> PersonIdentity:
+        result = reader_cache.get(reader_id)
+        if isinstance(result, PersonIdentityError):
+            raise result
+        if result is not None:
+            return result
+        indexed = by_reader_index.get(reader_id, set())
+        if len(indexed) == 1:
+            first = next(iter(indexed))
+            result = PersonIdentity(first.source_person_id, first.person_id, None, None, reader_id)
+        elif len(indexed) > 1:
+            people = {item.person_id for item in indexed}
+            sources = {item.source_person_id for item in indexed}
+            if len(people) == 1 and len(sources) == 1:
+                first = next(iter(indexed))
+                result = PersonIdentity(first.source_person_id, first.person_id, None, None, reader_id)
+            else:
+                result = PersonIdentityError("AMBIGUOUS_IDENTITY")
+        else:
+            result = PersonIdentityError("IDENTITY_NOT_FOUND")
+        reader_cache[reader_id] = result
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    def current_credentials(person_id: str) -> list[PersonIdentity]:
+        return current_by_person.get(person_id, [])
+
+    def current_orphan_credential(credential_id: str) -> bool:
+        if credential_id in orphan_cache:
+            result = orphan_cache[credential_id]
+            if isinstance(result, Exception):
+                raise result
+            return result
+        try:
+            rows = cursor.execute(_CURRENT_CREDENTIAL_SQL, credential_id).fetchall()
+        except Exception as exc:
+            error = PresenceSourceError(_safe_odbc_category(exc, phase="query"))
+            orphan_cache[credential_id] = error
+            raise error from None
+        unique = {(_safe_text(row[0]), _safe_text(row[1]), _safe_text(row[2])) for row in rows if row[0] and row[1]}
+        result = len(unique) == 1 and next(iter(unique))[2] is None
+        orphan_cache[credential_id] = result
+        return result
+
+    def latest_movement(credential_id: str):
+        if credential_id not in movement_cache:
+            try:
+                movement_cache[credential_id] = _movement(cursor, credential_id)
+            except PresenceSourceError as exc:
+                movement_cache[credential_id] = exc
+        result = movement_cache[credential_id]
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    latest_movement.current_orphan_credential = current_orphan_credential
+    return by_reader, current_credentials, latest_movement, current_orphan_credential
 
 
 def _connect():
@@ -532,7 +607,12 @@ def reconcile_factory_presence(
     try:
         if source is None:
             connection = _connect()
-            source = _source_resolver(connection.cursor())
+            cursor = connection.cursor()
+            try:
+                identities = fetch_current_person_badges(query=lambda: cursor.execute(_CURRENT_SQL).fetchall())
+            except PersonIdentityError as exc:
+                raise PresenceSourceError(exc.category) from None
+            source = _source_resolver_from_snapshot(cursor, identities)
         by_reader, current_credentials, movement = source[:3]
         if len(source) > 3:
             movement.current_orphan_credential = source[3]
