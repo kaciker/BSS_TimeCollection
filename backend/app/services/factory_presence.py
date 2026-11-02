@@ -806,6 +806,7 @@ def reconcile_factory_presence(
     except Exception as exc:
         # If the connection itself fails, every previously inferred current
         # state loses current authoritative support and must be UNKNOWN.
+        logger.exception("Factory presence reconciliation failed factory=%s", config.factory_code)
         category = exc.category if isinstance(exc, PresenceSourceError) else "QUERY_FAILED"
         now = verified_at
         changed = 0
