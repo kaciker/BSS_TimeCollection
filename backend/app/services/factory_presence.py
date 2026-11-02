@@ -805,7 +805,19 @@ def reconcile_factory_presence(
         existing = {row.tracking_key: row for row in db.scalars(select(FactoryPresenceProjection).where(
             FactoryPresenceProjection.factory_code == config.factory_code
         )).all()}
-        changed = 0
+        before_values = {
+            key: {
+                "person_id": row.person_id,
+                "reader_id": row.reader_id,
+                "credential_id": row.credential_id,
+                "state": row.state,
+                "source_system": row.source_system,
+                "resolution_code": row.resolution_code,
+                "source_movement_at": row.source_movement_at,
+                "unresolved_reason": row.unresolved_reason,
+            }
+            for key, row in existing.items()
+        }
         for key, candidate in candidates.items():
             try:
                 expected = _expected_for_candidate(candidate, by_reader, current_credentials, movement)
@@ -881,9 +893,18 @@ def reconcile_factory_presence(
                         setattr(row, name, value)
                 if differs:
                     row.verified_at = verified_at
-                    changed += 1
         db.commit()
-        return changed
+        names = (
+            "person_id", "reader_id", "credential_id", "state", "source_system",
+            "resolution_code", "source_movement_at", "unresolved_reason",
+        )
+        return sum(
+            key not in before_values or any(
+                not _same_projection_value(before_values[key][name], getattr(row, name))
+                for name in names
+            )
+            for key, row in existing.items()
+        )
     except Exception as exc:
         # If the connection itself fails, every previously inferred current
         # state loses current authoritative support and must be UNKNOWN.
