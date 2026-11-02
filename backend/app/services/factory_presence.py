@@ -702,20 +702,14 @@ def reconcile_factory_presence(
             identities = []
             for row in rows:
                 representation = _safe_text(row[0])
-                identity = _normalize_row(row[1:])
-                if identity is None:
-                    # Bad attribute formatting must not erase valid person/card
-                    # identity; it only prevents a direct Reader ID link.
-                    try:
-                        source_id, person_pin, source_card_id, credential, card_pin = (
-                            _safe_text(value) for value in row[1:6]
-                        )
-                        if all((source_id, person_pin, source_card_id, credential, card_pin)) and person_pin == card_pin:
-                            identity = PersonIdentity(source_id, person_pin, source_card_id, credential)
-                    except (TypeError, ValueError):
-                        identity = None
-                if identity is None:
+                # This result orders attr_value4 first for SQL Server lookup,
+                # while PersonIdentity expects source person id first.
+                source_id, person_pin, source_card_id, credential, card_pin = (
+                    _safe_text(value) for value in row[1:6]
+                )
+                if not all((source_id, person_pin, source_card_id, credential, card_pin)) or person_pin != card_pin:
                     continue
+                identity = PersonIdentity(source_id, person_pin, source_card_id, credential)
                 reader_id = None
                 if representation:
                     try:

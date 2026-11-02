@@ -153,6 +153,21 @@ def test_snapshot_resolver_batches_latest_movements_by_physical_card_no():
     assert "WHERE t.card_no = ?" not in sql
 
 
+def test_presence_snapshot_respects_attribute_first_sql_column_order():
+    from app.services.factory_presence import _PRESENCE_CURRENT_IDENTITIES_SQL
+
+    class Cursor:
+        def execute(self, _sql):
+            return self
+        def fetchall(self):
+            return [("1234", "SEC-3627", "3627", "ROW-1", "CARD-1", "3627")]
+
+    # The integration query returns attr, source person, PIN, card row,
+    # card number, person PIN; keep the true Employee ID/person link intact.
+    row = Cursor().execute(_PRESENCE_CURRENT_IDENTITIES_SQL).fetchall()[0]
+    assert row[1] == "SEC-3627" and row[2] == "3627" and row[4] == "CARD-1"
+
+
 def test_historical_reader_resolves_person_then_uses_replacement_current_card(session):
     at = datetime(2026, 11, 2, 9, tzinfo=timezone.utc)
     session.add(PersonBadgeAssignment(factory_code="ARGANDA", source_system="SQLSERVER_SECURITY_DB",
