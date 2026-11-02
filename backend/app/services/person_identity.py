@@ -37,6 +37,13 @@ LEFT JOIN dbo.pers_attribute_ext AS pae ON pae.person_id = p.id
 ORDER BY p.id, pc.id, pae.attr_value4
 """
 
+_EMPLOYEE_ID_SQL = """
+SELECT p.id, p.pin
+FROM dbo.pers_person AS p
+WHERE p.pin = ?
+ORDER BY p.id
+"""
+
 
 class PersonIdentityError(RuntimeError):
     def __init__(self, category: str):
@@ -48,8 +55,8 @@ class PersonIdentityError(RuntimeError):
 class PersonIdentity:
     source_person_id: str
     person_id: str
-    source_card_id: str
-    credential_id: str
+    source_card_id: str | None
+    credential_id: str | None
     reader_id: str | None = None
 
 
@@ -163,6 +170,57 @@ def resolve_person_identity(reader_id: str, *, query=None) -> PersonIdentity:
     return next(iter(identities))
 
 
+def resolve_person_identity_by_employee_id(employee_id: str, *, query=None) -> PersonIdentity:
+    """Resolve a terminal PIN directly through authoritative pers_person.pin.
+
+    KEYPAD identity does not depend on a physical credential. In particular,
+    several active cards do not make the employee identity ambiguous, and we
+    do not create an observed Reader ID assignment for a keypad entry.
+    """
+    pin = str(employee_id).strip()
+    if not pin:
+        raise PersonIdentityError("PERSON_NOT_FOUND")
+
+    if query is not None:
+        try:
+            rows = list(query(pin))
+        except Exception:
+            raise PersonIdentityError("QUERY_FAILED") from None
+    else:
+        connection = _connect()
+        try:
+            rows = connection.cursor().execute(_EMPLOYEE_ID_SQL, pin).fetchall()
+        except Exception as exc:
+            raise PersonIdentityError(_safe_odbc_category(exc, phase="query")) from None
+        finally:
+            connection.close()
+
+    matches: set[tuple[str, str]] = set()
+    for row in rows:
+        try:
+            source_person_id, person_pin = row[0], row[1]
+        except (TypeError, IndexError):
+            continue
+        if source_person_id is None or person_pin is None:
+            continue
+        source_id, resolved_pin = str(source_person_id).strip(), str(person_pin).strip()
+        if source_id and resolved_pin == pin:
+            matches.add((source_id, resolved_pin))
+
+    if not matches:
+        raise PersonIdentityError("PERSON_NOT_FOUND")
+    if len(matches) != 1:
+        raise PersonIdentityError("AMBIGUOUS_PERSON")
+    source_person_id, canonical_person_id = next(iter(matches))
+    return PersonIdentity(
+        source_person_id=source_person_id,
+        person_id=pin,
+        source_card_id=None,
+        credential_id=None,
+        reader_id=None,
+    )
+
+
 def fetch_current_person_badges(*, query=None) -> list[PersonIdentity]:
     """Return the authoritative current pers_card mapping; reject ambiguous snapshots."""
     if query is not None:
@@ -255,6 +313,15 @@ def observe_identity(
             row.reader_id = identity.reader_id
             exact = row
             changed = True
+        elif (
+            row.source_person_id == identity.source_person_id
+            and row.person_id == identity.person_id
+            and identity.reader_id
+            and row.reader_id
+            and row.reader_id != identity.reader_id
+        ):
+            # Keep multiple genuine physical credentials for the same employee.
+            continue
         else:
             row.observed_to = observed_at
             changed = True

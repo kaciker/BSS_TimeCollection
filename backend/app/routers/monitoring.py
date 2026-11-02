@@ -107,41 +107,9 @@ def cards(
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
-    # Combine both logs before ranking or filtering. At a shared cascade timestamp,
-    # the final perimeter movement follows the automatic cell EXIT.
-    cell = select(
-        TimeEvent.id.label("id"), TimeEvent.reporter_id.label("badge"),
-        TimeEvent.terminal_code.label("clock"), TimeEvent.state_effect.label("effect"),
-        TimeEvent.event_datetime.label("at"), TimeEvent.created_at.label("created"),
-        literal("CELL").label("kind"), literal(0).label("final_movement"),
-        Terminal.factory_code.label("factory"),
-    ).outerjoin(Terminal, Terminal.id == TimeEvent.terminal_id).where(TimeEvent.state_effect.in_(["ENTER", "EXIT"]))
-    perimeter = select(
-        FactoryPerimeterEvent.id.label("id"), FactoryPerimeterEvent.reporter_id.label("badge"),
-        Terminal.code.label("clock"), FactoryPerimeterEvent.direction.label("effect"),
-        FactoryPerimeterEvent.event_datetime.label("at"), FactoryPerimeterEvent.event_datetime.label("created"),
-        literal("PERIMETER").label("kind"), literal(1).label("final_movement"),
-        FactoryPerimeterEvent.factory_code.label("factory"),
-    ).join(Terminal, Terminal.id == FactoryPerimeterEvent.terminal_id)
-    combined = union_all(cell, perimeter).subquery()
-    ranked = select(
-        combined,
-        func.row_number().over(
-            partition_by=combined.c.badge,
-            order_by=(combined.c.at.desc(), combined.c.final_movement.desc(), combined.c.created.desc(), combined.c.id.desc()),
-        ).label("position"),
-    ).subquery()
-    cell_ranked = select(
-        TimeEvent.reporter_id.label("badge"), TimeEvent.state_effect.label("effect"),
-        func.row_number().over(partition_by=TimeEvent.reporter_id,
-            order_by=(TimeEvent.event_datetime.desc(), TimeEvent.created_at.desc(), TimeEvent.id.desc())).label("position"),
-    ).where(TimeEvent.state_effect.in_(["ENTER", "EXIT"])).subquery()
-    factory_ranked = select(
-        FactoryPerimeterEvent.reporter_id.label("badge"), FactoryPerimeterEvent.factory_code.label("factory"),
-        FactoryPerimeterEvent.direction.label("effect"),
-        func.row_number().over(partition_by=(FactoryPerimeterEvent.reporter_id, FactoryPerimeterEvent.factory_code),
-            order_by=(FactoryPerimeterEvent.event_datetime.desc(), FactoryPerimeterEvent.id.desc())).label("position"),
-    ).subquery()
+    # Resolve legacy reporter IDs through observed RFID assignments before ranking.
+    # This lets old events and current RFID/perimeter observations share a worker row
+    # with new events that already carry person_id.
     identity_ranked = select(
         PersonBadgeAssignment.factory_code.label("factory"),
         PersonBadgeAssignment.reader_id.label("badge"),
@@ -156,52 +124,117 @@ def cards(
         PersonBadgeAssignment.observed_to.is_(None),
         PersonBadgeAssignment.reader_id.is_not(None),
     ).subquery()
+    cell_identity = identity_ranked.alias("cell_identity")
+    cell_events = select(
+        TimeEvent.id.label("id"), TimeEvent.reporter_id.label("badge"),
+        func.coalesce(TimeEvent.person_id, cell_identity.c.person_id).label("person_id"),
+        func.coalesce(TimeEvent.source_person_id, cell_identity.c.source_person_id).label("source_person_id"),
+        func.coalesce(TimeEvent.credential_id, cell_identity.c.credential_id).label("credential_id"),
+        TimeEvent.terminal_code.label("clock"), TimeEvent.state_effect.label("effect"),
+        TimeEvent.event_datetime.label("at"), TimeEvent.created_at.label("created"),
+        literal("CELL").label("kind"), literal(0).label("final_movement"),
+        func.coalesce(Terminal.factory_code, "DEFAULT").label("factory"),
+    ).outerjoin(Terminal, Terminal.id == TimeEvent.terminal_id).outerjoin(
+        cell_identity,
+        (cell_identity.c.factory == func.coalesce(Terminal.factory_code, "DEFAULT"))
+        & (cell_identity.c.badge == TimeEvent.reporter_id)
+        & (cell_identity.c.position == 1),
+    ).where(TimeEvent.state_effect.in_(["ENTER", "EXIT"]))
+    perimeter_identity = identity_ranked.alias("perimeter_identity")
+    perimeter_events = select(
+        FactoryPerimeterEvent.id.label("id"), FactoryPerimeterEvent.reporter_id.label("badge"),
+        func.coalesce(FactoryPerimeterEvent.person_id, perimeter_identity.c.person_id).label("person_id"),
+        func.coalesce(FactoryPerimeterEvent.source_person_id, perimeter_identity.c.source_person_id).label("source_person_id"),
+        func.coalesce(FactoryPerimeterEvent.credential_id, perimeter_identity.c.credential_id).label("credential_id"),
+        Terminal.code.label("clock"), FactoryPerimeterEvent.direction.label("effect"),
+        FactoryPerimeterEvent.event_datetime.label("at"), FactoryPerimeterEvent.event_datetime.label("created"),
+        literal("PERIMETER").label("kind"), literal(1).label("final_movement"),
+        FactoryPerimeterEvent.factory_code.label("factory"),
+    ).join(Terminal, Terminal.id == FactoryPerimeterEvent.terminal_id).outerjoin(
+        perimeter_identity,
+        (perimeter_identity.c.factory == FactoryPerimeterEvent.factory_code)
+        & (perimeter_identity.c.badge == FactoryPerimeterEvent.reporter_id)
+        & (perimeter_identity.c.position == 1),
+    )
+    combined = union_all(cell_events, perimeter_events).subquery()
+    ranked = select(
+        combined,
+        func.coalesce(combined.c.person_id, combined.c.badge).label("identity_key"),
+        func.row_number().over(
+            partition_by=func.coalesce(combined.c.person_id, combined.c.badge),
+            order_by=(combined.c.at.desc(), combined.c.final_movement.desc(), combined.c.created.desc(), combined.c.id.desc()),
+        ).label("position"),
+    ).subquery()
+    cell_rows = cell_events.subquery("cell_rows")
+    perimeter_rows = perimeter_events.subquery("perimeter_rows")
+    cell_ranked = select(
+        cell_rows.c.factory.label("factory"),
+        func.coalesce(cell_rows.c.person_id, cell_rows.c.badge).label("identity_key"),
+        cell_rows.c.effect.label("effect"),
+        func.row_number().over(
+            partition_by=(cell_rows.c.factory, func.coalesce(cell_rows.c.person_id, cell_rows.c.badge)),
+            order_by=(cell_rows.c.at.desc(), cell_rows.c.created.desc(), cell_rows.c.id.desc()),
+        ).label("position"),
+    ).subquery()
+    perimeter_ranked = select(
+        perimeter_rows.c.factory.label("factory"),
+        func.coalesce(perimeter_rows.c.person_id, perimeter_rows.c.badge).label("identity_key"),
+        perimeter_rows.c.effect.label("effect"),
+        func.row_number().over(
+            partition_by=(perimeter_rows.c.factory, func.coalesce(perimeter_rows.c.person_id, perimeter_rows.c.badge)),
+            order_by=(perimeter_rows.c.at.desc(), perimeter_rows.c.id.desc()),
+        ).label("position"),
+    ).subquery()
     cell_state = case((cell_ranked.c.effect == "ENTER", "INSIDE"), else_="OUTSIDE")
     perimeter_state = case((FactoryPerimeterSettings.enabled.is_(True),
-        case((factory_ranked.c.effect == "ENTER", "INSIDE"), else_="OUTSIDE")), else_=None)
+        case((perimeter_ranked.c.effect == "ENTER", "INSIDE"), else_="OUTSIDE")), else_=None)
     query = select(
         ranked,
+        ranked.c.badge.label("state_identity_key"),
         cell_state.label("cell_state"),
         perimeter_state.label("factory_state"),
-        identity_ranked.c.source_person_id,
-        identity_ranked.c.person_id,
-        identity_ranked.c.credential_id,
+    ).select_from(ranked).outerjoin(
+        cell_ranked,
+        (cell_ranked.c.factory == ranked.c.factory)
+        & (cell_ranked.c.identity_key == ranked.c.identity_key)
+        & (cell_ranked.c.position == 1),
     ).outerjoin(
-        cell_ranked, (cell_ranked.c.badge == ranked.c.badge) & (cell_ranked.c.position == 1),
-    ).outerjoin(factory_ranked,
-        (factory_ranked.c.badge == ranked.c.badge) & (factory_ranked.c.factory == ranked.c.factory) & (factory_ranked.c.position == 1),
-    ).outerjoin(FactoryPerimeterSettings, FactoryPerimeterSettings.factory_code == ranked.c.factory).outerjoin(
-        identity_ranked,
-        (identity_ranked.c.factory == ranked.c.factory)
-        & (identity_ranked.c.badge == ranked.c.badge)
-        & (identity_ranked.c.position == 1),
+        perimeter_ranked,
+        (perimeter_ranked.c.factory == ranked.c.factory)
+        & (perimeter_ranked.c.identity_key == ranked.c.identity_key)
+        & (perimeter_ranked.c.position == 1),
+    ).outerjoin(FactoryPerimeterSettings, FactoryPerimeterSettings.factory_code == ranked.c.factory
     ).where(ranked.c.position == 1)
     if terminal_code:
         query = query.where(ranked.c.clock == terminal_code)
     if reporter_id:
         query = query.where(or_(
             ranked.c.badge.contains(reporter_id, autoescape=True),
-            identity_ranked.c.person_id.contains(reporter_id, autoescape=True),
-            identity_ranked.c.credential_id.contains(reporter_id, autoescape=True),
+            ranked.c.person_id.contains(reporter_id, autoescape=True),
+            ranked.c.credential_id.contains(reporter_id, autoescape=True),
+            ranked.c.source_person_id.contains(reporter_id, autoescape=True),
         ))
     if worker_state:
         query = query.where(cell_state == worker_state)
     if factory_state:
-        query = query.where(perimeter_state == factory_state)
+        query = query.where(FactoryPerimeterSettings.enabled.is_(True), perimeter_state == factory_state)
     total = _total(db, query)
-    rows = db.execute(query.order_by(ranked.c.badge).offset(offset).limit(limit)).all()
+    rows = db.execute(query.order_by(ranked.c.badge, ranked.c.at.desc(), ranked.c.factory).offset(offset).limit(limit)).all()
     enabled = bool(db.scalar(select(func.count()).select_from(FactoryPerimeterSettings).where(FactoryPerimeterSettings.enabled.is_(True))))
-    return CardPage(items=[CardState(
-        reporter_id=row.badge,
-        source_person_id=row.source_person_id,
-        person_id=row.person_id,
-        credential_id=row.credential_id,
-        worker_state=row.cell_state,
-        factory_code=row.factory,
-        factory_state=row.factory_state,
-        event=EventSnapshot.model_validate(db.get(TimeEvent, row.id)) if row.kind == "CELL" else _perimeter_snapshot(db, db.get(FactoryPerimeterEvent, row.id)),
-    ) for row in rows], total=total, factory_perimeter_enabled=enabled)
-
+    items = []
+    for row in rows:
+        event = EventSnapshot.model_validate(db.get(TimeEvent, row.id)) if row.kind == "CELL" else _perimeter_snapshot(db, db.get(FactoryPerimeterEvent, row.id))
+        items.append(CardState(
+            reporter_id=row.state_identity_key,
+            source_person_id=row.source_person_id or event.source_person_id,
+            person_id=row.person_id or event.person_id,
+            credential_id=row.credential_id or event.credential_id,
+            worker_state=row.cell_state,
+            factory_code=row.factory,
+            factory_state=row.factory_state,
+            event=event,
+        ))
+    return CardPage(items=items, total=total, factory_perimeter_enabled=enabled)
 
 @router.get("/attempts", response_model=AttemptPage)
 def attempts(
