@@ -128,6 +128,31 @@ def test_reader_with_multiple_card_rows_uses_unique_person_and_unique_current_ca
     assert current_cards("3627") == []  # no current credential means caller returns UNKNOWN
 
 
+def test_snapshot_resolver_batches_latest_movements_by_physical_card_no():
+    from app.services.factory_presence import _LATEST_CURRENT_CARD_MOVEMENTS_SQL, _source_resolver_from_snapshot
+
+    class Cursor:
+        def __init__(self):
+            self.queries = []
+        def execute(self, sql, *params):
+            self.queries.append((sql, params))
+            return self
+        def fetchall(self):
+            if self.queries[-1][0] == _LATEST_CURRENT_CARD_MOVEMENTS_SQL:
+                return [("CARD-3627", "txn-1", datetime.now(timezone.utc), "2")]
+            return []
+
+    cursor = Cursor()
+    source_identity = PersonIdentity("SEC-3627", "3627", "CARDROW-CARD-3627", "CARD-3627", "0537312724")
+    by_reader, cards, movement, _orphan = _source_resolver_from_snapshot(cursor, [source_identity])
+    assert by_reader("0537312724").person_id == "3627"
+    assert cards("3627")[0].credential_id == "CARD-3627"
+    assert movement("CARD-3627")["state"] == "INSIDE"
+    sql = cursor.queries[0][0]
+    assert "JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no" in sql
+    assert "WHERE t.card_no = ?" not in sql
+
+
 def test_historical_reader_resolves_person_then_uses_replacement_current_card(session):
     at = datetime(2026, 11, 2, 9, tzinfo=timezone.utc)
     session.add(PersonBadgeAssignment(factory_code="ARGANDA", source_system="SQLSERVER_SECURITY_DB",

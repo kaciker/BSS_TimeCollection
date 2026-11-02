@@ -39,6 +39,24 @@ FROM dbo.acc_transaction AS t
 WHERE t.card_no = ? AND t.acc_zone_code IN (1, 2)
 ORDER BY t.event_time DESC, t.id DESC
 """
+_LATEST_CURRENT_CARD_MOVEMENTS_SQL = """
+WITH current_cards AS (
+    SELECT DISTINCT pc.card_no
+    FROM dbo.pers_card AS pc
+    WHERE pc.card_state = 1
+      AND (pc.start_time IS NULL OR pc.start_time <= GETDATE())
+      AND (pc.end_time IS NULL OR pc.end_time > GETDATE())
+), latest AS (
+    SELECT t.card_no, CAST(t.id AS nvarchar(128)) AS transaction_id,
+           t.event_time, t.acc_zone_code,
+           ROW_NUMBER() OVER (PARTITION BY t.card_no ORDER BY t.event_time DESC, t.id DESC) AS position
+    FROM current_cards AS pc
+    JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no
+    WHERE t.acc_zone_code IN (1, 2)
+)
+SELECT card_no, transaction_id, event_time, acc_zone_code
+FROM latest WHERE position = 1
+"""
 _NORMALIZED_READER_SQL = """
 SELECT DISTINCT pae.attr_value4, p.id, p.pin, pc.id, pc.card_no, pc.person_pin
 FROM dbo.pers_attribute_ext AS pae
@@ -195,6 +213,40 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity]):
     reader_cache: dict[str, PersonIdentity | PersonIdentityError] = {}
     movement_cache: dict[str, dict | None | PresenceSourceError] = {}
     orphan_cache: dict[str, bool | PresenceSourceError] = {}
+
+    # Resolve the latest movement for all current credentials in one indexed
+    # SECURITY_DB query. Per-card round trips made a full reconciliation scale
+    # with the number of employees and could take several minutes.
+    try:
+        movement_rows = cursor.execute(_LATEST_CURRENT_CARD_MOVEMENTS_SQL).fetchall()
+        for row in movement_rows:
+            credential = _safe_text(row[0])
+            if not credential:
+                continue
+            zone = int(row[3])
+            when = row[2]
+            if zone not in (1, 2) or not isinstance(when, datetime):
+                movement_cache[credential] = None
+                continue
+            if when.tzinfo is None:
+                when = when.replace(tzinfo=ZoneInfo(settings.event_timezone))
+            age = datetime.now(timezone.utc) - when.astimezone(timezone.utc)
+            if age < -timedelta(seconds=60):
+                state = "UNKNOWN"
+            elif zone == 1:
+                state = "OUTSIDE"
+            elif age > timedelta(hours=settings.perimeter_external_max_age_hours):
+                state = "UNKNOWN"
+            else:
+                state = "INSIDE"
+            movement_cache[credential] = {
+                "state": state, "at": when, "transaction_id": _safe_text(row[1]),
+            }
+    except Exception as exc:
+        error = PresenceSourceError(_safe_odbc_category(exc, phase="query"))
+        for identity in identities:
+            if identity.credential_id:
+                movement_cache[identity.credential_id] = error
 
     def by_reader(reader_id: str) -> PersonIdentity:
         result = reader_cache.get(reader_id)
