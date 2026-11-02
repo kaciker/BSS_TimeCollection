@@ -15,6 +15,7 @@ from app.models.terminal import Terminal
 from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
 from app.models.factory import Factory
+from app.models.person_badge_assignment import PersonBadgeAssignment
 from app.services.external_perimeter import reader_number_to_attr_value
 from app.services.external_perimeter_sync import (
     attr_value_to_reader_number,
@@ -233,6 +234,66 @@ def test_current_state_fails_closed_for_ambiguous_badge_mapping():
         ("30", "good", 57, at, at, 2, reader_number_to_attr_value("0582609699"), 1, False, "CARD-B"),
     ])
     assert [item["reporter_id"] for item in rows] == ["0582609699"]
+
+
+def test_badge_scoped_state_uses_unique_identity_and_physical_card_query(monkeypatch):
+    from app.services.external_perimeter_sync import external_current_states
+    from app.services.person_identity import PersonIdentity
+
+    at = datetime(2026, 10, 30, 9, 30)
+    calls = []
+
+    class Cursor:
+        def execute(self, sql, *params):
+            calls.append((sql, params))
+            return self
+
+        def fetchone(self):
+            return ("source-id", "source-key", 9001, at, at, "1")
+
+        def fetchall(self):
+            return [("raw", "source-person", "person", "card-row", "physical-card", "raw")]
+
+    class Connection:
+        def cursor(self):
+            return Cursor()
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("app.services.external_perimeter_sync._connect", Connection)
+    monkeypatch.setattr(
+        "app.services.external_perimeter_sync.resolve_person_identity",
+        lambda badge, **kwargs: PersonIdentity("source-person", "person", "card-row", "physical-card", badge),
+    )
+
+    rows = external_current_states(badges={"0582609699"})
+
+    assert len(rows) == 1
+    assert rows[0]["reporter_id"] == "0582609699"
+    assert rows[0]["zone_code"] == 1
+    assert calls[-1][1] == ("physical-card",)
+    assert "WHERE t.card_no = ?" in calls[-1][0]
+
+
+def test_reconcile_uses_resolved_current_card_states_to_repair_stale_inside(db, monkeypatch):
+    from app.services.external_perimeter_sync import external_current_states
+
+    config, _, _ = _seed_active_cell(db)
+    terminal = ensure_virtual_terminal(db, "ARGANDA")
+    stale = datetime(2026, 10, 30, 9, 0, tzinfo=LOCAL_TZ)
+    exited = stale + timedelta(minutes=5)
+    mirror_external_event(db, config, terminal, _state(150, stale, 2, "2959281396"))
+    db.commit()
+
+    monkeypatch.setattr("app.services.external_perimeter_sync.external_current_states", lambda **kwargs: [
+        {**_state(180, exited, 1, "2959281396"), "source_transaction_id": "source-180"}
+    ])
+
+    assert reconcile_external_factory(db, config) == 1
+    events = db.scalars(select(FactoryPerimeterEvent).order_by(FactoryPerimeterEvent.event_datetime)).all()
+    assert [event.direction for event in events] == ["ENTER", "EXIT"]
+    assert events[-1].event_datetime == exited.replace(tzinfo=None)
 
 
 def test_naive_security_db_datetime_attaches_madrid_and_preserves_instant():

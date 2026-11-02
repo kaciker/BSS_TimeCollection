@@ -13,6 +13,7 @@ from app.domain.enums import IdentificationMethod
 from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
 from app.models.terminal import Terminal
 from app.models.factory import Factory
+from app.services.person_identity import PersonIdentityError, _RESOLVE_SQL, resolve_person_identity
 from app.services.external_perimeter import (
     ExternalPerimeterError,
     _connection_string,
@@ -94,6 +95,18 @@ ORDER BY event_time, source_transaction_id
 """
 
 _CURRENT_STATES_SQL = _CURRENT_INSIDE_SQL.replace(" AND acc_zone_code = 2", "")
+
+# `attr_value4` is not a canonical badge column. SECURITY_DB stores both raw
+# and byte-swapped values, and the same card transaction can join to multiple
+# historical attribute rows. Resolve known BSS badge identities first, then
+# query the current physical card directly.
+_LATEST_CARD_EVENT_SQL = """
+SELECT TOP (1) CAST(t.id AS nvarchar(128)), t.unique_key, t.log_id,
+       COALESCE(t.create_time, t.event_time), t.event_time, t.acc_zone_code
+FROM dbo.acc_transaction AS t
+WHERE t.card_no = ? AND t.acc_zone_code IN (1, 2)
+ORDER BY t.event_time DESC, t.id DESC
+"""
 
 
 def attr_value_to_reader_number(value: str) -> str:
@@ -578,8 +591,67 @@ def sync_external_factory(db: Session, config: FactoryPerimeterSettings) -> int:
     return mirrored
 
 
-def external_current_states(*, query=None) -> list[dict]:
+def external_current_states(
+    *, query=None, badges: set[str] | list[str] | None = None,
+    factory_code: str | None = None, db: Session | None = None,
+) -> list[dict]:
     """Return the latest resolvable real movement per badge from SECURITY_DB."""
+    if badges is not None:
+        if query is not None:
+            rows = query(badges)
+            return [_normalize_external_row(row, reporter_id=badge) for badge, row in rows]
+
+        connection = _connect()
+        try:
+            cursor = connection.cursor()
+            latest: dict[str, dict] = {}
+            unresolved: dict[str, int] = {}
+            for badge in sorted({str(value) for value in badges if value}):
+                try:
+                    identity = resolve_person_identity(
+                        badge,
+                        query=lambda raw_value, converted: cursor.execute(
+                            _RESOLVE_SQL.format(
+                                placeholders=", ".join("?" for _ in (raw_value, converted))
+                            ),
+                            raw_value, converted,
+                        ).fetchall(),
+                    )
+                except PersonIdentityError as exc:
+                    unresolved[exc.category] = unresolved.get(exc.category, 0) + 1
+                    continue
+
+                row = cursor.execute(_LATEST_CARD_EVENT_SQL, identity.credential_id).fetchone()
+                if row is None:
+                    unresolved["NO_SOURCE_MOVEMENT"] = unresolved.get("NO_SOURCE_MOVEMENT", 0) + 1
+                    continue
+                try:
+                    zone_code = int(row[5])
+                    event_time = row[4]
+                    if zone_code not in (1, 2) or not isinstance(event_time, datetime):
+                        unresolved["INVALID_RESPONSE"] = unresolved.get("INVALID_RESPONSE", 0) + 1
+                        continue
+                    if event_time.tzinfo is None:
+                        event_time = event_time.replace(tzinfo=ZoneInfo(settings.event_timezone))
+                    latest[badge] = {
+                        "source_transaction_id": str(row[0]) if row[0] is not None else None,
+                        "unique_key": str(row[1]) if row[1] is not None else None,
+                        "log_id": int(row[2]) if row[2] is not None else None,
+                        "source_created_at": row[3],
+                        "event_time": event_time,
+                        "zone_code": zone_code,
+                        "reporter_id": badge,
+                    }
+                except (TypeError, ValueError, IndexError):
+                    unresolved["INVALID_RESPONSE"] = unresolved.get("INVALID_RESPONSE", 0) + 1
+        except Exception as exc:
+            raise ExternalPerimeterError(_safe_odbc_category(exc, phase="query")) from None
+        finally:
+            connection.close()
+        if unresolved:
+            logger.warning("External badge-scoped reconciliation unresolved totals=%s", unresolved)
+        return list(latest.values())
+
     if query is not None:
         rows = query()
     else:
@@ -668,10 +740,6 @@ def reconcile_external_factory(
     """Repair divergent local states from authoritative SECURITY_DB current state."""
     if not config.enabled or config.badge_source != "EXTERNAL":
         return 0
-    sql_by_badge = {
-        item["reporter_id"]: item
-        for item in external_current_states()
-    }
     local_events = db.scalars(
         select(FactoryPerimeterEvent)
         .where(FactoryPerimeterEvent.factory_code == config.factory_code)
@@ -680,6 +748,16 @@ def reconcile_external_factory(
     local_by_badge: dict[str, FactoryPerimeterEvent] = {}
     for event in local_events:
         local_by_badge.setdefault(event.reporter_id, event)
+
+    # Resolve only badge IDs already known to BSS. SECURITY_DB attribute values
+    # are heterogeneous, so current presence is established through each
+    # unambiguous person/card identity and its physical card number.
+    sql_by_badge = {
+        item["reporter_id"]: item
+        for item in external_current_states(
+            badges=set(local_by_badge), factory_code=config.factory_code, db=db,
+        )
+    }
 
     # Do not materialize outside-only badges. Reconcile only known local occupants
     # and current SQL occupants that need an ENTER snapshot.
