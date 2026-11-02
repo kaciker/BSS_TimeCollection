@@ -15,6 +15,7 @@ from app.models import (
     WorkerRuntimeMetrics,
     FactoryPerimeterEvent,
     FactoryPerimeterSettings,
+    FactoryPresenceProjection,
     Factory,
     InstallationSettings,
 )  # noqa: F401

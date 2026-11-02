@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import case, func, literal, or_, select, union_all
-from sqlalchemy.orm import Session
+from sqlalchemy import String, case, cast, func, literal, or_, select, union_all
+from sqlalchemy.orm import Session, aliased
 
 from app.core.config import settings
 from app.db.session import get_db
@@ -11,7 +11,7 @@ from app.domain.enums import DeliveryStatus
 from app.integrations.oracle.client import OracleClient, OracleMappingError
 from app.models.person_badge_assignment import PersonBadgeAssignment
 from app.models.time_event import TimeEvent
-from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
+from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings, FactoryPresenceProjection
 from app.models.terminal import Terminal
 from app.models.transmission_attempt import TransmissionAttempt
 from app.schemas.monitoring import (
@@ -102,7 +102,7 @@ def cards(
     terminal_code: str | None = None,
     reporter_id: str | None = None,
     worker_state: Literal["INSIDE", "OUTSIDE"] | None = None,
-    factory_state: Literal["INSIDE", "OUTSIDE"] | None = None,
+    factory_state: Literal["INSIDE", "OUTSIDE", "UNKNOWN"] | None = None,
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -186,13 +186,36 @@ def cards(
         ).label("position"),
     ).subquery()
     cell_state = case((cell_ranked.c.effect == "ENTER", "INSIDE"), else_="OUTSIDE")
-    perimeter_state = case((FactoryPerimeterSettings.enabled.is_(True),
-        case((perimeter_ranked.c.effect == "ENTER", "INSIDE"), else_="OUTSIDE")), else_=None)
+    projection_key = case(
+        (ranked.c.person_id.is_not(None), literal("PERSON:").concat(cast(ranked.c.person_id, String))),
+        (ranked.c.badge.is_not(None), literal("READER:").concat(cast(ranked.c.badge, String))),
+        else_=literal(""),
+    )
+    # Legacy badges without canonical person_id resolve through their observed
+    # Reader ID projection. A canonical person's UNKNOWN projection remains
+    # authoritative and is not overridden by a reader-level row.
+    reader_projection = aliased(FactoryPresenceProjection)
+    use_reader_projection = ranked.c.person_id.is_(None)
+    factory_state_value = case((use_reader_projection, reader_projection.state), else_=FactoryPresenceProjection.state)
+    factory_verified_value = case((use_reader_projection, reader_projection.verified_at), else_=FactoryPresenceProjection.verified_at)
+    factory_movement_value = case((use_reader_projection, reader_projection.source_movement_at), else_=FactoryPresenceProjection.source_movement_at)
+    factory_resolution_value = case((use_reader_projection, reader_projection.resolution_code), else_=FactoryPresenceProjection.resolution_code)
+    factory_reason_value = func.coalesce(
+        case((use_reader_projection, reader_projection.unresolved_reason), else_=FactoryPresenceProjection.unresolved_reason),
+        "NO_PROJECTION",
+    )
     query = select(
         ranked,
         ranked.c.badge.label("state_identity_key"),
         cell_state.label("cell_state"),
-        perimeter_state.label("factory_state"),
+        case(
+            (FactoryPerimeterSettings.enabled.is_(True), func.coalesce(factory_state_value, "UNKNOWN")),
+            else_=None,
+        ).label("factory_state"),
+        factory_verified_value.label("factory_verified_at"),
+        factory_movement_value.label("factory_movement_at"),
+        factory_resolution_value.label("factory_resolution"),
+        factory_reason_value.label("factory_reason"),
     ).select_from(ranked).outerjoin(
         cell_ranked,
         (cell_ranked.c.factory == ranked.c.factory)
@@ -204,6 +227,15 @@ def cards(
         & (perimeter_ranked.c.identity_key == ranked.c.identity_key)
         & (perimeter_ranked.c.position == 1),
     ).outerjoin(FactoryPerimeterSettings, FactoryPerimeterSettings.factory_code == ranked.c.factory
+    ).outerjoin(
+        FactoryPresenceProjection,
+        (FactoryPresenceProjection.factory_code == ranked.c.factory)
+        & (FactoryPresenceProjection.tracking_key == projection_key),
+    ).outerjoin(
+        reader_projection,
+        use_reader_projection
+        & (reader_projection.factory_code == ranked.c.factory)
+        & (reader_projection.tracking_key == literal("READER:").concat(cast(ranked.c.badge, String))),
     ).where(ranked.c.position == 1)
     if terminal_code:
         query = query.where(ranked.c.clock == terminal_code)
@@ -217,7 +249,10 @@ def cards(
     if worker_state:
         query = query.where(cell_state == worker_state)
     if factory_state:
-        query = query.where(FactoryPerimeterSettings.enabled.is_(True), perimeter_state == factory_state)
+        query = query.where(
+            FactoryPerimeterSettings.enabled.is_(True),
+            func.coalesce(factory_state_value, "UNKNOWN") == factory_state,
+        )
     total = _total(db, query)
     rows = db.execute(query.order_by(ranked.c.badge, ranked.c.at.desc(), ranked.c.factory).offset(offset).limit(limit)).all()
     enabled = bool(db.scalar(select(func.count()).select_from(FactoryPerimeterSettings).where(FactoryPerimeterSettings.enabled.is_(True))))
@@ -232,6 +267,10 @@ def cards(
             worker_state=row.cell_state,
             factory_code=row.factory,
             factory_state=row.factory_state,
+            factory_verified_at=row.factory_verified_at,
+            factory_movement_at=row.factory_movement_at,
+            factory_resolution=row.factory_resolution,
+            factory_reason=row.factory_reason if row.factory_state == "UNKNOWN" else None,
             event=event,
         ))
     return CardPage(items=items, total=total, factory_perimeter_enabled=enabled)

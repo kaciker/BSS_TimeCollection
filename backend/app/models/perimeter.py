@@ -55,6 +55,28 @@ class FactoryPerimeterEvent(Base):
     )
 
 
+class FactoryPresenceProjection(Base):
+    """Current authoritative physical presence, separate from movement history."""
+
+    __tablename__ = "factory_presence_projections"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    factory_code: Mapped[str] = mapped_column(String(64), ForeignKey("factories.code", ondelete="RESTRICT"), nullable=False)
+    tracking_key: Mapped[str] = mapped_column(String(320), nullable=False)
+    person_id: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    reader_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    credential_id: Mapped[str | None] = mapped_column(String(250), nullable=True, index=True)
+    state: Mapped[str] = mapped_column(String(8), nullable=False)
+    source_system: Mapped[str] = mapped_column(String(64), nullable=False)
+    resolution_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_movement_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    verified_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False)
+    unresolved_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    __table_args__ = (
+        CheckConstraint("state IN ('INSIDE', 'OUTSIDE', 'UNKNOWN')", name="ck_factory_presence_state"),
+        Index("uq_factory_presence_tracking", "factory_code", "tracking_key", unique=True),
+    )
+
+
 @event.listens_for(Session, "before_flush")
 def snapshot_current_person_badge_identity(session, flush_context, instances) -> None:
     """Freeze the active local identity before new perimeter rows are inserted."""

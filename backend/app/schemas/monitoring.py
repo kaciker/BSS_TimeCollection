@@ -57,6 +57,10 @@ class CardState(BaseModel):
     worker_state: str
     factory_code: str | None = None
     factory_state: str | None = None
+    factory_verified_at: datetime | None = None
+    factory_movement_at: datetime | None = None
+    factory_resolution: str | None = None
+    factory_reason: str | None = None
     event: EventSnapshot
 
 
