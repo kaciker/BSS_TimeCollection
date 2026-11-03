@@ -19,8 +19,9 @@ MACHINES = {
     "4393": {"description": "T439.3 Recambios", "work_area": "439"},
 }
 CELLS = {
-    # The workbook identifies this cell as G.V. D34 under MACHINE 4391.
+    # Oracle exposes one P24 G.V. cell; BSS right/left details remain local.
     "54Q": {"description": "G.V. D34", "machine": "4391"},
+    "54T": {"description": "G.V. P24", "machine": "4391"},
 }
 
 
