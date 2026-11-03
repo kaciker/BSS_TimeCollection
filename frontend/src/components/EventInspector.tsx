@@ -10,7 +10,7 @@ export function EventInspector({ detail, onClose }: { detail: EventDetail; onClo
   const fields: [string, string | number | null | undefined][] = [
     ["Event ID", event.id], ["Request / requestNumber", event.request_number],
     ["Clock", event.terminal_code], ["deviceId", event.device_id],
-    ["RFID Value", event.reporter_id], ["Person ID", event.person_id],
+    [event.identification_method === "KEYPAD" ? "Employee ID" : "RFID Value", event.reporter_id], ["Person ID", event.person_id],
     ["SECURITY_DB person PK", event.source_person_id], ["Credential / card", event.credential_id],
     ["Oracle reporterId", event.oracle_reporter_id], ["Oracle reporterIdType", event.oracle_reporter_id_type],
     ["Oracle mapping issue", event.oracle_mapping_error], ["PayrollTimeType", event.oracle_payroll_time_type],

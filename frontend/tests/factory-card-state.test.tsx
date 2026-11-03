@@ -42,7 +42,7 @@ it('hides factory column and filter when perimeter is disabled, including empty 
 it('opens event details in a scrollable modal and closes with Escape or outside click',async()=>{
  localStorage.setItem('bss-timecollection-language','en');
  const event={id:'event-1',terminal_code:'CLOCK',event_datetime:'2026-10-20T10:00:00Z',action_label:'Exit',delivery_status:'PENDING'};
- vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:url.includes('/events/event-1')?{event:{...event,reporter_id:'001',event_kind:'CELL'},attempts:[],oracle_enabled:false,oracle_payload_preview:{ok:true}}:{factory_perimeter_enabled:false,total:1,items:[{reporter_id:'001',worker_state:'OUTSIDE',event}]} as never);
+ vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:url.includes('/events/event-1')?{event:{...event,reporter_id:'001',event_kind:'CELL',identification_method:'RFID'},attempts:[],oracle_enabled:false,oracle_payload_preview:{ok:true}}:{factory_perimeter_enabled:false,total:1,items:[{reporter_id:'001',worker_state:'OUTSIDE',event}]} as never);
  render(<MonitoringPanel terminals={[]}/>);
  fireEvent.click(await screen.findByRole('button',{name:'Details'}));
  const dialog=await screen.findByRole('dialog',{name:'Event details'}) as HTMLDialogElement;
