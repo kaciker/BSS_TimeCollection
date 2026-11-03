@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 12289)
-Total output lines: 999
-
 """Reconcile current physical factory presence independently of movement history."""
 from __future__ import annotations
 
@@ -531,7 +528,27 @@ def _source_resolver(cursor, config=None):
                         invalid = False
                         for row in rows:
                             raw_representation = _safe_text(row[0])
-                            if raw_representati…289 tokens truncated…      identity.source_person_id for identity in identities
+                            if raw_representation is None:
+                                continue
+                            try:
+                                matched_representation = str(int(raw_representation)) in {
+                                    str(int(candidate)) for candidate in candidates
+                                }
+                            except ValueError:
+                                matched_representation = False
+                            if not matched_representation:
+                                continue
+                            if not raw_representation.isascii() or not raw_representation.isdecimal():
+                                invalid = True
+                                continue
+                            identity = _normalize_row(row[1:], reader_id=digits)
+                            if identity is None:
+                                invalid = True
+                            else:
+                                identities.add(identity)
+                        people = {identity.person_id for identity in identities}
+                        if identities and len(people) == 1 and len(source_people := {
+                            identity.source_person_id for identity in identities
                         }) == 1 and not invalid:
                             person_id = next(iter(people))
                             result = PersonIdentity(
