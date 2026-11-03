@@ -664,3 +664,70 @@ def test_reconcile_recovers_incremental_missed_movement_when_mapping_resolves(db
     ])
     assert reconcile_external_factory(db, config) == 1
     assert db.scalar(select(FactoryPerimeterEvent).where(FactoryPerimeterEvent.reporter_id == "0582609699")).direction == "ENTER"
+
+
+def test_clock_correction_preserves_source_time_and_creates_corrected_auto_exit_once(db):
+    config, _, cell_enter = _seed_active_cell(db, at=datetime(2026, 11, 3, 10, 0, tzinfo=LOCAL_TZ))
+    config.source_clock_correction_enabled = True
+    config.source_clock_offset_minutes = 60
+    terminal = ensure_virtual_terminal(db, "ARGANDA")
+    raw_exit = datetime(2026, 11, 3, 11, 5, tzinfo=LOCAL_TZ)
+    item = {"source_transaction_id": "clock-corrected-exit", "unique_key": "clock-exit",
+            "log_id": 9001, "event_time": raw_exit, "zone_code": 1,
+            "reporter_id": "2959281396"}
+    assert mirror_external_event(db, config, terminal, item)
+    db.commit()
+    event = db.scalar(select(FactoryPerimeterEvent).where(
+        FactoryPerimeterEvent.source_transaction_id == "clock-corrected-exit"))
+    assert event.source_event_datetime.replace(tzinfo=LOCAL_TZ) == raw_exit
+    assert event.effective_event_datetime.replace(tzinfo=LOCAL_TZ) == raw_exit - timedelta(hours=1)
+    assert event.source_clock_offset_minutes == 60
+    assert event.auto_cell_exit_event_id
+    cell_exit = db.get(TimeEvent, event.auto_cell_exit_event_id)
+    assert cell_exit.event_datetime.replace(tzinfo=LOCAL_TZ) == raw_exit - timedelta(hours=1)
+    assert not mirror_external_event(db, config, terminal, item)
+    assert db.scalar(select(func.count()).select_from(TimeEvent)) == 2
+
+
+def test_security_db_import_remains_local_only_for_oracle(db):
+    from app.models.transmission_attempt import TransmissionAttempt
+    config, _, _ = _seed_active_cell(db)
+    terminal = ensure_virtual_terminal(db, "ARGANDA")
+    at = datetime.now(timezone.utc) - timedelta(minutes=2)
+    assert mirror_external_event(db, config, terminal, {
+        "source_transaction_id": "local-perimeter-only", "unique_key": "local-only",
+        "log_id": 9010, "event_time": at, "zone_code": 2,
+        "reporter_id": "2959281396",
+    })
+    db.commit()
+    external = db.scalar(select(FactoryPerimeterEvent).where(
+        FactoryPerimeterEvent.source_transaction_id == "local-perimeter-only"))
+    assert external.source_system == "SQLSERVER_SECURITY_DB"
+    assert external.auto_cell_exit_event_id is None
+    assert db.scalar(select(func.count()).select_from(TransmissionAttempt)) == 0
+
+
+def test_events_imported_while_correction_disabled_are_not_reinterpreted_later(db):
+    config, _, _ = _seed_active_cell(db)
+    config.source_clock_correction_enabled = False
+    config.source_clock_offset_minutes = 60
+    terminal = ensure_virtual_terminal(db, "ARGANDA")
+    raw = datetime.now(LOCAL_TZ) - timedelta(minutes=2)
+    item = {"source_transaction_id": "disabled-period-event", "unique_key": "disabled",
+            "log_id": 9020, "event_time": raw, "zone_code": 2,
+            "reporter_id": "2959281396"}
+    assert mirror_external_event(db, config, terminal, item)
+    db.commit()
+    event = db.scalar(select(FactoryPerimeterEvent).where(
+        FactoryPerimeterEvent.source_transaction_id == "disabled-period-event"))
+    assert event.source_clock_correction_pending is False
+    assert event.source_clock_correction_applied is False
+    assert event.effective_event_datetime.replace(tzinfo=LOCAL_TZ) == raw
+
+    config.source_clock_correction_enabled = True
+    config.source_clock_offset_minutes = 60
+    from app.routers.perimeter import set_config, FactoryConfigUpdate
+    # The legacy transition applies only to rows explicitly marked pending by
+    # migration; this newly imported event remains unchanged.
+    assert not event.source_clock_correction_pending
+    assert event.effective_event_datetime.replace(tzinfo=LOCAL_TZ) == raw

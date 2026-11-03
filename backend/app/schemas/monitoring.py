@@ -12,6 +12,9 @@ class EventSnapshot(EventRead):
     factory_code: str | None = None
     correlation_id: str | None = None
     auto_cell_exit_event_id: str | None = None
+    source_event_datetime: datetime | None = None
+    effective_event_datetime: datetime | None = None
+    source_clock_offset_minutes: int | None = None
     terminal_id: int
     action_id: int | None
     request_number: str | None = None

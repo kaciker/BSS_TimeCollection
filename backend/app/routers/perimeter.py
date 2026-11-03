@@ -4,7 +4,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -13,7 +13,10 @@ from app.models.terminal import Terminal
 from app.models.action import Action
 from app.models.factory import Factory
 from app.services.perimeter_service import settings_for, is_inside
-from app.services.external_perimeter import connector_status, test_external_connection, check_external_presence
+from app.services.external_perimeter import (
+    connector_status, test_external_connection, check_external_presence,
+    normalize_security_db_event_time,
+)
 
 router = APIRouter(prefix="/api/v1/admin/perimeter", tags=["perimeter"])
 
@@ -24,6 +27,8 @@ class FactoryConfigUpdate(BaseModel):
     dedup_enabled: bool = True
     dedup_seconds: int = Field(default=5, ge=0, le=300)
     auto_exit_action_code: str | None = None
+    source_clock_correction_enabled: bool = False
+    source_clock_offset_minutes: int = Field(default=0, ge=-720, le=720)
 
 
 class TerminalRoleUpdate(BaseModel):
@@ -72,10 +77,13 @@ def external_check(factory_code: str, db: Session = Depends(get_db)):
 def external_test_badge(factory_code: str, payload: ExternalBadgeTest, db: Session = Depends(get_db)):
     _require_active_factory(db, factory_code)
     _external_factory(factory_code)
-    result = check_external_presence(payload.badge)
+    config = db.get(FactoryPerimeterSettings, factory_code)
+    result = check_external_presence(payload.badge, config=config) if config else check_external_presence(payload.badge)
     return {
         "status": result.get("status", "ERROR"),
-        "external_event_time": result.get("event_time"),
+        "external_event_time": result.get("source_event_time"),
+        "effective_event_time": result.get("event_time"),
+        "source_clock_offset_minutes": result.get("source_clock_offset_minutes", 0),
         "zone_code": result.get("zone_code"),
         "error_category": result.get("error_category"),
     }
@@ -87,7 +95,9 @@ def get_config(factory_code: str, db: Session = Depends(get_db)):
     c = settings_for(db, factory_code)
     return {"factory_code": factory_code, "enabled": c.enabled, "badge_source": c.badge_source,
             "dedup_enabled": c.dedup_enabled, "dedup_seconds": c.dedup_seconds,
-            "auto_exit_action_code": c.auto_exit_action_code}
+            "auto_exit_action_code": c.auto_exit_action_code,
+            "source_clock_correction_enabled": c.source_clock_correction_enabled,
+            "source_clock_offset_minutes": c.source_clock_offset_minutes}
 
 
 @router.put("/{factory_code}")
@@ -103,10 +113,29 @@ def set_config(factory_code: str, payload: FactoryConfigUpdate, db: Session = De
         raise HTTPException(422, "External SQL Server perimeter is configured only for ARGANDA")
     c = db.get(FactoryPerimeterSettings, factory_code)
     if c is None:
-        c = FactoryPerimeterSettings(factory_code=factory_code)
+        c = FactoryPerimeterSettings(factory_code=factory_code, source_clock_correction_enabled=False, source_clock_offset_minutes=0)
         db.add(c)
     for field, value in payload.model_dump().items():
         setattr(c, field, value)
+    if c.badge_source == "EXTERNAL" and c.source_clock_correction_enabled and c.source_clock_offset_minutes != 0:
+        # One-time transition for legacy imports: retain their original timestamp
+        # and record the corrected effective time and applied offset. Rows already
+        # annotated by a prior correction are never reinterpreted on config changes.
+        legacy_events = db.scalars(select(FactoryPerimeterEvent).where(
+            FactoryPerimeterEvent.factory_code == factory_code,
+            FactoryPerimeterEvent.source_system == "SQLSERVER_SECURITY_DB",
+            FactoryPerimeterEvent.source_clock_correction_pending.is_(True),
+        ).with_for_update()).all()
+        for event in legacy_events:
+            raw = event.source_event_datetime or event.event_datetime
+            effective, applied_offset = normalize_security_db_event_time(raw, c)
+            event.source_event_datetime = raw
+            event.effective_event_datetime = effective
+            event.source_clock_offset_minutes = applied_offset
+            event.source_clock_correction_applied = bool(
+                c.source_clock_correction_enabled and applied_offset
+            )
+            event.source_clock_correction_pending = False
     db.commit()
     return get_config(factory_code, db)
 
@@ -134,10 +163,14 @@ def presence(factory_code: str, limit: int = Query(200, ge=1, le=1000), db: Sess
     _require_factory(db, factory_code)
     rows = db.scalars(select(FactoryPerimeterEvent).where(
         FactoryPerimeterEvent.factory_code == factory_code,
-    ).order_by(FactoryPerimeterEvent.event_datetime.desc()).limit(limit)).all()
+    ).order_by(func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime).desc(), FactoryPerimeterEvent.event_datetime.desc()).limit(limit)).all()
     badges = db.scalars(select(FactoryPerimeterEvent.reporter_id).where(
         FactoryPerimeterEvent.factory_code == factory_code).distinct()).all()
     return {"factory_code": factory_code, "inside": [badge for badge in badges if is_inside(db, factory_code, badge)],
             "recent_events": [{"id": row.id, "badge": row.reporter_id, "direction": row.direction,
-                               "at": row.event_datetime, "correlation_id": row.correlation_id,
+                               "at": row.effective_event_datetime or row.event_datetime,
+                               "source_event_time": row.source_event_datetime,
+                               "source_clock_offset_minutes": row.source_clock_offset_minutes,
+                               "source_clock_correction_applied": row.source_clock_correction_applied,
+                               "correlation_id": row.correlation_id,
                                "auto_cell_exit_event_id": row.auto_cell_exit_event_id} for row in rows]}

@@ -450,3 +450,20 @@ def test_old_authoritative_enter_is_unknown_but_old_exit_remains_outside(monkeyp
     stale = datetime(2026, 10, 1, 8, tzinfo=timezone.utc)
     assert _movement(Cursor(("old-enter", stale, "2")), "CARD") ["state"] == "UNKNOWN"
     assert _movement(Cursor(("old-exit", stale, "1")), "CARD")["state"] == "OUTSIDE"
+
+
+def test_external_current_movement_uses_factory_offset_before_freshness():
+    from types import SimpleNamespace
+    from datetime import datetime, timedelta, timezone
+    from zoneinfo import ZoneInfo
+    from app.services.factory_presence import _movement_from_row
+
+    raw = datetime.now(ZoneInfo("Europe/Madrid")).replace(tzinfo=None) + timedelta(minutes=59)
+    corrected = _movement_from_row(("source-1", raw, "2"), SimpleNamespace(
+        source_clock_correction_enabled=True, source_clock_offset_minutes=60,
+    ))
+    assert corrected is not None
+    assert corrected["state"] == "INSIDE"
+    assert corrected["source_event_time"] == raw
+    assert corrected["source_clock_offset_minutes"] == 60
+    assert corrected["at"].astimezone(timezone.utc) < datetime.now(timezone.utc) + timedelta(seconds=5)

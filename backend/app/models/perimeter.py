@@ -15,6 +15,8 @@ class FactoryPerimeterSettings(Base):
     dedup_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     dedup_seconds: Mapped[int] = mapped_column(Integer, default=5)
     auto_exit_action_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_clock_correction_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    source_clock_offset_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     external_last_log_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     external_sync_window_from: Mapped[object | None] = mapped_column(DateTime(timezone=False), nullable=True)
     external_sync_cursor_created_at: Mapped[object | None] = mapped_column(DateTime(timezone=False), nullable=True)
@@ -25,6 +27,7 @@ class FactoryPerimeterSettings(Base):
     __table_args__ = (
         CheckConstraint("dedup_seconds >= 0 AND dedup_seconds <= 300", name="ck_perimeter_dedup_seconds"),
         CheckConstraint("badge_source IN ('OPEN', 'EXTERNAL')", name="ck_perimeter_badge_source"),
+        CheckConstraint("source_clock_offset_minutes >= -720 AND source_clock_offset_minutes <= 720", name="ck_perimeter_source_clock_offset"),
     )
 
 
@@ -39,6 +42,12 @@ class FactoryPerimeterEvent(Base):
     terminal_id: Mapped[int] = mapped_column(ForeignKey("terminals.id"))
     direction: Mapped[str] = mapped_column(String(8))
     event_datetime: Mapped[object] = mapped_column(DateTime(timezone=True))
+    # Preserve SECURITY_DB source time separately from the effective BSS time.
+    source_event_datetime: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    effective_event_datetime: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    source_clock_offset_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    source_clock_correction_applied: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    source_clock_correction_pending: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     correlation_id: Mapped[str] = mapped_column(String(36))
     source_system: Mapped[str | None] = mapped_column(String(64), nullable=True)
     source_transaction_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
