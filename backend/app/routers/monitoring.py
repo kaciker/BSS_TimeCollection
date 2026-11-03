@@ -150,11 +150,14 @@ def _perimeter_snapshot(db, event):
     return EventSnapshot(
         id="perimeter:" + event.id, event_kind="PERIMETER", factory_code=event.factory_code,
         correlation_id=event.correlation_id, auto_cell_exit_event_id=event.auto_cell_exit_event_id,
+        source_event_datetime=event.source_event_datetime,
+        effective_event_datetime=event.effective_event_datetime or event.event_datetime,
+        source_clock_offset_minutes=event.source_clock_offset_minutes,
         terminal_id=event.terminal_id, terminal_code=terminal.code, action_id=None,
         action_code="PERIMETER_" + event.direction, action_label="Factory " + ("entry" if event.direction == "ENTER" else "exit"),
         state_effect=event.direction, reporter_id=event.reporter_id,
         source_person_id=event.source_person_id, person_id=event.person_id, credential_id=event.credential_id,
-        event_datetime=event.event_datetime, event_timezone=settings.event_timezone,
+        event_datetime=event.effective_event_datetime or event.event_datetime, event_timezone=settings.event_timezone,
         oracle_attributes={}, created_at=event.event_datetime, delivery_status="LOCAL_ONLY",
         attempt_count=0, next_attempt_at=None, last_attempt_at=None, sent_at=None,
         oracle_request_id=None, oracle_event_id=None,
@@ -187,7 +190,7 @@ def events(
         ))
     if terminal_code:
         cell = cell.where(TimeEvent.terminal_code == terminal_code)
-    perimeter = select(FactoryPerimeterEvent.id.label("id"), FactoryPerimeterEvent.event_datetime.label("at"), FactoryPerimeterEvent.event_datetime.label("created"), literal("PERIMETER").label("kind")).join(Terminal, Terminal.id == FactoryPerimeterEvent.terminal_id)
+    perimeter = select(FactoryPerimeterEvent.id.label("id"), func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime).label("at"), FactoryPerimeterEvent.event_datetime.label("created"), literal("PERIMETER").label("kind")).join(Terminal, Terminal.id == FactoryPerimeterEvent.terminal_id)
     if terminal_code:
         perimeter = perimeter.where(Terminal.code == terminal_code)
     if reporter_id:
@@ -203,7 +206,7 @@ def events(
     for value, operator in ((start, "ge"), (end, "le")):
         if value:
             cell = cell.where(TimeEvent.event_datetime >= value if operator == "ge" else TimeEvent.event_datetime <= value)
-            perimeter = perimeter.where(FactoryPerimeterEvent.event_datetime >= value if operator == "ge" else FactoryPerimeterEvent.event_datetime <= value)
+            perimeter = perimeter.where(func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime) >= value if operator == "ge" else func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime) <= value)
     if delivery_status:
         cell = cell.where(TimeEvent.delivery_status == delivery_status)
         if delivery_status != "LOCAL_ONLY":
@@ -253,7 +256,7 @@ def cards(
         func.coalesce(FactoryPerimeterEvent.source_person_id, perimeter_identity.c.source_person_id).label("source_person_id"),
         func.coalesce(FactoryPerimeterEvent.credential_id, perimeter_identity.c.credential_id).label("credential_id"),
         Terminal.code.label("clock"), FactoryPerimeterEvent.direction.label("effect"),
-        FactoryPerimeterEvent.event_datetime.label("at"), FactoryPerimeterEvent.event_datetime.label("created"),
+        func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime).label("at"), FactoryPerimeterEvent.event_datetime.label("created"),
         literal("PERIMETER").label("kind"), literal(1).label("final_movement"),
         FactoryPerimeterEvent.factory_code.label("factory"),
     ).join(Terminal, Terminal.id == FactoryPerimeterEvent.terminal_id).outerjoin(
