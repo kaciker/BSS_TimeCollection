@@ -239,11 +239,27 @@ def test_current_state_fails_closed_for_ambiguous_badge_mapping():
     at = datetime(2026, 10, 22, 11, 0)
     good_attr = reader_number_to_attr_value("2959281396")
     rows = external_current_states(query=lambda: [
-        ("20", "ambiguous", 55, at, at, 2, good_attr, 1, False, "CARD-A"),
-        ("21", "ambiguous", 56, at + timedelta(minutes=1), at, 1, None, 1, True, "CARD-A"),
-        ("30", "good", 57, at, at, 2, reader_number_to_attr_value("0582609699"), 1, False, "CARD-B"),
+        ("20", "ambiguous", 55, at, at, 2, good_attr, 0, "CARD-A"),
+        ("21", "ambiguous", 56, at + timedelta(minutes=1), at, 1, None, 1, "CARD-A"),
+        ("30", "good", 57, at, at, 2, reader_number_to_attr_value("0582609699"), 0, "CARD-B"),
     ])
     assert [item["reporter_id"] for item in rows] == ["0582609699"]
+
+
+def test_current_states_uses_documented_nine_column_security_db_shape():
+    from app.services.external_perimeter_sync import _CURRENT_INSIDE_ROW, external_current_states
+    at = datetime(2026, 10, 22, 11, 0)
+    inside_attr = reader_number_to_attr_value("2959281396")
+    outside_attr = reader_number_to_attr_value("0582609699")
+    rows = external_current_states(query=lambda: [
+        ("id-41", "key-41", 41, at, at, 2, inside_attr, 0, "CARD-1"),
+        ("id-42", "key-42", 42, at, at, 1, outside_attr, 0, "CARD-2"),
+        ("id-43", "key-43", 43, at, at, 2, inside_attr, 1, "CARD-3"),
+    ])
+    assert _CURRENT_INSIDE_ROW["has_unresolved_mapping"] == 7
+    assert [(row["reporter_id"], row["zone_code"]) for row in rows] == [
+        ("2959281396", 2), ("0582609699", 1)
+    ]
 
 
 def test_badge_scoped_state_uses_unique_identity_and_physical_card_query(monkeypatch):
@@ -324,7 +340,8 @@ def test_unresolved_rows_are_counted_per_movement_not_collapsed_by_null_badge(ca
     from app.services.external_perimeter_sync import external_current_states
     at = datetime(2026, 10, 22, 11, 0)
     rows = external_current_states(query=lambda: [
-        ("1", "key1", 31, at, at, 2, None), ("2", "key2", 31, at + timedelta(minutes=1), at, 1, None)
+        ("1", "key1", 31, at, at, 2, None, 1, "CARD-1"),
+        ("2", "key2", 31, at + timedelta(minutes=1), at, 1, None, 1, "CARD-2"),
     ])
     assert rows == []
     assert "enter=1 exit=1" in caplog.text
