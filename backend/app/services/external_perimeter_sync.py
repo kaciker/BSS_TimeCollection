@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import NAMESPACE_URL, uuid5
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -20,7 +20,7 @@ from app.services.external_perimeter import (
     _connection_string,
     _credentials,
     _safe_odbc_category,
-    reader_number_to_attr_value,
+    reader_number_to_attr_value, normalize_security_db_event_time,
 )
 from app.services.rfid_identity import reader_from_swapped_attribute
 from app.services.perimeter_service import create_auto_cell_exit_for_factory_exit
@@ -435,10 +435,15 @@ def mirror_external_event(
     log_id = item.get("log_id")
     source_id = item.get("source_transaction_id")
     source_id = str(source_id) if source_id is not None else None
+    source_event_time = item.get("source_event_time") or item.get("event_time")
     event_time = item.get("event_time")
     zone_code = item.get("zone_code")
     badge = item.get("reporter_id")
     if (log_id is None and not source_id) or event_time is None or zone_code not in (1, 2) or not badge:
+        return False
+    try:
+        event_time, applied_offset = normalize_security_db_event_time(source_event_time, config)
+    except ValueError:
         return False
 
     event_id = _snapshot_event_uuid(config.factory_code, item)
@@ -461,18 +466,22 @@ def mirror_external_event(
     if source_id and log_id is not None:
         legacy_id = _external_event_uuid(config.factory_code, int(log_id))
         legacy = db.get(FactoryPerimeterEvent, legacy_id)
-        legacy_time = legacy.event_datetime if legacy is not None else None
+        legacy_time = (legacy.source_event_datetime or legacy.event_datetime) if legacy is not None else None
         if legacy_time is not None and legacy_time.tzinfo is None:
             legacy_time = legacy_time.replace(tzinfo=ZoneInfo(settings.event_timezone))
         expected_direction = "EXIT" if zone_code == 1 else "ENTER"
         if (legacy is not None and legacy.source_transaction_id is None
                 and legacy.reporter_id == badge and legacy.direction == expected_direction
-                and legacy_time.astimezone(timezone.utc) == event_time.astimezone(timezone.utc)):
+                and legacy_time.astimezone(timezone.utc) == source_event_time.astimezone(timezone.utc)):
             correlation_id = _transaction_correlation_uuid(config.factory_code, item)
             legacy.source_system = SOURCE
             legacy.source_transaction_id = str(source_id)
             legacy.source_log_id = log_id
             legacy.source_unique_key = item.get("unique_key")
+            legacy.source_event_datetime = legacy.source_event_datetime or source_event_time
+            legacy.effective_event_datetime = legacy.effective_event_datetime or event_time
+            legacy.source_clock_offset_minutes = applied_offset
+            legacy.source_clock_correction_applied = bool(getattr(config, "source_clock_correction_enabled", False))
             legacy.correlation_id = correlation_id
             if legacy.auto_cell_exit_event_id:
                 cell_event = db.get(TimeEvent, legacy.auto_cell_exit_event_id)
@@ -510,6 +519,11 @@ def mirror_external_event(
             terminal_id=terminal.id,
             direction=direction,
             event_datetime=event_time,
+            source_event_datetime=source_event_time,
+            effective_event_datetime=event_time,
+            source_clock_offset_minutes=applied_offset,
+            source_clock_correction_applied=bool(getattr(config, "source_clock_correction_enabled", False) and applied_offset),
+            source_clock_correction_pending=not bool(getattr(config, "source_clock_correction_enabled", False)),
             correlation_id=correlation_id,
             source_system=SOURCE if source_id else None,
             source_transaction_id=source_id,
@@ -662,6 +676,7 @@ def external_current_states(
                         "log_id": int(row[2]) if row[2] is not None else None,
                         "source_created_at": row[3],
                         "event_time": event_time,
+                        "source_event_time": event_time,
                         "zone_code": zone_code,
                         "reporter_id": badge,
                     }
@@ -776,7 +791,7 @@ def reconcile_external_factory(
     local_events = db.scalars(
         select(FactoryPerimeterEvent)
         .where(FactoryPerimeterEvent.factory_code == config.factory_code)
-        .order_by(FactoryPerimeterEvent.event_datetime.desc(), FactoryPerimeterEvent.id.desc())
+        .order_by(func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime).desc(), FactoryPerimeterEvent.event_datetime.desc(), FactoryPerimeterEvent.id.desc())
     ).all()
     local_by_badge: dict[str, FactoryPerimeterEvent] = {}
     for event in local_events:
