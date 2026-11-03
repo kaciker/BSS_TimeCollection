@@ -5,7 +5,7 @@ from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -26,6 +26,8 @@ def settings_for(db: Session, factory_code: str) -> FactoryPerimeterSettings:
         dedup_enabled=False,
         dedup_seconds=5,
         auto_exit_action_code=None,
+        source_clock_correction_enabled=False,
+        source_clock_offset_minutes=0,
     )
 
 
@@ -36,7 +38,7 @@ def is_inside(db: Session, factory_code: str, badge: str) -> bool:
             FactoryPerimeterEvent.factory_code == factory_code,
             FactoryPerimeterEvent.reporter_id == badge,
         )
-        .order_by(FactoryPerimeterEvent.event_datetime.desc(), FactoryPerimeterEvent.id.desc())
+        .order_by(func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime).desc(), FactoryPerimeterEvent.event_datetime.desc(), FactoryPerimeterEvent.id.desc())
         .limit(1)
     )
     return last is not None and last.direction == "ENTER"
@@ -51,7 +53,7 @@ def is_person_inside(db: Session, factory_code: str, identity) -> bool:
             FactoryPerimeterEvent.factory_code == factory_code,
             FactoryPerimeterEvent.person_id == identity.person_id,
         )
-        .order_by(FactoryPerimeterEvent.event_datetime.desc(), FactoryPerimeterEvent.id.desc())
+        .order_by(func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime).desc(), FactoryPerimeterEvent.event_datetime.desc(), FactoryPerimeterEvent.id.desc())
         .limit(1)
     )
     return last is not None and last.direction == "ENTER"
@@ -62,9 +64,9 @@ def check_badge_source(config: FactoryPerimeterSettings, badge: str, *, identity
         from app.services.external_perimeter import check_external_person_presence, check_external_presence
 
         result = (
-            check_external_person_presence(identity.source_person_id)
+            check_external_person_presence(identity.source_person_id, config=config)
             if identity is not None and identity.source_person_id
-            else check_external_presence(badge)
+            else check_external_presence(badge, config=config)
         )
         if result["status"] != "INSIDE":
             detail = "External perimeter presence: " + result["status"]
