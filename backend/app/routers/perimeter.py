@@ -13,7 +13,10 @@ from app.models.terminal import Terminal
 from app.models.action import Action
 from app.models.factory import Factory
 from app.services.perimeter_service import settings_for, is_inside
-from app.services.external_perimeter import connector_status, test_external_connection, check_external_presence
+from app.services.external_perimeter import (
+    connector_status, test_external_connection, check_external_presence,
+    normalize_security_db_event_time,
+)
 
 router = APIRouter(prefix="/api/v1/admin/perimeter", tags=["perimeter"])
 
@@ -118,7 +121,6 @@ def set_config(factory_code: str, payload: FactoryConfigUpdate, db: Session = De
         # One-time transition for legacy imports: retain their original timestamp
         # and record the corrected effective time and applied offset. Rows already
         # annotated by a prior correction are never reinterpreted on config changes.
-        from datetime import timedelta, timezone
         legacy_events = db.scalars(select(FactoryPerimeterEvent).where(
             FactoryPerimeterEvent.factory_code == factory_code,
             FactoryPerimeterEvent.source_system == "SQLSERVER_SECURITY_DB",
@@ -126,13 +128,13 @@ def set_config(factory_code: str, payload: FactoryConfigUpdate, db: Session = De
         ).with_for_update()).all()
         for event in legacy_events:
             raw = event.source_event_datetime or event.event_datetime
-            if raw.tzinfo is None:
-                from zoneinfo import ZoneInfo
-                raw = raw.replace(tzinfo=ZoneInfo("Europe/Madrid"))
+            effective, applied_offset = normalize_security_db_event_time(raw, c)
             event.source_event_datetime = raw
-            event.effective_event_datetime = (raw.astimezone(timezone.utc) - timedelta(minutes=c.source_clock_offset_minutes)).astimezone(ZoneInfo("Europe/Madrid"))
-            event.source_clock_offset_minutes = c.source_clock_offset_minutes
-            event.source_clock_correction_applied = c.source_clock_correction_enabled
+            event.effective_event_datetime = effective
+            event.source_clock_offset_minutes = applied_offset
+            event.source_clock_correction_applied = bool(
+                c.source_clock_correction_enabled and applied_offset
+            )
             event.source_clock_correction_pending = False
     db.commit()
     return get_config(factory_code, db)
