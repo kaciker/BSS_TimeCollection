@@ -165,7 +165,9 @@ def test_mapping_catalogue_hierarchy_and_local_codes_are_independent(structure_c
     catalogue = client.get("/api/v1/admin/structure/oracle-catalogue").json()
     assert {item["code"] for item in catalogue["work_areas"]} == {"439"}
     assert {item["code"] for item in catalogue["machines"]} == {"4391", "4392", "4393"}
-    assert {item["code"] for item in catalogue["cells"]} == {"54Q"}
+    assert {item["code"] for item in catalogue["cells"]} == {"54Q", "54T"}
+    p24 = post(client, "project-lines", subworkshop_id=machine["id"], code="LOCAL-P24-T", description="P24 G.V. Derecha", oracle_cell_code="54T")
+    assert p24["oracle_cell_code"] == "54T"
     wrong_machine = client.post("/api/v1/admin/structure/subworkshops", json={"workshop_id": work_area["id"], "code":"wrong", "description":"wrong", "oracle_machine_code":"not-in-catalogue"})
     wrong_parent = post(client, "subworkshops", workshop_id=work_area["id"], code="other-machine", description="Other Oracle machine", oracle_machine_code="4392")
     wrong_cell = client.post("/api/v1/admin/structure/project-lines", json={"subworkshop_id": wrong_parent["id"], "code":"wrong", "description":"wrong", "oracle_cell_code":"54Q"})
