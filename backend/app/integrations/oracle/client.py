@@ -9,6 +9,7 @@ import httpx
 from app.core.config import settings
 from app.core.oracle_credentials import get_oracle_credentials
 from app.models.time_event import TimeEvent
+from app.services.oracle_readiness import oracle_readiness_errors
 
 
 class OracleMappingError(ValueError):
@@ -56,6 +57,9 @@ class OracleClient:
         return f"{settings.oracle_base_url.rstrip('/')}{settings.oracle_api_path}"
 
     def build_payload(self, event: TimeEvent) -> dict[str, Any]:
+        # A client payload is built exclusively from frozen, catalogue-valid
+        # Oracle fields. Legacy/local structures and arbitrary JSON attributes
+        # are intentionally not payload sources.
         # Oracle metadata defines requestNumber as an 80-character field.
         if not event.request_number or len(event.request_number) > 80:
             event.oracle_mapping_error = "Oracle requestNumber exceeds the described 80-character limit"
@@ -64,29 +68,15 @@ class OracleClient:
             event.oracle_mapping_error = "Configured Oracle sourceId exceeds the described 40-character limit"
             raise OracleMappingError(event.oracle_mapping_error)
 
+        errors = oracle_readiness_errors(event)
+        if errors:
+            event.oracle_mapping_error = "; ".join(errors)[:255]
+            raise OracleMappingError(event.oracle_mapping_error)
+
         # Only the frozen resolved Person ID is valid for this contract. Keep
         # the terminal's raw identifier locally for audit; never send it here.
         reporter_id = event.person_id
-        if not reporter_id or not reporter_id.strip():
-            event.oracle_mapping_error = "Resolved Person ID is missing; event requires identity reconciliation"
-            raise OracleMappingError(event.oracle_mapping_error)
-
-        if not all(value and value.strip() for value in (event.workshop_code, event.subworkshop_code, event.project_line_code)):
-            event.oracle_mapping_error = "Workshop / Subworkshop / Project-Line snapshot is incomplete"
-            raise OracleMappingError(event.oracle_mapping_error)
-        if not event.oracle_payroll_time_type or not event.oracle_payroll_time_type.strip():
-            event.oracle_mapping_error = "PayrollTimeType is missing; action mapping requires reconciliation"
-            raise OracleMappingError(event.oracle_mapping_error)
-
-        expected_supplier = {
-            "ENTER": "HUT_TCD_SUPP1_IN_2",
-            "EXIT": "HUT_TCD_SUPP1_OUT_2",
-        }.get(event.state_effect)
-        if expected_supplier is None or event.oracle_supplier_event != expected_supplier:
-            event.oracle_mapping_error = (
-                f"Oracle supplier device event is incompatible with {event.state_effect} direction"
-            )
-            raise OracleMappingError(event.oracle_mapping_error)
+        expected_supplier = event.oracle_supplier_event
 
         # event_datetime is the captured business timestamp. Interpret legacy
         # naive values in the event's captured timezone, then serialize one UTC
@@ -98,9 +88,9 @@ class OracleClient:
 
         attributes = [
             {"name": "PayrollTimeType", "value": str(event.oracle_payroll_time_type)},
-            {"name": "WORK_AREA", "value": str(event.workshop_code)},
-            {"name": "MACHINE", "value": str(event.subworkshop_code)},
-            {"name": "CELL", "value": str(event.project_line_code)},
+            {"name": "WORK_AREA", "value": str(event.oracle_work_area_code)},
+            {"name": "MACHINE", "value": str(event.oracle_machine_code)},
+            {"name": "CELL", "value": str(event.oracle_cell_code)},
         ]
         invalid_attributes = [
             (row["name"], len(row["value"]))

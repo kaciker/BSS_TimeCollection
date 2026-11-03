@@ -11,7 +11,7 @@ class TerminalSettings(BaseModel):
     name: str = Field(min_length=1, max_length=160)
     factory_code: str | None = Field(default=None, min_length=1, max_length=64)
     perimeter_only: bool | None = None
-    external_device_id: str | None = Field(default=None, min_length=1, max_length=40)
+    external_device_id: str | None = Field(default=None, max_length=40)
     identification_mode: IdentificationMode = IdentificationMode.BOTH
     exit_menu_timeout_seconds: int | None = Field(default=None, ge=0, le=120)
     oracle_attributes: dict[str, Any] = Field(default_factory=dict)
@@ -59,6 +59,10 @@ class TerminalRead(BaseModel):
     workshop_id: int | None = None
     subworkshop_id: int | None = None
     structure_path: str | None = None
+    oracle_work_area_code: str | None = None
+    oracle_machine_code: str | None = None
+    oracle_cell_code: str | None = None
+    oracle_structure_ready: bool = False
     exit_policy_mode: str
     effective_exit_policy_mode: str
     global_exit_policy_mode: str
@@ -137,6 +141,8 @@ class ActionRead(BaseModel):
     oracle_supplier_event: str
     state_effect: str
     oracle_payroll_time_type: str | None = None
+    oracle_ready: bool = False
+    oracle_mapping_error: str | None = None
     oracle_attributes: dict[str, Any]
     display_order: int
     requires_subaction: bool
@@ -175,6 +181,10 @@ class EventRead(BaseModel):
     subworkshop_description: str | None = None
     project_line_code: str | None = None
     project_line_description: str | None = None
+    oracle_work_area_code: str | None = None
+    oracle_machine_code: str | None = None
+    oracle_cell_code: str | None = None
+    oracle_ready: bool = False
     delivery_status: str
     attempt_count: int
     sent_at: datetime | None

@@ -51,6 +51,8 @@ from app.services.terminal_cloning_service import clone_terminal
 from app.services.terminal_code_service import allocate_terminal_code
 from app.services.terminal_identity_service import issue_activation_token
 from app.services.terminal_pairing_service import approve_pairing_request
+from app.services.oracle_readiness import is_oracle_ready, oracle_readiness_errors, action_readiness_errors
+from app.services.oracle_catalogue import PAYROLL_TIME_TYPES
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
@@ -187,6 +189,10 @@ def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> T
         subworkshop_id=terminal.project_line.subworkshop_id if terminal.project_line else None,
         workshop_id=terminal.project_line.subworkshop.workshop_id if terminal.project_line else None,
         structure_path=" / ".join([terminal.project_line.subworkshop.workshop.code, terminal.project_line.subworkshop.code, terminal.project_line.code]) if terminal.project_line else None,
+        oracle_work_area_code=terminal.project_line.subworkshop.workshop.oracle_work_area_code if terminal.project_line else None,
+        oracle_machine_code=terminal.project_line.subworkshop.oracle_machine_code if terminal.project_line else None,
+        oracle_cell_code=terminal.project_line.oracle_cell_code if terminal.project_line else None,
+        oracle_structure_ready=bool(terminal.project_line and terminal.project_line.subworkshop.workshop.oracle_work_area_code and terminal.project_line.subworkshop.oracle_machine_code and terminal.project_line.oracle_cell_code),
         exit_policy_mode=override or "INHERIT",
         effective_exit_policy_mode=get_mode(db, terminal.id),
         global_exit_policy_mode=get_mode(db, None),
@@ -194,6 +200,8 @@ def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> T
 
 
 def _action_read(action: Action) -> ActionRead:
+    mapping_errors = action_readiness_errors(action)
+    action_ready = not mapping_errors
     return ActionRead(
         code=action.code,
         label=action.label,
@@ -201,6 +209,8 @@ def _action_read(action: Action) -> ActionRead:
         oracle_supplier_event=action.oracle_supplier_event,
         state_effect=action.state_effect,
         oracle_payroll_time_type=action.oracle_payroll_time_type,
+        oracle_ready=action_ready,
+        oracle_mapping_error="; ".join(mapping_errors)[:255] or None,
         oracle_attributes=action.oracle_attributes or {},
         display_order=action.display_order,
         requires_subaction=action.requires_subaction,
@@ -407,7 +417,7 @@ def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
     if payload.perimeter_only:
         device_id = device_id or (terminal_code if len(terminal_code) <= 40 else "GATE-" + uuid4().hex)
     if not device_id:
-        raise HTTPException(422, "Oracle device ID is required for a cell terminal")
+        device_id = terminal_code
     check_device_id(db, device_id)
     actions = [] if payload.perimeter_only else resolve_actions(db, payload.action_codes)
     if payload.active:
@@ -452,7 +462,7 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
     role = (terminal.terminal_role if terminal.terminal_role != "CELL" else "PERIMETER_BOTH") if perimeter else "CELL"
     device_id = payload.external_device_id or (terminal.external_device_id if perimeter else None)
     if not device_id:
-        raise HTTPException(422, "Oracle device ID is required for a cell terminal")
+        device_id = terminal.external_device_id
     check_device_id(db, device_id, terminal)
     actions = [] if perimeter else resolve_actions(db, payload.action_codes)
     if payload.active:
@@ -542,6 +552,8 @@ def create_action(payload: ActionCreate, db: Session = Depends(get_db)):
     oracle_supplier_event = payload.oracle_supplier_event or (
         "HUT_TCD_SUPP1_IN_2" if payload.state_effect.value == "ENTER" else "HUT_TCD_SUPP1_OUT_2"
     )
+    if payload.oracle_payroll_time_type is not None and payload.oracle_payroll_time_type not in PAYROLL_TIME_TYPES:
+        raise HTTPException(422, "PayrollTimeType must be selected from the HR-Path catalogue")
     parent = resolve_parent_action(db, payload.parent_action_code)
     action = Action(
         code=payload.code,
@@ -574,6 +586,8 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
         raise HTTPException(404, "Action not found")
     check_supplier_event(db, payload.supplier_device_event, action)
     oracle_supplier_event = payload.oracle_supplier_event or action.oracle_supplier_event
+    if payload.oracle_payroll_time_type is not None and payload.oracle_payroll_time_type not in PAYROLL_TIME_TYPES:
+        raise HTTPException(422, "PayrollTimeType must be selected from the HR-Path catalogue")
     parent = resolve_parent_action(db, payload.parent_action_code, action)
     action.label = payload.label
     action.supplier_device_event = payload.supplier_device_event
@@ -610,7 +624,7 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
 @router.get("/events", response_model=list[EventRead])
 def list_events(limit: int = Query(100, ge=1, le=500), db: Session = Depends(get_db)):
     events = db.scalars(select(TimeEvent).order_by(TimeEvent.created_at.desc()).limit(limit)).all()
-    return [EventRead(**{field: getattr(item, field) for field in EventRead.model_fields}) for item in events]
+    return [EventRead(**{**{field: getattr(item, field) for field in EventRead.model_fields if hasattr(item, field)}, "oracle_ready": is_oracle_ready(item), "oracle_mapping_error": "; ".join(oracle_readiness_errors(item))[:255] or None}) for item in events]
 
 
 @router.post("/events/{event_id}/retry", response_model=EventRead)
@@ -632,4 +646,4 @@ def retry_event(event_id: str, db: Session = Depends(get_db)):
     event.next_attempt_at = None
     db.commit()
     db.refresh(event)
-    return EventRead(**{field: getattr(event, field) for field in EventRead.model_fields})
+    return EventRead(**{**{field: getattr(event, field) for field in EventRead.model_fields if hasattr(event, field)}, "oracle_ready": is_oracle_ready(event), "oracle_mapping_error": "; ".join(oracle_readiness_errors(event))[:255] or None})

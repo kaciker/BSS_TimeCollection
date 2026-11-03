@@ -18,6 +18,9 @@ from app.models import (
     FactoryPresenceProjection,
     Factory,
     InstallationSettings,
+    Workshop,
+    Subworkshop,
+    ProjectLine,
 )  # noqa: F401
 
 config = context.config

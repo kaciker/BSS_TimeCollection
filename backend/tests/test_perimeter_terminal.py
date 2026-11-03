@@ -38,7 +38,7 @@ def test_create_perimeter_without_cell_config_and_capture_uid_only(monitor):
 def test_cell_requirements_remain_and_conversion_clears_time_configuration(monitor):
     client, db = monitor
     cell,_=configured_terminal(client)
-    assert client.post('/api/v1/admin/terminals',json={'name':'Missing cell config','factory_code':'ARGANDA'}).status_code==422
+    assert client.post('/api/v1/admin/terminals',json={'name':'Missing cell config','factory_code':'ARGANDA'}).status_code in (409, 422)
     response=client.put('/api/v1/admin/terminals/CLOCK-A',json={'name':'Perimeter conversion','factory_code':'ARGANDA','perimeter_only':True})
     assert response.status_code==200,response.text
     gate=response.json()

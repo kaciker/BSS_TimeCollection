@@ -87,5 +87,5 @@ def validate_supplier_event_direction(code: str, effect: str) -> None:
         "HUT_TCD_SUPP1_IN_2": "ENTER",
         "HUT_TCD_SUPP1_OUT_2": "EXIT",
     }.get(code)
-    if expected and effect != expected:
-        raise HTTPException(422, f"{code} is only valid for {expected} actions")
+    if expected != effect:
+        raise HTTPException(422, "Oracle supplier event must match the action direction")

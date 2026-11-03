@@ -35,9 +35,12 @@ def make_event(event_id="selected", **overrides):
         event_timezone="UTC",
         oracle_payroll_time_type="Workshop Entry ES",
         oracle_attributes={},
-        workshop_code="439",
-        subworkshop_code="4393",
-        project_line_code="54A",
+        workshop_code="local-W",
+        subworkshop_code="local-S",
+        project_line_code="local-P",
+        oracle_work_area_code="439",
+        oracle_machine_code="4391",
+        oracle_cell_code="54Q",
         delivery_status="PENDING",
         attempt_count=0,
         created_at=datetime(2026, 11, 3, 12, tzinfo=timezone.utc),
@@ -174,9 +177,12 @@ def test_explicit_event_id_sends_only_selected_and_audits_ids_once(db_factory):
     [
         ({"delivery_status": "LOCAL_ONLY"}, "LOCAL_ONLY"),
         ({"oracle_payroll_time_type": None}, "PayrollTimeType"),
-        ({"workshop_code": None}, "WORK_AREA"),
-        ({"subworkshop_code": None}, "MACHINE"),
-        ({"project_line_code": None}, "CELL"),
+        ({"oracle_work_area_code": None}, "WORK_AREA"),
+        ({"oracle_machine_code": None}, "MACHINE"),
+        ({"oracle_cell_code": None}, "CELL"),
+        ({"oracle_payroll_time_type": "Unknown type"}, "not in the HR-Path catalogue"),
+        ({"oracle_machine_code": "4399"}, "not in the HR-Path catalogue"),
+        ({"oracle_cell_code": "54Q", "oracle_machine_code": "4393"}, "does not belong to MACHINE"),
         ({"person_id": None}, "Person ID"),
         ({"delivery_status": "SENT"}, "SENT"),
         ({"delivery_status": "UNKNOWN"}, "UNKNOWN"),
@@ -244,3 +250,39 @@ def test_ambiguous_delivery_stays_unknown_and_is_never_replayed(db_factory):
             "selected", send=True, confirm_request_number="BSS-selected", client=client, session_factory=db_factory
         )
     assert client.calls == ["selected"]
+
+
+def test_unhandled_one_event_failure_is_audited_unknown_without_replay(db_factory):
+    class ExplodingClient(FakeClient):
+        def send(self, event):
+            self.calls.append(event.id)
+            raise RuntimeError("connection ended after request may have been written")
+
+    client = ExplodingClient()
+    result = oracle_delivery.send_one_event(
+        "selected", send=True, confirm_request_number="BSS-selected", client=client, session_factory=db_factory
+    )
+    with db_factory() as db:
+        event = db.get(TimeEvent, "selected")
+        attempt = db.scalar(select(TransmissionAttempt))
+        assert event.delivery_status == "UNKNOWN"
+        assert attempt.result == "UNKNOWN" and attempt.ambiguous is True and attempt.retryable is False
+        assert attempt.request_payload["requestNumber"] == "BSS-selected"
+    with pytest.raises(ValueError, match="UNKNOWN"):
+        oracle_delivery.send_one_event(
+            "selected", send=True, confirm_request_number="BSS-selected", client=client, session_factory=db_factory
+        )
+    assert client.calls == ["selected"]
+    assert result["delivery_status"] == "UNKNOWN"
+
+
+def test_worker_skips_unready_pending_event_and_leaves_it_untouched(db_factory, monkeypatch):
+    from app import worker
+    with db_factory() as db:
+        event=db.get(TimeEvent,"other")
+        event.oracle_cell_code=None
+        db.commit()
+    monkeypatch.setattr(worker,"SessionLocal",db_factory)
+    assert worker.claim_next_event() == "selected"
+    with db_factory() as db:
+        assert db.get(TimeEvent,"other").delivery_status == "PENDING"

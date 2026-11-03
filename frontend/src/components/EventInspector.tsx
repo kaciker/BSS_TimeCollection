@@ -14,6 +14,7 @@ export function EventInspector({ detail, onClose }: { detail: EventDetail; onClo
     ["SECURITY_DB person PK", event.source_person_id], ["Credential / card", event.credential_id],
     ["Oracle reporterId", event.oracle_reporter_id], ["Oracle reporterIdType", event.oracle_reporter_id_type],
     ["Oracle mapping issue", event.oracle_mapping_error], ["PayrollTimeType", event.oracle_payroll_time_type],
+    ["Oracle WORK_AREA", event.oracle_work_area_code], ["Oracle MACHINE", event.oracle_machine_code], ["Oracle CELL", event.oracle_cell_code], ["Oracle readiness", event.oracle_ready ? "READY" : "UNMAPPED"],
     ["Identification", event.identification_method], ["Action", `${event.action_code} · ${event.action_label}`],
     ["Local supplier event", event.supplier_device_event], ["Oracle supplier event", event.oracle_supplier_event ?? "—"], ["Local effect", event.state_effect],
     ["Event time", dateLabel(event.event_datetime)], ["Time zone", event.event_timezone],

@@ -22,4 +22,7 @@ __all__ = [
     "Factory",
     "InstallationSettings",
     "FactoryPresenceProjection",
+    "Workshop",
+    "Subworkshop",
+    "ProjectLine",
 ]

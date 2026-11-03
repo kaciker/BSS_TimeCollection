@@ -22,6 +22,10 @@ export interface EventSnapshot extends AdminEvent {
   oracle_reporter_id_type?: string | null;
   oracle_mapping_error?: string | null;
   oracle_payroll_time_type?: string | null;
+  oracle_work_area_code?: string | null;
+  oracle_machine_code?: string | null;
+  oracle_cell_code?: string | null;
+  oracle_ready?: boolean;
   event_timezone: string;
   oracle_attributes: Record<string, unknown>;
   created_at: string;

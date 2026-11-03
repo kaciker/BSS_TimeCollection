@@ -63,6 +63,7 @@ export interface AdminTerminal {
   global_exit_policy_mode: "DISABLED" | "SAME_TERMINAL" | "SAME_WORK_CELL";
   activation_token?: string | null;
   project_line_id?: number | null; workshop_id?: number | null; subworkshop_id?: number | null; structure_path?: string | null;
+  oracle_work_area_code?: string | null; oracle_machine_code?: string | null; oracle_cell_code?: string | null; oracle_structure_ready?: boolean;
 }
 
 export interface Factory { id: number; code: string; name: string; location?: string | null; country?: string | null; timezone: string; active: boolean; created_at: string; updated_at: string }
@@ -80,6 +81,8 @@ export interface AdminAction {
   oracle_supplier_event: string;
   state_effect: "ENTER" | "EXIT";
   oracle_payroll_time_type?: string | null;
+  oracle_ready?: boolean;
+  oracle_mapping_error?: string | null;
   oracle_attributes: Record<string, unknown>;
   display_order: number;
   requires_subaction: boolean;
@@ -100,5 +103,6 @@ export interface AdminEvent {
   attempt_count: number;
 }
 
-export interface StructureItem { id: number; code: string; description: string; active: boolean; workshop_id?: number; subworkshop_id?: number }
+export interface StructureItem { id: number; code: string; description: string; active: boolean; workshop_id?: number; subworkshop_id?: number; oracle_work_area_code?: string | null; oracle_machine_code?: string | null; oracle_cell_code?: string | null }
 export interface StructureData { workshops: StructureItem[]; subworkshops: StructureItem[]; project_lines: StructureItem[] }
+export interface OracleCatalogue { payroll_time_types: string[]; work_areas: {code:string;description:string}[]; machines: {code:string;description:string;work_area:string}[]; cells: {code:string;description:string;machine:string}[] }

@@ -19,6 +19,7 @@ from app.schemas.monitoring import (
     EventDetail, EventPage, EventSnapshot,
 )
 from app.services.rfid_identity import rfid_equivalence_key, rfid_equivalence_key_sql
+from app.services.oracle_readiness import oracle_readiness_errors, is_oracle_ready
 
 router = APIRouter(prefix="/api/v1/admin/monitoring", tags=["monitoring"])
 
@@ -424,15 +425,20 @@ def event_detail(event_id: str, db: Session = Depends(get_db)):
         preview = OracleClient().build_payload(event)
     except OracleMappingError:
         preview = None
-        db.flush()
+    mapping_error = "; ".join(oracle_readiness_errors(event))[:255] or None
     # A preview is not an historical send. The actual timestamp/sourceId are
     # available only in the persisted request_payload of each attempt.
     if preview is not None:
         preview.pop("requestTimestamp", None)
+    snapshot = EventSnapshot.model_validate(event)
+    snapshot = snapshot.model_copy(update={
+        "oracle_ready": is_oracle_ready(event),
+        "oracle_mapping_error": mapping_error,
+    })
     return EventDetail(
-        event=EventSnapshot.model_validate(event),
+        event=snapshot,
         attempts=[AttemptRead.model_validate(row) for row in attempts],
         oracle_enabled=settings.oracle_enabled,
         oracle_payload_preview=preview,
-        oracle_mapping_error=event.oracle_mapping_error,
+        oracle_mapping_error=mapping_error,
     )

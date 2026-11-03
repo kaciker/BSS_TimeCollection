@@ -8,6 +8,7 @@ from app.domain.enums import DeliveryStatus
 from app.integrations.oracle.client import OracleClient, OracleMappingError
 from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
+from app.services.oracle_readiness import oracle_readiness_errors
 
 logger = logging.getLogger("delivery-worker")
 
@@ -25,6 +26,32 @@ def deliver_event(
         if event is None:
             return
         started_at = datetime.now(timezone.utc)
+        mapping_errors = oracle_readiness_errors(event)
+        if mapping_errors:
+            error_message = "; ".join(mapping_errors)
+            event.oracle_mapping_error = error_message[:255]
+            event.delivery_status = DeliveryStatus.REJECTED.value
+            event.next_attempt_at = None
+            db.add(TransmissionAttempt(
+                event_id=event.id,
+                attempt_number=event.attempt_count,
+                started_at=started_at,
+                finished_at=datetime.now(timezone.utc),
+                endpoint=client.endpoint,
+                http_status=None,
+                result=DeliveryStatus.REJECTED.value,
+                duration_ms=0,
+                request_payload={},
+                response_payload=None,
+                error_message=error_message,
+                retryable=False,
+                ambiguous=False,
+                oracle_request_id=None,
+                oracle_event_id=None,
+            ))
+            db.commit()
+            logger.error("Event mapping requires reconciliation event=%s reason=%s", event.id, error_message)
+            return
         try:
             result = client.send(event)
         except OracleMappingError as exc:
@@ -103,25 +130,9 @@ def validate_sendable_event(event: TimeEvent, client: OracleClient) -> dict:
         raise ValueError("UNKNOWN delivery requires read-only reconciliation before any resend")
     if event.delivery_status not in {DeliveryStatus.PENDING.value, DeliveryStatus.RETRY.value, DeliveryStatus.REJECTED.value}:
         raise ValueError(f"Event status {event.delivery_status} is not eligible for explicit delivery")
-    if not event.person_id or not event.person_id.strip():
-        raise ValueError("Resolved Person ID is missing")
-    if not event.oracle_payroll_time_type or not event.oracle_payroll_time_type.strip():
-        raise ValueError("PayrollTimeType is missing")
-    for label, value in (
-        ("WORK_AREA", event.workshop_code),
-        ("MACHINE", event.subworkshop_code),
-        ("CELL", event.project_line_code),
-    ):
-        if not value or not value.strip():
-            raise ValueError(f"{label} structure is missing")
-    expected_supplier = {
-        "ENTER": "HUT_TCD_SUPP1_IN_2",
-        "EXIT": "HUT_TCD_SUPP1_OUT_2",
-    }.get(event.state_effect)
-    if not expected_supplier or event.oracle_supplier_event != expected_supplier:
-        raise ValueError("Oracle supplier event/direction mapping is invalid")
-    if not event.request_number or len(event.request_number) > 80 or not event.request_number.strip():
-        raise ValueError("Oracle requestNumber is missing or invalid")
+    errors = oracle_readiness_errors(event)
+    if errors:
+        raise ValueError("; ".join(errors))
     return client.build_payload(event)
 
 
@@ -152,7 +163,36 @@ def send_one_event(
         event.last_attempt_at = datetime.now(timezone.utc)
         db.commit()
 
-    deliver_event(event_id, client, session_factory=session_factory)
+    try:
+        deliver_event(event_id, client, session_factory=session_factory)
+    except Exception as exc:
+        # Once the network operation may have started, a CLI crash/error must
+        # never leave the event eligible for a blind replay. Preserve the
+        # exact preview and make the one attempted delivery auditable.
+        with session_factory() as db:
+            event = db.get(TimeEvent, event_id)
+            if event is not None and event.delivery_status == DeliveryStatus.SENDING.value:
+                finished_at = datetime.now(timezone.utc)
+                event.delivery_status = DeliveryStatus.UNKNOWN.value
+                event.next_attempt_at = None
+                db.add(TransmissionAttempt(
+                    event_id=event.id,
+                    attempt_number=event.attempt_count,
+                    started_at=event.last_attempt_at or finished_at,
+                    finished_at=finished_at,
+                    endpoint=client.endpoint,
+                    http_status=None,
+                    result=DeliveryStatus.UNKNOWN.value,
+                    duration_ms=0,
+                    request_payload=payload,
+                    response_payload=None,
+                    error_message=f"Unhandled one-event delivery failure: {type(exc).__name__}",
+                    retryable=False,
+                    ambiguous=True,
+                    oracle_request_id=None,
+                    oracle_event_id=None,
+                ))
+                db.commit()
     with session_factory() as db:
         event = db.get(TimeEvent, event_id)
         attempt = db.scalar(
@@ -167,4 +207,5 @@ def send_one_event(
             "oracle_request_id": event.oracle_request_id,
             "oracle_event_id": event.oracle_event_id,
             "attempt_id": attempt.id if attempt else None,
+            "attempt_result": attempt.result if attempt else None,
         }

@@ -12,6 +12,7 @@ from app.integrations.oracle.client import OracleClient
 from app.models.time_event import TimeEvent
 from app.models.worker_runtime_metrics import WorkerRuntimeMetrics
 from app.services.oracle_delivery import deliver_event
+from app.services.oracle_readiness import is_oracle_ready
 from app.services.external_perimeter_sync import (
     reconcile_enabled_external_perimeters,
     sync_enabled_external_perimeters,
@@ -91,18 +92,26 @@ def recover_stale_events() -> None:
 def claim_next_event() -> str | None:
     now = datetime.now(timezone.utc)
     with SessionLocal() as db:
-        event = db.scalar(
+        candidate_ids = db.scalars(
             select(TimeEvent)
             .where(TimeEvent.delivery_status.in_([DeliveryStatus.PENDING.value, DeliveryStatus.RETRY.value]))
-            .where(TimeEvent.person_id.is_not(None))
-            .where(TimeEvent.workshop_code.is_not(None))
-            .where(TimeEvent.subworkshop_code.is_not(None))
-            .where(TimeEvent.project_line_code.is_not(None))
             .where(or_(TimeEvent.next_attempt_at.is_(None), TimeEvent.next_attempt_at <= now))
             .order_by(TimeEvent.created_at)
-            .with_for_update(skip_locked=True)
-            .limit(1)
-        )
+            .with_only_columns(TimeEvent.id)
+        ).all()
+        # Catalogue hierarchy validation lives in one shared service. Rows not
+        # ready remain local and pending; the worker never claims them.
+        event = None
+        for candidate_id in candidate_ids:
+            candidate = db.scalar(select(TimeEvent).where(TimeEvent.id == candidate_id).with_for_update(skip_locked=True))
+            if (
+                candidate is not None
+                and candidate.delivery_status in {DeliveryStatus.PENDING.value, DeliveryStatus.RETRY.value}
+                and (candidate.next_attempt_at is None or candidate.next_attempt_at <= now)
+                and is_oracle_ready(candidate)
+            ):
+                event = candidate
+                break
         if event is None:
             return None
         event.delivery_status = DeliveryStatus.SENDING.value
