@@ -207,21 +207,31 @@ def test_same_log_id_movements_are_imported_as_distinct_idempotent_events(db):
     assert {event.source_log_id for event in events} == {77}
 
 
-def test_current_inside_snapshot_returns_only_valid_inside_badges():
-    from app.services.external_perimeter_sync import _CURRENT_INSIDE_SQL
+def test_current_inside_snapshot_uses_documented_nine_column_security_db_shape():
+    from app.services.external_perimeter_sync import _CURRENT_INSIDE_ROW, _CURRENT_INSIDE_SQL
     assert "source_transaction_pk" in _CURRENT_INSIDE_SQL
+    assert _CURRENT_INSIDE_ROW["has_unresolved_mapping"] == 7
+    assert _CURRENT_INSIDE_ROW["card_no"] == 8
     at = datetime(2026, 10, 22, 11, 0)
     inside_attr = reader_number_to_attr_value("2959281396")
     outside_attr = reader_number_to_attr_value("0582609699")
     rows = external_inside_snapshot(
         query=lambda *args: [
-            ("id-41", "key-41", 41, at, at, 2, inside_attr, 1, False, "CARD-1"),
-            ("id-42", "key-42", 42, at, at, 1, outside_attr, 1, False, "CARD-2"),
-            ("id-43", "key-43", 43, at, at, 2, None, 1, True, "CARD-3"),
-            ("id-44", "key-44", 44, at, at, 2, inside_attr, 1, True, "CARD-1"),
+            # Actual nine-column ODBC row: valid person/card INSIDE row.
+            ("id-41", "key-41", 41, at, at, 2, inside_attr, 0, "CARD-1"),
+            ("id-42", "key-42", 42, at, at, 1, outside_attr, 0, "CARD-2"),
+            # SQL reports a genuine unresolved mapping for this card.
+            ("id-43", "key-43", 43, at, at, 2, inside_attr, 1, "CARD-3"),
+            # A valid row with the same card as an unresolved row is discarded.
+            ("id-44", "key-44", 44, at, at, 2, inside_attr, 0, "CARD-3"),
         ]
     )
-    assert rows == []  # the latest SQL mapping for CARD-1 is ambiguous
+    assert len(rows) == 1
+    assert rows[0]["reporter_id"] == "2959281396"
+    assert rows[0]["zone_code"] == 2
+    assert rows[0]["source_transaction_id"] == "id-41"
+    assert rows[0]["reporter_id"] == "2959281396"
+    assert rows[0]["zone_code"] == 2
 
 
 def test_current_state_fails_closed_for_ambiguous_badge_mapping():

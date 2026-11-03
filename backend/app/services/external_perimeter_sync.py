@@ -94,6 +94,21 @@ FROM latest WHERE rn = 1 AND acc_zone_code = 2
 ORDER BY event_time, source_transaction_id
 """
 
+# Explicit SECURITY_DB result contract for _CURRENT_INSIDE_SQL. SQL Server
+# expression columns have empty labels in ODBC, so consumers use these
+# documented ordinals and never infer semantics from row length/value shape.
+_CURRENT_INSIDE_ROW = {
+    "source_transaction_id": 0,
+    "unique_key": 1,
+    "log_id": 2,
+    "source_created_at": 3,
+    "event_time": 4,
+    "acc_zone_code": 5,
+    "reader_attribute": 6,
+    "has_unresolved_mapping": 7,
+    "card_no": 8,
+}
+
 _CURRENT_STATES_SQL = _CURRENT_INSIDE_SQL.replace(" AND acc_zone_code = 2", "")
 
 # `attr_value4` is not a canonical badge column. SECURITY_DB stores both raw
@@ -320,20 +335,36 @@ def external_inside_snapshot(max_log_id: int | None = None, *, query=None) -> li
             raise ExternalPerimeterError(_safe_odbc_category(exc, phase="query")) from None
         finally:
             connection.close()
-    items = [_normalize_external_row(row) for row in rows]
-    sql_snapshot_shape = any(len(row) >= 10 for row in rows)
-    ambiguous_cards = {str(item.get("source_card_no")) for item in items
-                       if item.get("_mapping_ambiguous") and item.get("source_card_no") is not None}
+    items = []
+    ambiguous_cards: set[str] = set()
+    for row in rows:
+        # Consume the documented nine-column SECURITY_DB source schema. The
+        # unresolved-mapping flag is column 8 (ordinal 7); card_no is ordinal 8.
+        try:
+            values = {name: row[index] for name, index in _CURRENT_INSIDE_ROW.items()}
+        except (IndexError, TypeError):
+            continue
+        if bool(values["has_unresolved_mapping"]):
+            if values["card_no"] is not None:
+                ambiguous_cards.add(str(values["card_no"]))
+            continue
+        if values["reader_attribute"] is None:
+            continue
+        item = _normalize_external_row((
+            values["source_transaction_id"], values["unique_key"],
+            values["log_id"], values["source_created_at"],
+            values["event_time"], values["acc_zone_code"],
+            values["reader_attribute"],
+        ))
+        item["source_card_no"] = values["card_no"]
+        items.append(item)
+
     resolved = [item for item in items
                 if item.get("zone_code") == 2 and item.get("reporter_id")
-                and not item.get("_mapping_ambiguous")
-                and (item.get("source_card_no") is None or str(item["source_card_no"]) not in ambiguous_cards)]
+                and (item.get("source_card_no") is None
+                     or str(item["source_card_no"]) not in ambiguous_cards)]
     for item in resolved:
         item.pop("source_card_no", None)
-        item.pop("_mapping_ambiguous", None)
-    if not sql_snapshot_shape:
-        for item in resolved:
-            item.pop("_source_batch_size", None)
     return resolved
 
 
