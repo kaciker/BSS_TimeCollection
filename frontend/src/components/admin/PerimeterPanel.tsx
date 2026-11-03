@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../api";
 import type { AdminAction, AdminTerminal, Factory, InstallationSettings } from "../../types";
 import { useLanguage } from "../../i18n";
+import { dateLabel } from "../monitoringTypes";
 
 type Config = {
   factory_code: string; enabled: boolean; badge_source: "OPEN" | "EXTERNAL";
@@ -101,13 +102,13 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
         <span className={`resource-status ${externalStatus?.reachable ? "is-active" : "is-inactive"}`}><span />{externalStatus?.reachable ? "Connected" : !externalStatus?.configured ? "Not configured" : !externalStatus?.last_check_at ? "Not checked" : "Error"}</span>
       </div>
       <div className="form-grid"><div><strong>{tr("externalSourceLabel")}</strong><div>SECURITY_DB</div></div><div><strong>{tr("externalModeLabel")}</strong><div>{tr("readOnly")}</div></div>
-        <div><strong>{tr("lastCheckLabel")}</strong><div>{externalStatus?.last_check_at ? new Date(externalStatus.last_check_at).toLocaleString(language) : "—"}</div></div>
+        <div><strong>{tr("lastCheckLabel")}</strong><div>{dateLabel(externalStatus?.last_check_at ?? null, language)}</div></div>
         {externalStatus?.error_category && <div><strong>{tr("technicalErrorLabel")}</strong><div>{externalStatus.error_category}</div></div>}
       </div>
       <div className="form-actions"><button className="secondary" disabled={busy} onClick={() => void checkExternal()}>{tr("testExternalConnection")}</button></div>
       <div className="form-grid"><label>{tr("testBadgeLabel")}<input value={badge} maxLength={64} disabled={busy} onChange={e => setBadge(e.target.value)} /></label>
         <div className="form-actions"><button className="secondary" disabled={busy || !badge.trim()} onClick={() => void testBadge()}>{tr("testBadgeButton")}</button></div></div>
-      {badgeResult && <div className="success-notice" role="status"><strong>{tr("externalTestResult")}: {badgeResult.status}</strong>{badgeResult.external_event_time && <div>{tr("externalEventTime")}: {new Date(badgeResult.external_event_time).toLocaleString(language)}</div>}{badgeResult.error_category && <div>{tr("technicalErrorLabel")}: {badgeResult.error_category}</div>}</div>}
+      {badgeResult && <div className="success-notice" role="status"><strong>{tr("externalTestResult")}: {badgeResult.status}</strong>{badgeResult.external_event_time && <div>{tr("externalEventTime")}: {dateLabel(badgeResult.external_event_time, language)}</div>}{badgeResult.error_category && <div>{tr("technicalErrorLabel")}: {badgeResult.error_category}</div>}</div>}
     </section>}
     <section className="admin-card">
       <div className="section-heading"><div><h3>{tr("factorySettings")}</h3><p>{tr("factorySettingsHelp")}</p></div>
@@ -155,7 +156,7 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
     {config?.badge_source !== "EXTERNAL" && <section className="admin-card resource-list">
       <div className="list-toolbar perimeter-audit-heading"><div className="section-heading"><div><h3>{tr("recentMovements")}</h3><p>{tr("perimeterHistoryHelp")}</p></div></div></div>
       {presence?.recent_events.length ? <div className="table-wrap"><table><thead><tr><th>{tr("uid")}</th><th>{tr("direction")}</th><th>{tr("time")}</th><th>{tr("autoCellExit")}</th></tr></thead>
-        <tbody>{presence.recent_events.map(e => <tr key={e.id}><td><strong>{e.badge}</strong></td><td><span className="status">{e.direction}</span></td><td>{new Date(e.at).toLocaleString(language)}</td><td><code>{e.auto_cell_exit_event_id ?? "—"}</code></td></tr>)}</tbody></table></div> : <div className="empty-state">{tr("noMovements")}</div>}
+        <tbody>{presence.recent_events.map(e => <tr key={e.id}><td><strong>{e.badge}</strong></td><td><span className="status">{e.direction}</span></td><td>{dateLabel(e.at, language)}</td><td><code>{e.auto_cell_exit_event_id ?? "—"}</code></td></tr>)}</tbody></table></div> : <div className="empty-state">{tr("noMovements")}</div>}
     </section>}
   </div>;
 }
