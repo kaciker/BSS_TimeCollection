@@ -132,21 +132,28 @@ def _edit(db: Session, model, id: int, values: dict):
     for key, value in values.items(): setattr(row, key, value)
     if model is Workshop:
         for child in row.subworkshops:
-            if child.oracle_machine_code and (child.oracle_machine_code not in MACHINES or MACHINES[child.oracle_machine_code]["work_area"] != row.oracle_work_area_code):
+            if child.oracle_machine_code and (
+                child.oracle_machine_code not in MACHINES
+                or MACHINES[child.oracle_machine_code]["work_area"] != row.oracle_work_area_code
+                or structure_parent_mapping_errors(
+                    work_area=row.oracle_work_area_code,
+                    machine=child.oracle_machine_code,
+                )
+            ):
                 db.rollback()
                 raise HTTPException(409, "Workshop Oracle WORK_AREA conflicts with an existing Subworkshop Oracle MACHINE mapping")
     if model is Subworkshop:
         for child in row.project_lines:
-            if child.oracle_cell_code and (child.oracle_cell_code not in CELLS or CELLS[child.oracle_cell_code]["machine"] != row.oracle_machine_code):
+            if child.oracle_cell_code and (
+                child.oracle_cell_code not in CELLS
+                or CELLS[child.oracle_cell_code]["machine"] != row.oracle_machine_code
+                or structure_parent_mapping_errors(
+                    work_area=row.workshop.oracle_work_area_code,
+                    machine=row.oracle_machine_code,
+                )
+            ):
                 db.rollback()
                 raise HTTPException(409, "Subworkshop Oracle MACHINE conflicts with an existing Project / Line Oracle CELL mapping")
-        parent_errors = structure_parent_mapping_errors(
-            work_area=row.workshop.oracle_work_area_code,
-            machine=row.oracle_machine_code,
-        )
-        if parent_errors:
-            db.rollback()
-            raise HTTPException(409, "; ".join(parent_errors))
     return _read(_save(db, row))
 
 @router.post("/workshops", status_code=201)

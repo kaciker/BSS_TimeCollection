@@ -190,11 +190,13 @@ def test_parent_mapping_change_cannot_break_existing_child_hierarchy(structure_c
     machine=post(client,"subworkshops",workshop_id=workshop["id"],code="S-PARENT-CHANGE",description="Machine",oracle_machine_code="4391")
     invalid=client.put(f"/api/v1/admin/structure/workshops/{workshop['id']}",json={"code":workshop["code"],"description":workshop["description"],"active":True,"oracle_work_area_code":None})
     assert invalid.status_code==409
-    new_area=post(client,"workshops",code="W-PARENT-OTHER",description="Other",oracle_work_area_code="439")
-    other_machine=post(client,"subworkshops",workshop_id=new_area["id"],code="S-PARENT-OTHER",description="Other machine",oracle_machine_code="4392")
     cell=post(client,"project-lines",subworkshop_id=machine["id"],code="P-PARENT-CHANGE",description="Cell",oracle_cell_code="54Q")
-    changed=client.put(f"/api/v1/admin/structure/subworkshops/{machine['id']}",json={"workshop_id":workshop["id"],"code":machine["code"],"description":machine["description"],"active":True,"oracle_machine_code":"4392"})
+    changed=client.put(f"/api/v1/admin/structure/subworkshops/{machine['id']}",json={"workshop_id":workshop["id"],"code":machine["code"],"description":machine["description"],"active":True,"oracle_machine_code":"4393"})
     assert changed.status_code==409
+    unmapped=post(client,"subworkshops",workshop_id=workshop["id"],code="S-UNMAPPED",description="Unmapped")
+    edited=client.put(f"/api/v1/admin/structure/subworkshops/{unmapped['id']}",json={"workshop_id":workshop["id"],"code":unmapped["code"],"description":"Still editable","active":True})
+    assert edited.status_code==200
+    assert cell["oracle_cell_code"]=="54Q"
     assert cell["oracle_cell_code"]=="54Q"
 
 def test_unmapped_structure_keeps_local_capture_and_blocks_oracle_payload(structure_client):
