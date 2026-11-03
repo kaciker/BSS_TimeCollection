@@ -21,6 +21,10 @@ from app.models import (
     Workshop,
     Subworkshop,
     ProjectLine,
+    OracleWorkArea,
+    OracleMachine,
+    OracleCell,
+    OraclePayrollTimeType,
 )  # noqa: F401
 
 config = context.config

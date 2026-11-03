@@ -1,4 +1,5 @@
 import logging
+import inspect
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
@@ -26,7 +27,7 @@ def deliver_event(
         if event is None:
             return
         started_at = datetime.now(timezone.utc)
-        mapping_errors = oracle_readiness_errors(event)
+        mapping_errors = oracle_readiness_errors(event, db)
         if mapping_errors:
             error_message = "; ".join(mapping_errors)
             event.oracle_mapping_error = error_message[:255]
@@ -53,7 +54,8 @@ def deliver_event(
             logger.error("Event mapping requires reconciliation event=%s reason=%s", event.id, error_message)
             return
         try:
-            result = client.send(event)
+            send_method = client.send
+            result = send_method(event, db=db) if "db" in inspect.signature(send_method).parameters else send_method(event)
         except OracleMappingError as exc:
             event.delivery_status = DeliveryStatus.REJECTED.value
             event.next_attempt_at = None
@@ -118,7 +120,7 @@ def deliver_event(
         logger.info("Delivery result event=%s status=%s http=%s", event.id, result.result, result.status_code)
 
 
-def validate_sendable_event(event: TimeEvent, client: OracleClient) -> dict:
+def validate_sendable_event(event: TimeEvent, client: OracleClient, db) -> dict:
     """Validate an event without persisting changes and return its exact payload."""
     if event.delivery_status == "LOCAL_ONLY" or (
         event.terminal is not None and event.terminal.terminal_role != "CELL"
@@ -130,10 +132,11 @@ def validate_sendable_event(event: TimeEvent, client: OracleClient) -> dict:
         raise ValueError("UNKNOWN delivery requires read-only reconciliation before any resend")
     if event.delivery_status not in {DeliveryStatus.PENDING.value, DeliveryStatus.RETRY.value, DeliveryStatus.REJECTED.value}:
         raise ValueError(f"Event status {event.delivery_status} is not eligible for explicit delivery")
-    errors = oracle_readiness_errors(event)
+    errors = oracle_readiness_errors(event, db)
     if errors:
         raise ValueError("; ".join(errors))
-    return client.build_payload(event)
+    build_method = client.build_payload
+    return build_method(event, db=db) if "db" in inspect.signature(build_method).parameters else build_method(event)
 
 
 def send_one_event(
@@ -153,7 +156,7 @@ def send_one_event(
         event = db.scalar(statement)
         if event is None:
             raise ValueError("Event does not exist")
-        payload = validate_sendable_event(event, client)
+        payload = validate_sendable_event(event, client, db)
         if not send:
             return {"sent": False, "payload": payload}
         if confirm_request_number != event.request_number:

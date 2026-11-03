@@ -9,6 +9,7 @@ from app.models.transmission_attempt import TransmissionAttempt
 from app.models.worker_runtime_metrics import WorkerRuntimeMetrics
 from app.models.perimeter import FactoryPerimeterSettings, FactoryPerimeterEvent, FactoryPresenceProjection, TerminalBadgeRead
 from app.models.factory import Factory, InstallationSettings
+from app.models.oracle_catalogue import OracleWorkArea, OracleMachine, OracleCell, OraclePayrollTimeType
 
 __all__ = [
     "Action",
@@ -25,4 +26,8 @@ __all__ = [
     "Workshop",
     "Subworkshop",
     "ProjectLine",
+    "OracleWorkArea",
+    "OracleMachine",
+    "OracleCell",
+    "OraclePayrollTimeType",
 ]

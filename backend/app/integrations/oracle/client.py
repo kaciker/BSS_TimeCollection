@@ -8,6 +8,7 @@ import httpx
 
 from app.core.config import settings
 from app.core.oracle_credentials import get_oracle_credentials
+from app.db.session import SessionLocal
 from app.models.time_event import TimeEvent
 from app.services.oracle_readiness import oracle_readiness_errors
 
@@ -56,7 +57,7 @@ class OracleClient:
     def endpoint(self) -> str:
         return f"{settings.oracle_base_url.rstrip('/')}{settings.oracle_api_path}"
 
-    def build_payload(self, event: TimeEvent) -> dict[str, Any]:
+    def build_payload(self, event: TimeEvent, db=None) -> dict[str, Any]:
         # A client payload is built exclusively from frozen, catalogue-valid
         # Oracle fields. Legacy/local structures and arbitrary JSON attributes
         # are intentionally not payload sources.
@@ -68,7 +69,11 @@ class OracleClient:
             event.oracle_mapping_error = "Configured Oracle sourceId exceeds the described 40-character limit"
             raise OracleMappingError(event.oracle_mapping_error)
 
-        errors = oracle_readiness_errors(event)
+        if db is None:
+            with SessionLocal() as session:
+                errors = oracle_readiness_errors(event, session)
+        else:
+            errors = oracle_readiness_errors(event, db)
         if errors:
             event.oracle_mapping_error = "; ".join(errors)[:255]
             raise OracleMappingError(event.oracle_mapping_error)
@@ -133,8 +138,8 @@ class OracleClient:
             headers["Authorization"] = f"Bearer {credentials['bearer_token']}"
         return headers
 
-    def send(self, event: TimeEvent) -> DeliveryResult:
-        payload = self.build_payload(event)
+    def send(self, event: TimeEvent, db=None) -> DeliveryResult:
+        payload = self.build_payload(event, db=db)
         started = monotonic()
         try:
             with httpx.Client(timeout=settings.oracle_timeout_seconds) as client:

@@ -204,7 +204,7 @@ def _create_event(
         event.oracle_work_area_code = snapshot.oracle_work_area_code
         event.oracle_machine_code = snapshot.oracle_machine_code
         event.oracle_cell_code = snapshot.oracle_cell_code
-    errors = oracle_readiness_errors(event)
+    errors = oracle_readiness_errors(event, db)
     event.oracle_mapping_error = "; ".join(errors)[:255] if errors else None
     db.add(event)
     if commit:

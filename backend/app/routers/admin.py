@@ -52,7 +52,7 @@ from app.services.terminal_code_service import allocate_terminal_code
 from app.services.terminal_identity_service import issue_activation_token
 from app.services.terminal_pairing_service import approve_pairing_request
 from app.services.oracle_readiness import is_oracle_ready, oracle_readiness_errors, action_readiness_errors
-from app.services.oracle_catalogue import PAYROLL_TIME_TYPES
+from app.services.oracle_catalogue import payroll_time_type_is_active
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
@@ -199,8 +199,8 @@ def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> T
     )
 
 
-def _action_read(action: Action) -> ActionRead:
-    mapping_errors = action_readiness_errors(action)
+def _action_read(action: Action, db: Session) -> ActionRead:
+    mapping_errors = action_readiness_errors(action, db)
     action_ready = not mapping_errors
     return ActionRead(
         code=action.code,
@@ -541,7 +541,7 @@ def update_terminal_actions(terminal_code: str, payload: TerminalActionsUpdate, 
 @router.get("/actions", response_model=list[ActionRead])
 def list_actions(db: Session = Depends(get_db)):
     actions = db.scalars(select(Action).order_by(Action.display_order, Action.code)).unique().all()
-    return [_action_read(item) for item in actions]
+    return [_action_read(item, db) for item in actions]
 
 
 @router.post("/actions", response_model=ActionRead, status_code=status.HTTP_201_CREATED)
@@ -552,7 +552,7 @@ def create_action(payload: ActionCreate, db: Session = Depends(get_db)):
     oracle_supplier_event = payload.oracle_supplier_event or (
         "HUT_TCD_SUPP1_IN_2" if payload.state_effect.value == "ENTER" else "HUT_TCD_SUPP1_OUT_2"
     )
-    if payload.oracle_payroll_time_type is not None and payload.oracle_payroll_time_type not in PAYROLL_TIME_TYPES:
+    if payload.oracle_payroll_time_type is not None and not payroll_time_type_is_active(db, payload.oracle_payroll_time_type):
         raise HTTPException(422, "PayrollTimeType must be selected from the HR-Path catalogue")
     parent = resolve_parent_action(db, payload.parent_action_code)
     action = Action(
@@ -576,7 +576,7 @@ def create_action(payload: ActionCreate, db: Session = Depends(get_db)):
     db.add(action)
     commit_configuration(db)
     db.refresh(action)
-    return _action_read(action)
+    return _action_read(action, db)
 
 
 @router.put("/actions/{action_code}", response_model=ActionRead)
@@ -586,7 +586,7 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
         raise HTTPException(404, "Action not found")
     check_supplier_event(db, payload.supplier_device_event, action)
     oracle_supplier_event = payload.oracle_supplier_event or action.oracle_supplier_event
-    if payload.oracle_payroll_time_type is not None and payload.oracle_payroll_time_type not in PAYROLL_TIME_TYPES:
+    if payload.oracle_payroll_time_type is not None and not payroll_time_type_is_active(db, payload.oracle_payroll_time_type):
         raise HTTPException(422, "PayrollTimeType must be selected from the HR-Path catalogue")
     parent = resolve_parent_action(db, payload.parent_action_code, action)
     action.label = payload.label
@@ -618,13 +618,13 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
         raise
     commit_configuration(db)
     db.refresh(action)
-    return _action_read(action)
+    return _action_read(action, db)
 
 
 @router.get("/events", response_model=list[EventRead])
 def list_events(limit: int = Query(100, ge=1, le=500), db: Session = Depends(get_db)):
     events = db.scalars(select(TimeEvent).order_by(TimeEvent.created_at.desc()).limit(limit)).all()
-    return [EventRead(**{**{field: getattr(item, field) for field in EventRead.model_fields if hasattr(item, field)}, "oracle_ready": is_oracle_ready(item), "oracle_mapping_error": "; ".join(oracle_readiness_errors(item))[:255] or None}) for item in events]
+    return [EventRead(**{**{field: getattr(item, field) for field in EventRead.model_fields if hasattr(item, field)}, "oracle_ready": is_oracle_ready(item, db), "oracle_mapping_error": "; ".join(oracle_readiness_errors(item, db))[:255] or None}) for item in events]
 
 
 @router.post("/events/{event_id}/retry", response_model=EventRead)
@@ -646,4 +646,4 @@ def retry_event(event_id: str, db: Session = Depends(get_db)):
     event.next_attempt_at = None
     db.commit()
     db.refresh(event)
-    return EventRead(**{**{field: getattr(event, field) for field in EventRead.model_fields if hasattr(event, field)}, "oracle_ready": is_oracle_ready(event), "oracle_mapping_error": "; ".join(oracle_readiness_errors(event))[:255] or None})
+    return EventRead(**{**{field: getattr(event, field) for field in EventRead.model_fields if hasattr(event, field)}, "oracle_ready": is_oracle_ready(event, db), "oracle_mapping_error": "; ".join(oracle_readiness_errors(event, db))[:255] or None})

@@ -108,7 +108,7 @@ def claim_next_event() -> str | None:
                 candidate is not None
                 and candidate.delivery_status in {DeliveryStatus.PENDING.value, DeliveryStatus.RETRY.value}
                 and (candidate.next_attempt_at is None or candidate.next_attempt_at <= now)
-                and is_oracle_ready(candidate)
+                and is_oracle_ready(candidate, db)
             ):
                 event = candidate
                 break

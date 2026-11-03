@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.structure import Workshop, Subworkshop, ProjectLine
 from app.models.terminal import Terminal
-from app.services.oracle_catalogue import CELLS, MACHINES, PAYROLL_TIME_TYPES, WORK_AREAS
-from app.services.oracle_readiness import structure_parent_mapping_errors
+from app.models.oracle_catalogue import OracleCell, OracleMachine, OraclePayrollTimeType, OracleWorkArea
+from app.services.oracle_catalogue import catalogue_payload, structure_mapping_errors, structure_parent_mapping_errors
 
 router = APIRouter(prefix="/api/v1/admin/structure", tags=["structure"])
 
@@ -28,6 +28,45 @@ class SubworkshopInput(StructureInput):
 class ProjectLineInput(StructureInput):
     subworkshop_id: int = Field(gt=0)
     oracle_cell_code: str | None = Field(default=None, max_length=80)
+
+class CatalogueValueInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    code: str = Field(min_length=1, max_length=120)
+    description: str | None = Field(default=None, max_length=255)
+    parent_code: str | None = Field(default=None, max_length=80)
+    source_reference: str | None = Field(default=None, max_length=255)
+    active: bool = True
+
+class CatalogueImportInput(BaseModel):
+    """Canonical converted HR-Path JSON format; import is additive/upsert only."""
+    work_areas: list[dict]
+    machines: list[dict]
+    cells: list[dict]
+    payroll_time_types: list[dict]
+
+    @model_validator(mode="after")
+    def validate_hierarchy(self):
+        areas = {row.get("code") for row in self.work_areas}
+        machines = {row.get("code"): row.get("work_area_code") for row in self.machines}
+        if len(areas) != len(self.work_areas) or len(machines) != len(self.machines):
+            raise ValueError("Duplicate WORK_AREA or MACHINE codes in import")
+        if len({row.get("code") for row in self.cells}) != len(self.cells):
+            raise ValueError("Duplicate CELL codes in import")
+        if len({row.get("code") for row in self.payroll_time_types}) != len(self.payroll_time_types):
+            raise ValueError("Duplicate PayrollTimeType codes in import")
+        if any(not row.get("code") or not row.get("description") for row in self.work_areas + self.machines + self.cells):
+            raise ValueError("Every structural Oracle catalogue row requires code and description")
+        if any(not row.get("code") for row in self.payroll_time_types):
+            raise ValueError("Every PayrollTimeType row requires code")
+        for row in self.machines:
+            if row.get("work_area_code") not in areas:
+                raise ValueError(f"MACHINE {row.get('code')} references an unknown WORK_AREA")
+        for row in self.cells:
+            if row.get("machine_code") not in machines:
+                raise ValueError(f"CELL {row.get('code')} references an unknown MACHINE")
+        if any(not row.get("code") or not row.get("description") for row in self.machines + self.cells):
+            raise ValueError("Every MACHINE and CELL row requires code and description")
+        return self
 
 def _save(db: Session, row):
     try:
@@ -59,19 +98,128 @@ def list_structure(db: Session = Depends(get_db)):
     }
 
 @router.get("/oracle-catalogue")
-def oracle_catalogue():
-    return {
-        "payroll_time_types": list(PAYROLL_TIME_TYPES),
-        "work_areas": [{"code": code, "description": label} for code, label in WORK_AREAS.items()],
-        "machines": [{"code": code, **value} for code, value in MACHINES.items()],
-        "cells": [{"code": code, **value} for code, value in CELLS.items()],
-    }
+def oracle_catalogue(db: Session = Depends(get_db)):
+    return catalogue_payload(db)
 
-def _validate_oracle_mapping(model, values: dict, parent=None):
+@router.get("/oracle-catalogue/admin")
+def oracle_catalogue_admin(db: Session = Depends(get_db)):
+    return catalogue_payload(db, include_inactive=True)
+
+def _save_catalogue_row(db: Session, model, values: dict, *, parent_model=None, parent_field: str | None = None):
+    values = dict(values)
+    code = values["code"].strip()
+    parent_code = values.pop("parent_code", None)
+    if parent_model is not None:
+        parent = db.get(parent_model, parent_code) if parent_code else None
+        if parent is None or not parent.active:
+            raise HTTPException(422, "Select an existing active Oracle parent catalogue value")
+    row = db.get(model, code)
+    if row is None:
+        row = model(code=code)
+        db.add(row)
+    for key in ("description", "active", "source_reference"):
+        if key in values:
+            setattr(row, key, values[key])
+    if parent_field:
+        setattr(row, parent_field, parent_code)
+    return row
+
+def _catalogue_upsert(db: Session, model, payload: CatalogueValueInput, *, parent_model=None, parent_field: str | None = None):
+    values = payload.model_dump()
+    if model is OraclePayrollTimeType:
+        values["description"] = values.get("description")
+    else:
+        values["description"] = values.get("description") or ""
+    row = _save_catalogue_row(db, model, values, parent_model=parent_model, parent_field=parent_field)
+    try:
+        db.commit()
+        db.refresh(row)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Catalogue code or parent reference conflicts")
+    return {"code": row.code, "description": row.description, "active": row.active}
+
+@router.post("/oracle-catalogue/work-areas", status_code=201)
+def create_oracle_work_area(payload: CatalogueValueInput, db: Session = Depends(get_db)):
+    return _catalogue_upsert(db, OracleWorkArea, payload)
+
+@router.post("/oracle-catalogue/machines", status_code=201)
+def create_oracle_machine(payload: CatalogueValueInput, db: Session = Depends(get_db)):
+    if not payload.description or not payload.parent_code:
+        raise HTTPException(422, "MACHINE description and WORK_AREA parent are required")
+    return _catalogue_upsert(db, OracleMachine, payload, parent_model=OracleWorkArea, parent_field="work_area_code")
+
+@router.post("/oracle-catalogue/cells", status_code=201)
+def create_oracle_cell(payload: CatalogueValueInput, db: Session = Depends(get_db)):
+    if not payload.description or not payload.parent_code:
+        raise HTTPException(422, "CELL description and MACHINE parent are required")
+    return _catalogue_upsert(db, OracleCell, payload, parent_model=OracleMachine, parent_field="machine_code")
+
+@router.post("/oracle-catalogue/payroll-time-types", status_code=201)
+def create_oracle_payroll_time_type(payload: CatalogueValueInput, db: Session = Depends(get_db)):
+    return _catalogue_upsert(db, OraclePayrollTimeType, payload)
+
+@router.put("/oracle-catalogue/{kind}/{code}")
+def update_oracle_catalogue(kind: str, code: str, payload: CatalogueValueInput, db: Session = Depends(get_db)):
+    models = {"work-areas": (OracleWorkArea, None, None), "machines": (OracleMachine, OracleWorkArea, "work_area_code"), "cells": (OracleCell, OracleMachine, "machine_code"), "payroll-time-types": (OraclePayrollTimeType, None, None)}
+    if kind not in models:
+        raise HTTPException(404, "Unknown Oracle catalogue type")
+    model, parent_model, parent_field = models[kind]
+    if payload.code != code:
+        raise HTTPException(422, "Catalogue codes are immutable; deactivate and add a replacement")
+    row = db.get(model, code)
+    if row is None:
+        raise HTTPException(404, "Catalogue entry not found")
+    values = payload.model_dump()
+    values["description"] = values.get("description") or ""
+    parent_code = values.pop("parent_code", None)
+    if parent_field:
+        parent = db.get(parent_model, parent_code) if parent_code else None
+        if parent is None or not parent.active:
+            raise HTTPException(422, "Select an active parent catalogue value")
+        setattr(row, parent_field, parent_code)
+    for key in ("description", "active", "source_reference"):
+        if key in values:
+            setattr(row, key, values[key])
+    db.commit()
+    return {"code": row.code, "description": row.description, "active": row.active}
+
+@router.post("/oracle-catalogue/import")
+def import_oracle_catalogue(payload: CatalogueImportInput, db: Session = Depends(get_db)):
+    """Validate parent paths, then atomically upsert; omitted items are preserved."""
+    rows = []
+    for values in payload.work_areas:
+        rows.append((OracleWorkArea, values, None, None))
+    for values in payload.machines:
+        rows.append((OracleMachine, values, OracleWorkArea, "work_area_code"))
+    for values in payload.cells:
+        rows.append((OracleCell, values, OracleMachine, "machine_code"))
+    for values in payload.payroll_time_types:
+        rows.append((OraclePayrollTimeType, values, None, None))
+    counts = {"added": 0, "updated": 0, "unchanged": 0, "invalid": 0}
+    try:
+        for model, values, parent_model, parent_field in rows:
+            before = db.get(model, values.get("code"))
+            old = ({column: getattr(before, column) for column in ("description", "active", "source_reference", parent_field) if column and hasattr(before, column)} if before else None)
+            normalized = {"code": values.get("code"), "description": values.get("description") or "", "active": values.get("active", True), "source_reference": values.get("source_reference")}
+            if parent_field:
+                normalized["parent_code"] = values.get(parent_field)
+            row = _save_catalogue_row(db, model, normalized, parent_model=parent_model, parent_field=parent_field)
+            db.flush()
+            new = {column: getattr(row, column) for column in old} if old is not None else None
+            counts["added" if before is None else "unchanged" if old == new else "updated"] += 1
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(422, f"Catalogue import rejected; no changes committed: {exc}") from exc
+    return counts
+
+def _validate_oracle_mapping(db: Session, model, values: dict, parent=None):
     if model is Workshop:
         code = values.get("oracle_work_area_code")
-        if code is not None and code not in WORK_AREAS:
-            raise HTTPException(422, "Oracle WORK_AREA is not in the HR-Path catalogue")
+        row = db.get(OracleWorkArea, code) if code is not None else None
+        if code is not None and (row is None or not row.active):
+            raise HTTPException(422, "Oracle WORK_AREA is missing or inactive in the HR-Path catalogue")
         return
     if model is Subworkshop:
         code = values.get("oracle_machine_code")
@@ -79,9 +227,10 @@ def _validate_oracle_mapping(model, values: dict, parent=None):
             return
         if not parent.oracle_work_area_code:
             raise HTTPException(422, "Oracle MACHINE requires a mapped parent Workshop Oracle WORK_AREA")
-        if code not in MACHINES:
-            raise HTTPException(422, "Oracle MACHINE is not in the HR-Path catalogue")
-        if MACHINES[code]["work_area"] != parent.oracle_work_area_code:
+        machine = db.get(OracleMachine, code)
+        if machine is None or not machine.active:
+            raise HTTPException(422, "Oracle MACHINE is missing or inactive in the HR-Path catalogue")
+        if machine.work_area_code != parent.oracle_work_area_code:
             raise HTTPException(422, "Oracle MACHINE does not belong to parent WORK_AREA")
         return
     code = values.get("oracle_cell_code")
@@ -89,15 +238,16 @@ def _validate_oracle_mapping(model, values: dict, parent=None):
         return
     if not parent.oracle_machine_code:
         raise HTTPException(422, "Oracle CELL requires a mapped parent Subworkshop Oracle MACHINE")
-    parent_errors = structure_parent_mapping_errors(
+    parent_errors = structure_parent_mapping_errors(db,
         work_area=parent.workshop.oracle_work_area_code,
         machine=parent.oracle_machine_code,
     )
     if parent_errors:
         raise HTTPException(422, "; ".join(parent_errors))
-    if code not in CELLS:
-        raise HTTPException(422, "Oracle CELL is not in the HR-Path catalogue")
-    if CELLS[code]["machine"] != parent.oracle_machine_code:
+    cell = db.get(OracleCell, code)
+    if cell is None or not cell.active:
+        raise HTTPException(422, "Oracle CELL is missing or inactive in the HR-Path catalogue")
+    if cell.machine_code != parent.oracle_machine_code:
         raise HTTPException(422, "Oracle CELL does not belong to parent MACHINE")
 
 def _parent(db: Session, model, id: int):
@@ -110,14 +260,14 @@ def _edit(db: Session, model, id: int, values: dict):
     if row is None: raise HTTPException(404, "Structure record not found")
     if model is Subworkshop:
         parent = _parent(db, Workshop, values["workshop_id"])
-        _validate_oracle_mapping(model, values, parent)
+        _validate_oracle_mapping(db, model, values, parent)
         if not parent.active and values["active"]: raise HTTPException(409, "Parent Workshop is inactive")
     if model is ProjectLine:
         parent = _parent(db, Subworkshop, values["subworkshop_id"])
-        _validate_oracle_mapping(model, values, parent)
+        _validate_oracle_mapping(db, model, values, parent)
         if values["active"] and (not parent.active or not parent.workshop.active): raise HTTPException(409, "Parent path is inactive")
     if model is Workshop:
-        _validate_oracle_mapping(model, values)
+        _validate_oracle_mapping(db, model, values)
     if row.active and not values["active"]:
         if model is Workshop and db.scalar(select(Subworkshop.id).where(Subworkshop.workshop_id == id, Subworkshop.active.is_(True)).limit(1)) is not None:
             raise HTTPException(409, "Deactivate active Subworkshops first")
@@ -132,33 +282,26 @@ def _edit(db: Session, model, id: int, values: dict):
     for key, value in values.items(): setattr(row, key, value)
     if model is Workshop:
         for child in row.subworkshops:
-            if child.oracle_machine_code and (
-                child.oracle_machine_code not in MACHINES
-                or MACHINES[child.oracle_machine_code]["work_area"] != row.oracle_work_area_code
-                or structure_parent_mapping_errors(
+            if child.oracle_machine_code and structure_parent_mapping_errors(db,
                     work_area=row.oracle_work_area_code,
                     machine=child.oracle_machine_code,
-                )
-            ):
+                ):
                 db.rollback()
                 raise HTTPException(409, "Workshop Oracle WORK_AREA conflicts with an existing Subworkshop Oracle MACHINE mapping")
     if model is Subworkshop:
         for child in row.project_lines:
-            if child.oracle_cell_code and (
-                child.oracle_cell_code not in CELLS
-                or CELLS[child.oracle_cell_code]["machine"] != row.oracle_machine_code
-                or structure_parent_mapping_errors(
+            if child.oracle_cell_code and structure_mapping_errors(db,
                     work_area=row.workshop.oracle_work_area_code,
                     machine=row.oracle_machine_code,
-                )
-            ):
+                    cell=child.oracle_cell_code,
+                ):
                 db.rollback()
                 raise HTTPException(409, "Subworkshop Oracle MACHINE conflicts with an existing Project / Line Oracle CELL mapping")
     return _read(_save(db, row))
 
 @router.post("/workshops", status_code=201)
 def create_workshop(payload: WorkshopInput, db: Session = Depends(get_db)):
-    _validate_oracle_mapping(Workshop, payload.model_dump())
+    _validate_oracle_mapping(db, Workshop, payload.model_dump())
     return _read(_save(db, Workshop(**payload.model_dump())))
 
 @router.put("/workshops/{id}")
@@ -168,7 +311,7 @@ def update_workshop(id: int, payload: WorkshopInput, db: Session = Depends(get_d
 @router.post("/subworkshops", status_code=201)
 def create_subworkshop(payload: SubworkshopInput, db: Session = Depends(get_db)):
     parent = _parent(db, Workshop, payload.workshop_id)
-    _validate_oracle_mapping(Subworkshop, payload.model_dump(), parent)
+    _validate_oracle_mapping(db, Subworkshop, payload.model_dump(), parent)
     if payload.active and not parent.active: raise HTTPException(409, "Parent Workshop is inactive")
     return _read(_save(db, Subworkshop(**payload.model_dump())))
 
@@ -179,7 +322,7 @@ def update_subworkshop(id: int, payload: SubworkshopInput, db: Session = Depends
 @router.post("/project-lines", status_code=201)
 def create_project_line(payload: ProjectLineInput, db: Session = Depends(get_db)):
     parent = _parent(db, Subworkshop, payload.subworkshop_id)
-    _validate_oracle_mapping(ProjectLine, payload.model_dump(), parent)
+    _validate_oracle_mapping(db, ProjectLine, payload.model_dump(), parent)
     if payload.active and (not parent.active or not parent.workshop.active): raise HTTPException(409, "Parent path is inactive")
     return _read(_save(db, ProjectLine(**payload.model_dump())))
 
