@@ -44,30 +44,6 @@ class CatalogueImportInput(BaseModel):
     cells: list[dict]
     payroll_time_types: list[dict]
 
-    @model_validator(mode="after")
-    def validate_hierarchy(self):
-        areas = {row.get("code") for row in self.work_areas}
-        machines = {row.get("code"): row.get("work_area_code") for row in self.machines}
-        if len(areas) != len(self.work_areas) or len(machines) != len(self.machines):
-            raise ValueError("Duplicate WORK_AREA or MACHINE codes in import")
-        if len({row.get("code") for row in self.cells}) != len(self.cells):
-            raise ValueError("Duplicate CELL codes in import")
-        if len({row.get("code") for row in self.payroll_time_types}) != len(self.payroll_time_types):
-            raise ValueError("Duplicate PayrollTimeType codes in import")
-        if any(not row.get("code") or not row.get("description") for row in self.work_areas + self.machines + self.cells):
-            raise ValueError("Every structural Oracle catalogue row requires code and description")
-        if any(not row.get("code") for row in self.payroll_time_types):
-            raise ValueError("Every PayrollTimeType row requires code")
-        for row in self.machines:
-            if row.get("work_area_code") not in areas:
-                raise ValueError(f"MACHINE {row.get('code')} references an unknown WORK_AREA")
-        for row in self.cells:
-            if row.get("machine_code") not in machines:
-                raise ValueError(f"CELL {row.get('code')} references an unknown MACHINE")
-        if any(not row.get("code") or not row.get("description") for row in self.machines + self.cells):
-            raise ValueError("Every MACHINE and CELL row requires code and description")
-        return self
-
 def _save(db: Session, row):
     try:
         db.add(row)
@@ -187,6 +163,29 @@ def update_oracle_catalogue(kind: str, code: str, payload: CatalogueValueInput, 
 @router.post("/oracle-catalogue/import")
 def import_oracle_catalogue(payload: CatalogueImportInput, db: Session = Depends(get_db)):
     """Validate parent paths, then atomically upsert; omitted items are preserved."""
+    errors: list[str] = []
+    areas = {item.get("code") for item in payload.work_areas if item.get("code")}
+    machines = {item.get("code") for item in payload.machines if item.get("code")}
+    all_rows = payload.work_areas + payload.machines + payload.cells
+    for item in all_rows:
+        if not item.get("code") or not item.get("description"):
+            errors.append(f"{item.get('code') or '<missing code>'}: code and description are required")
+    for item in payload.payroll_time_types:
+        if not item.get("code"):
+            errors.append("PayrollTimeType: code is required")
+    for label, items in (("WORK_AREA", payload.work_areas), ("MACHINE", payload.machines), ("CELL", payload.cells), ("PayrollTimeType", payload.payroll_time_types)):
+        codes = [item.get("code") for item in items if item.get("code")]
+        if len(codes) != len(set(codes)):
+            errors.append(f"Duplicate {label} codes in import")
+    for item in payload.machines:
+        if item.get("work_area_code") not in areas and db.get(OracleWorkArea, item.get("work_area_code")) is None:
+            errors.append(f"MACHINE {item.get('code')} references unknown WORK_AREA {item.get('work_area_code')}")
+    for item in payload.cells:
+        if item.get("machine_code") not in machines and db.get(OracleMachine, item.get("machine_code")) is None:
+            errors.append(f"CELL {item.get('code')} references unknown MACHINE {item.get('machine_code')}")
+    if errors:
+        raise HTTPException(422, {"added": 0, "updated": 0, "unchanged": 0, "invalid": len(errors), "errors": errors})
+
     rows = []
     for values in payload.work_areas:
         rows.append((OracleWorkArea, values, None, None))
@@ -200,6 +199,12 @@ def import_oracle_catalogue(payload: CatalogueImportInput, db: Session = Depends
     try:
         for model, values, parent_model, parent_field in rows:
             before = db.get(model, values.get("code"))
+            parent_code = values.get(parent_field) if parent_field else None
+            if before is not None and parent_field and getattr(before, parent_field) != parent_code:
+                if model is OracleMachine and db.scalar(select(Workshop.id).where(Workshop.oracle_work_area_code == before.work_area_code).limit(1)) is not None:
+                    raise ValueError(f"Cannot change MACHINE {before.code} parent while a Workshop maps to its current hierarchy")
+                if model is OracleCell and db.scalar(select(ProjectLine.id).where(ProjectLine.oracle_cell_code == before.code).limit(1)) is not None:
+                    raise ValueError(f"Cannot change CELL {before.code} parent while a Project / Line maps to it")
             old = ({column: getattr(before, column) for column in ("description", "active", "source_reference", parent_field) if column and hasattr(before, column)} if before else None)
             normalized = {"code": values.get("code"), "description": values.get("description") or "", "active": values.get("active", True), "source_reference": values.get("source_reference")}
             if parent_field:
