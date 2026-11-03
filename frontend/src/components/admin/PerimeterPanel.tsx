@@ -7,10 +7,11 @@ import { dateLabel } from "../monitoringTypes";
 type Config = {
   factory_code: string; enabled: boolean; badge_source: "OPEN" | "EXTERNAL";
   dedup_enabled: boolean; dedup_seconds: number; auto_exit_action_code: string | null;
+  source_clock_correction_enabled: boolean; source_clock_offset_minutes: number;
 };
 type Presence = { factory_code: string; inside: string[]; recent_events: Array<{id: string; badge: string; direction: string; at: string; auto_cell_exit_event_id: string | null}> };
 type ExternalStatus = {provider: string; configured: boolean; reachable: boolean; database: string; server: string | null; driver: string; last_check_at: string | null; status: string; error_category: string | null};
-type BadgeTest = {status: "INSIDE" | "OUTSIDE" | "STALE" | "UNKNOWN" | "ERROR"; external_event_time: string | null; zone_code: number | null; error_category: string | null};
+type BadgeTest = {status: "INSIDE" | "OUTSIDE" | "STALE" | "UNKNOWN" | "ERROR"; external_event_time: string | null; effective_event_time: string | null; source_clock_offset_minutes: number; zone_code: number | null; error_category: string | null};
 type Role = "CELL" | "PERIMETER_ENTER" | "PERIMETER_EXIT" | "PERIMETER_BOTH";
 export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {terminals: AdminTerminal[]; actions: AdminAction[]; onTerminalsChanged?: () => Promise<void>}) {
   const { t: tr, language } = useLanguage();
@@ -108,7 +109,7 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
       <div className="form-actions"><button className="secondary" disabled={busy} onClick={() => void checkExternal()}>{tr("testExternalConnection")}</button></div>
       <div className="form-grid"><label>{tr("testBadgeLabel")}<input value={badge} maxLength={64} disabled={busy} onChange={e => setBadge(e.target.value)} /></label>
         <div className="form-actions"><button className="secondary" disabled={busy || !badge.trim()} onClick={() => void testBadge()}>{tr("testBadgeButton")}</button></div></div>
-      {badgeResult && <div className="success-notice" role="status"><strong>{tr("externalTestResult")}: {badgeResult.status}</strong>{badgeResult.external_event_time && <div>{tr("externalEventTime")}: {dateLabel(badgeResult.external_event_time, language)}</div>}{badgeResult.error_category && <div>{tr("technicalErrorLabel")}: {badgeResult.error_category}</div>}</div>}
+      {badgeResult && <div className="success-notice" role="status"><strong>{tr("externalTestResult")}: {badgeResult.status}</strong>{badgeResult.external_event_time && <div>{tr("sourceClockRaw")}: {dateLabel(badgeResult.external_event_time, language)}</div>}{badgeResult.effective_event_time && <div>{tr("sourceClockEffective")}: {dateLabel(badgeResult.effective_event_time, language)}</div>}{badgeResult.error_category && <div>{tr("technicalErrorLabel")}: {badgeResult.error_category}</div>}</div>}
     </section>}
     <section className="admin-card">
       <div className="section-heading"><div><h3>{tr("factorySettings")}</h3><p>{tr("factorySettingsHelp")}</p></div>
@@ -123,6 +124,15 @@ export function PerimeterPanel({ terminals, actions, onTerminalsChanged }: {term
           <label className="switch-control"><input type="checkbox" checked={config.enabled} disabled={busy} onChange={e => setConfig({...config, enabled:e.target.checked})} /><span className="switch-track" aria-hidden="true" />{tr("requireFactoryEntry")}</label>
           <label className="switch-control"><input type="checkbox" checked={config.dedup_enabled} disabled={busy} onChange={e => setConfig({...config, dedup_enabled:e.target.checked})} /><span className="switch-track" aria-hidden="true" />{tr("ignoreRepeatedScans")}</label>
         </div>
+        {config.badge_source === "EXTERNAL" && <section className="form-section">
+          <h3>{tr("sourceClockCorrection")}</h3>
+          <p>{tr("sourceClockCorrectionHelp")}</p>
+          <label className="switch-control"><input type="checkbox" checked={config.source_clock_correction_enabled} disabled={busy} onChange={e => setConfig({...config, source_clock_correction_enabled:e.target.checked})} /><span className="switch-track" aria-hidden="true" />{tr("sourceClockCorrectionEnabled")}</label>
+          <div className="form-grid">
+            <label>{tr("sourceClockOffsetMinutes")}<input type="number" min="-720" max="720" step="1" disabled={busy || !config.source_clock_correction_enabled} value={config.source_clock_offset_minutes} onChange={e => setConfig({...config, source_clock_offset_minutes:Number(e.target.value)})} /><small>{tr("sourceClockSignHelp")}</small></label>
+            <div><strong>{tr("sourceClockPreview")}</strong><div>{tr("sourceClockRaw")}: 2026-11-03 12:42:13</div><div>{tr("sourceClockEffective")}: {config.source_clock_correction_enabled ? new Date(Date.UTC(2026,10,3,12,42,13)-config.source_clock_offset_minutes*60000).toISOString().replace("T"," ").slice(0,19) : "2026-11-03 12:42:13"} ({tr("madridTime")})</div></div>
+          </div>
+        </section>}
         <div className="form-grid">
           <label>{tr("scanCooldown")}<input type="number" min="0" max="300" value={config.dedup_seconds} onChange={e => setConfig({...config, dedup_seconds:Number(e.target.value)})} /></label>
           <label>{tr("autoExitAction")}<select aria-label={tr("autoExitAction")} value={config.auto_exit_action_code ?? ""} onChange={e => { setConfig({...config, auto_exit_action_code:e.target.value || null}); setNotice(""); setError(""); }}><option value="">{tr("selectExistingExit")}</option>{config.auto_exit_action_code && !exitActions.some(action => action.code === config.auto_exit_action_code) && <option value={config.auto_exit_action_code} disabled>{config.auto_exit_action_code} ({tr("unavailable")})</option>}{exitActions.map(action => <option key={action.code} value={action.code}>{action.label} · {action.code}{action.show_on_terminal === false ? ` (${tr("hidden")})` : ""}</option>)}</select>{exitActions.length === 0 && <small>{tr("noEligibleExit")}</small>}{config.auto_exit_action_code && !exitActions.some(action => action.code === config.auto_exit_action_code) && <small>{tr("savedActionUnavailable")}</small>}</label>
