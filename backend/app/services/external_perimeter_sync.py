@@ -523,7 +523,7 @@ def mirror_external_event(
             effective_event_datetime=event_time,
             source_clock_offset_minutes=applied_offset,
             source_clock_correction_applied=bool(getattr(config, "source_clock_correction_enabled", False) and applied_offset),
-            source_clock_correction_pending=not bool(getattr(config, "source_clock_correction_enabled", False)),
+            source_clock_correction_pending=False,
             correlation_id=correlation_id,
             source_system=SOURCE if source_id else None,
             source_transaction_id=source_id,

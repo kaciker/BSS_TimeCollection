@@ -79,8 +79,8 @@ def collect_operational_metrics():
             )
             local_only_count = conn.scalar(
                 select(func.count()).select_from(FactoryPerimeterEvent).where(
-                    FactoryPerimeterEvent.event_datetime >= cutoff,
-                    FactoryPerimeterEvent.event_datetime <= collected_at,
+                    func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime) >= cutoff,
+                    func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime) <= collected_at,
                 )
             )
             runtime = conn.execute(
