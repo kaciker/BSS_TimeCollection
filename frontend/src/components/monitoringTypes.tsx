@@ -62,7 +62,11 @@ export interface CardState {
 }
 export interface Page<T> { items: T[]; total: number; factory_perimeter_enabled?: boolean }
 export interface EventDetail { event: EventSnapshot; attempts: Attempt[]; oracle_enabled: boolean; oracle_payload_preview: Record<string, unknown> | null; oracle_mapping_error?: string | null }
-export const dateLabel = (value: string | null) => value ? new Date(value).toLocaleString("en-GB") : "—";
+const EVENT_TIME_ZONE = "Europe/Madrid";
+
+export const dateLabel = (value: string | null, locale = "en-GB") => value
+  ? new Date(value).toLocaleString(locale, { timeZone: EVENT_TIME_ZONE })
+  : "—";
 export function Status({ value }: { value: string }) {
   return <span className={`status status-${value.toLowerCase()}`}>{value === "LOCAL_ONLY" ? "Solo local" : value}</span>;
 }
