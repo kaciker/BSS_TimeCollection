@@ -154,7 +154,25 @@ def test_external_connection(*, connect=None) -> dict:
     return result
 
 
-def check_external_presence(badge: str, *, now: datetime | None = None, query=None) -> dict:
+def source_clock_offset(config) -> int:
+    """Minutes SECURITY_DB is ahead; positive values are subtracted."""
+    if not config or not getattr(config, "source_clock_correction_enabled", False):
+        return 0
+    return int(getattr(config, "source_clock_offset_minutes", 0) or 0)
+
+
+def normalize_security_db_event_time(value: datetime, config) -> tuple[datetime, int]:
+    """Normalize only SECURITY_DB acc_transaction.event_time in Madrid time."""
+    if not isinstance(value, datetime):
+        raise ValueError("SECURITY_DB event_time must be a datetime")
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=ZoneInfo(settings.event_timezone))
+    offset = source_clock_offset(config)
+    effective_utc = value.astimezone(timezone.utc) - timedelta(minutes=offset)
+    return effective_utc.astimezone(ZoneInfo(settings.event_timezone)), offset
+
+
+def check_external_presence(badge: str, *, now: datetime | None = None, query=None, config=None) -> dict:
     """Return INSIDE, OUTSIDE, STALE, UNKNOWN or ERROR; fail closed upstream."""
     try:
         candidates = rfid_lookup_candidates(badge)
@@ -189,10 +207,10 @@ def check_external_presence(badge: str, *, now: datetime | None = None, query=No
                 row = query(converted)
         except Exception:
             return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": "QUERY_FAILED"}
-    return _presence_from_row(row, now=now)
+    return _presence_from_row(row, now=now, config=config)
 
 
-def check_external_person_presence(source_person_id: str, *, now: datetime | None = None, query=None) -> dict:
+def check_external_person_presence(source_person_id: str, *, now: datetime | None = None, query=None, config=None) -> dict:
     """Resolve physical movement via a person's SECURITY_DB card relation."""
     person_id = str(source_person_id).strip()
     if not person_id:
@@ -220,10 +238,10 @@ def check_external_person_presence(source_person_id: str, *, now: datetime | Non
             row = query(person_id)
         except Exception:
             return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": "QUERY_FAILED"}
-    return _presence_from_row(row, now=now)
+    return _presence_from_row(row, now=now, config=config)
 
 
-def _presence_from_row(row, *, now: datetime | None = None) -> dict:
+def _presence_from_row(row, *, now: datetime | None = None, config=None) -> dict:
     if row is None:
         return {"status": "UNKNOWN", "event_time": None, "zone_code": None, "error_category": None}
     try:
@@ -240,11 +258,17 @@ def _presence_from_row(row, *, now: datetime | None = None) -> dict:
         return {"status": "UNKNOWN", "event_time": None, "zone_code": zone_code if zone_code in (1, 2) else None, "error_category": "INVALID_RESPONSE"}
     if not isinstance(event_time, datetime):
         return {"status": "UNKNOWN", "event_time": None, "zone_code": zone_code, "error_category": "INVALID_RESPONSE"}
-    if event_time.tzinfo is None:
-        event_time = event_time.replace(tzinfo=ZoneInfo(settings.event_timezone))
+    raw_event_time = event_time
+    try:
+        event_time, applied_offset = normalize_security_db_event_time(event_time, config)
+    except ValueError:
+        return {"status": "UNKNOWN", "event_time": None, "zone_code": zone_code, "error_category": "INVALID_RESPONSE"}
     current = now or datetime.now(timezone.utc)
     age = current.astimezone(timezone.utc) - event_time.astimezone(timezone.utc)
     if age < timedelta(seconds=-60):
         return {"status": "ERROR", "event_time": None, "zone_code": zone_code, "error_category": "INVALID_RESPONSE"}
     status = "OUTSIDE" if zone_code == 1 else ("STALE" if age > timedelta(hours=settings.perimeter_external_max_age_hours) else "INSIDE")
-    return {"status": status, "event_time": event_time.isoformat(), "zone_code": zone_code, "error_category": None}
+    return {"status": status, "event_time": event_time.isoformat(),
+            "source_event_time": raw_event_time.isoformat(),
+            "source_clock_offset_minutes": applied_offset,
+            "zone_code": zone_code, "error_category": None}
