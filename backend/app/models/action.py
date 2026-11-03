@@ -17,7 +17,7 @@ class Action(Base):
     supplier_device_event: Mapped[str] = mapped_column(String(128))
     oracle_supplier_event: Mapped[str] = mapped_column(String(40))
     state_effect: Mapped[str] = mapped_column(String(16))
-    oracle_payroll_time_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    oracle_payroll_time_type: Mapped[str | None] = mapped_column(ForeignKey("oracle_payroll_time_types.code", ondelete="RESTRICT"), nullable=True)
     oracle_attributes: Mapped[dict] = mapped_column(JSON, default=dict)
     visual_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
     display_order: Mapped[int] = mapped_column(Integer, default=100)

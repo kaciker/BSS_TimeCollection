@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
@@ -165,7 +167,7 @@ def test_mapping_catalogue_hierarchy_and_local_codes_are_independent(structure_c
     catalogue = client.get("/api/v1/admin/structure/oracle-catalogue").json()
     assert {item["code"] for item in catalogue["work_areas"]} == {"439"}
     assert {item["code"] for item in catalogue["machines"]} == {"4391", "4392", "4393"}
-    assert {item["code"] for item in catalogue["cells"]} == {"54Q", "54T"}
+    assert {item["code"] for item in catalogue["cells"]} == {"54A", "54Q", "54T"}
     p24 = post(client, "project-lines", subworkshop_id=machine["id"], code="LOCAL-P24-T", description="P24 G.V. Derecha", oracle_cell_code="54T")
     assert p24["oracle_cell_code"] == "54T"
     wrong_machine = client.post("/api/v1/admin/structure/subworkshops", json={"workshop_id": work_area["id"], "code":"wrong", "description":"wrong", "oracle_machine_code":"not-in-catalogue"})
@@ -228,3 +230,51 @@ def test_legacy_terminal_and_event_remain_readable(structure_client):
     row=next(x for x in client.get("/api/v1/admin/terminals").json() if x["code"]=="LEGACY")
     assert row["project_line_id"] is None
     assert row["oracle_attributes"]["custom"]=="keep"
+
+def test_catalogue_runtime_extension_and_idempotent_import(structure_client):
+    client, db = structure_client
+    source = {
+        "work_areas":[{"code":"WA-NEW","description":"New area","source_reference":"fixture"}],
+        "machines":[{"code":"M-NEW","description":"New machine","work_area_code":"WA-NEW","source_reference":"fixture"}],
+        "cells":[{"code":"C-NEW","description":"New cell","machine_code":"M-NEW","source_reference":"fixture"}],
+        "payroll_time_types":[{"code":"New Payroll Type","description":"Imported","source_reference":"fixture"}],
+    }
+    first = client.post("/api/v1/admin/structure/oracle-catalogue/import", json=source)
+    assert first.status_code == 200, first.text
+    assert first.json() == {"added":4,"updated":0,"unchanged":0,"invalid":0}
+    second = client.post("/api/v1/admin/structure/oracle-catalogue/import", json=source)
+    assert second.status_code == 200
+    assert second.json() == {"added":0,"updated":0,"unchanged":4,"invalid":0}
+    workshop = post(client,"workshops",code="LOCAL-NEW",description="New local",oracle_work_area_code="WA-NEW")
+    subworkshop = post(client,"subworkshops",workshop_id=workshop["id"],code="LOCAL-S",description="New local sub",oracle_machine_code="M-NEW")
+    project = post(client,"project-lines",subworkshop_id=subworkshop["id"],code="LOCAL-P",description="New local line",oracle_cell_code="C-NEW")
+    terminal_body={"factory_code":"ARGANDA","name":"Extensible","external_device_id":"EXT-NEW","project_line_id":project["id"],"workshop_id":workshop["id"],"subworkshop_id":subworkshop["id"],"action_codes":[],"active":False}
+    terminal_response=client.post("/api/v1/admin/terminals",json=terminal_body)
+    assert terminal_response.status_code == 201, terminal_response.text
+    terminal = db.scalar(select(Terminal).where(Terminal.code==terminal_response.json()["code"]))
+    assert not hasattr(terminal,"oracle_work_area_code")
+    action_response=client.post("/api/v1/admin/actions",json={"code":"NEW_PAYROLL_ACTION","label":"Imported payroll","supplier_device_event":"BSS_NEW_PAYROLL","state_effect":"ENTER","oracle_payroll_time_type":"New Payroll Type"})
+    assert action_response.status_code==201, action_response.text
+    action=db.scalar(select(Action).where(Action.code=="NEW_PAYROLL_ACTION"))
+    event = TimeEvent(
+        id="frozen-new", request_number="BSS-FROZEN-NEW", terminal_id=terminal.id, action_id=action.id,
+        terminal_code=terminal.code, device_id="unused", action_code="START_WORK", action_label="Start",
+        supplier_device_event="BSS_START", oracle_supplier_event="HUT_TCD_SUPP1_IN_2", state_effect="ENTER",
+        reporter_id="23703", reporter_id_type="BADGE", identification_method="KEYPAD", person_id="23703",
+        event_datetime=datetime.now(timezone.utc), event_timezone="UTC", oracle_payroll_time_type="New Payroll Type",
+        oracle_work_area_code="WA-NEW", oracle_machine_code="M-NEW", oracle_cell_code="C-NEW", oracle_attributes={}, delivery_status="PENDING",
+    )
+    db.add(event); db.commit()
+    from app.services.oracle_readiness import oracle_readiness_errors
+    assert oracle_readiness_errors(event, db) == []
+    assert client.get("/api/v1/admin/structure/oracle-catalogue").status_code==200
+    assert client.put("/api/v1/admin/structure/oracle-catalogue/cells/C-NEW",json={"code":"C-NEW","description":"Renamed","parent_code":"M-NEW","active":False}).status_code==200
+    assert "Oracle CELL is not in the HR-Path catalogue or is inactive" in oracle_readiness_errors(event, db)
+    assert event.oracle_cell_code == "C-NEW"
+
+def test_catalogue_import_rejects_broken_hierarchy_without_partial_commit(structure_client):
+    client, db = structure_client
+    invalid={"work_areas":[{"code":"WA-X","description":"X"}],"machines":[{"code":"M-X","description":"M","work_area_code":"UNKNOWN"}],"cells":[],"payroll_time_types":[]}
+    result=client.post("/api/v1/admin/structure/oracle-catalogue/import",json=invalid)
+    assert result.status_code==422
+    assert db.get(__import__("app.models.oracle_catalogue",fromlist=["OracleWorkArea"]).OracleWorkArea,"WA-X") is None

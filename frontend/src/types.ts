@@ -105,4 +105,4 @@ export interface AdminEvent {
 
 export interface StructureItem { id: number; code: string; description: string; active: boolean; workshop_id?: number; subworkshop_id?: number; oracle_work_area_code?: string | null; oracle_machine_code?: string | null; oracle_cell_code?: string | null }
 export interface StructureData { workshops: StructureItem[]; subworkshops: StructureItem[]; project_lines: StructureItem[] }
-export interface OracleCatalogue { payroll_time_types: string[]; work_areas: {code:string;description:string}[]; machines: {code:string;description:string;work_area:string}[]; cells: {code:string;description:string;machine:string}[] }
+export interface OracleCatalogue { payroll_time_types: (string | {code:string;description?:string|null;active?:boolean})[]; work_areas: {code:string;description:string;active?:boolean}[]; machines: {code:string;description:string;work_area:string;active?:boolean}[]; cells: {code:string;description:string;machine:string;active?:boolean}[] }

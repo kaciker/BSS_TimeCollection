@@ -422,17 +422,17 @@ def event_detail(event_id: str, db: Session = Depends(get_db)):
         raise HTTPException(404, "Event not found")
     attempts = db.scalars(select(TransmissionAttempt).where(TransmissionAttempt.event_id == event_id).order_by(TransmissionAttempt.attempt_number, TransmissionAttempt.id)).all()
     try:
-        preview = OracleClient().build_payload(event)
+        preview = OracleClient().build_payload(event, db=db)
     except OracleMappingError:
         preview = None
-    mapping_error = "; ".join(oracle_readiness_errors(event))[:255] or None
+    mapping_error = "; ".join(oracle_readiness_errors(event, db))[:255] or None
     # A preview is not an historical send. The actual timestamp/sourceId are
     # available only in the persisted request_payload of each attempt.
     if preview is not None:
         preview.pop("requestTimestamp", None)
     snapshot = EventSnapshot.model_validate(event)
     snapshot = snapshot.model_copy(update={
-        "oracle_ready": is_oracle_ready(event),
+        "oracle_ready": is_oracle_ready(event, db),
         "oracle_mapping_error": mapping_error,
     })
     return EventDetail(
