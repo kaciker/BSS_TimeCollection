@@ -20,7 +20,7 @@ def rfid_candidates(reader_id: str) -> tuple[str, ...]:
     The exact first candidate preserves the terminal's captured spelling; the
     other candidates are lookup aliases only and must never replace event data.
     """
-    digits = str(reader_id).strip()
+    digits = str(reader_id)
     if not digits or not digits.isascii() or not digits.isdecimal():
         raise ValueError("RFID reader ID must contain ASCII decimal digits")
     number = int(digits)
@@ -32,7 +32,7 @@ def rfid_candidates(reader_id: str) -> tuple[str, ...]:
 
 def rfid_lookup_candidates(reader_id: str) -> tuple[str, ...]:
     """Read-only aliases covering exact, padded/unpadded RAW and byte swap."""
-    exact = str(reader_id).strip()
+    exact = str(reader_id)
     base = rfid_candidates(exact)
     number = int(exact)
     swapped = int.from_bytes(number.to_bytes(4, "big"), "little")
@@ -41,7 +41,7 @@ def rfid_lookup_candidates(reader_id: str) -> tuple[str, ...]:
 
 def reader_number_to_attr_value(reader_id: str) -> str:
     """Return the byte-swapped SECURITY_DB attribute representation."""
-    digits = str(reader_id).strip()
+    digits = str(reader_id)
     if not digits or not digits.isascii() or not digits.isdecimal():
         raise ValueError("RFID reader ID must contain ASCII decimal digits")
     number = int(digits)
@@ -56,7 +56,7 @@ def canonical_reader_id(reader_id: str) -> str:
     It is for identity comparisons only; callers retain the original ID for
     audit/history and must reject a key shared by distinct people.
     """
-    digits = str(reader_id).strip()
+    digits = str(reader_id)
     rfid_candidates(digits)
     number = int(digits)
     swapped = int.from_bytes(number.to_bytes(4, "big"), "little")
@@ -65,7 +65,7 @@ def canonical_reader_id(reader_id: str) -> str:
 
 def reader_from_swapped_attribute(value: str) -> str:
     """Convert SQL's swapped attribute to the physical, zero-padded reader ID."""
-    digits = str(value).strip()
+    digits = str(value)
     if not digits or not digits.isascii() or not digits.isdecimal():
         raise ValueError("RFID attribute must contain ASCII decimal digits")
     number = int(digits)
@@ -76,7 +76,7 @@ def reader_from_swapped_attribute(value: str) -> str:
 
 def rfid_candidates_from_attribute(value: str) -> tuple[str, ...]:
     """Return reader aliases when an attribute may store RAW or swapped form."""
-    digits = str(value).strip()
+    digits = str(value)
     if not digits or not digits.isascii() or not digits.isdecimal():
         raise ValueError("RFID attribute must contain ASCII decimal digits")
     number = int(digits)
@@ -116,7 +116,7 @@ def reader_id_is_valid(value: str) -> bool:
 
 def rfid_equivalence_key(reader_id: str) -> str:
     """Canonical equivalence class shared by active assignments and events."""
-    digits = str(reader_id).strip()
+    digits = str(reader_id)
     rfid_candidates(digits)
     number = int(digits)
     swapped = int.from_bytes(number.to_bytes(4, "big"), "little")
