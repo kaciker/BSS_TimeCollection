@@ -15,6 +15,27 @@ class OracleMappingError(ValueError):
     """An event is retained locally but cannot be sent under the Oracle contract."""
 
 
+def _extract_event_id(body: Any) -> Any:
+    """Extract an event ID from known Oracle response collection shapes only."""
+    if not isinstance(body, dict):
+        return None
+    candidates: list[Any] = []
+    time_events = body.get("timeEvents")
+    if isinstance(time_events, dict):
+        candidates = time_events.get("items", [])
+    elif isinstance(time_events, list):
+        candidates = time_events
+    if not candidates:
+        items = body.get("items")
+        if isinstance(items, list):
+            candidates = items
+    if isinstance(candidates, list):
+        for candidate in candidates:
+            if isinstance(candidate, dict) and candidate.get("timeEventId") is not None:
+                return candidate["timeEventId"]
+    return None
+
+
 @dataclass
 class DeliveryResult:
     result: str
@@ -136,12 +157,9 @@ class OracleClient:
 
             if 200 <= response.status_code < 300:
                 request_id = body.get("timeEventRequestId") if isinstance(body, dict) else None
-                event_id = None
-                if isinstance(body, dict):
-                    events = body.get("timeEvents") or body.get("items") or []
-                    if events and isinstance(events, list) and isinstance(events[0], dict):
-                        event_id = events[0].get("timeEventId")
-                return DeliveryResult("SENT", False, False, response.status_code, duration_ms, payload, body, None, request_id, event_id)
+                event_id = _extract_event_id(body)
+                return DeliveryResult("SENT", False, False, response.status_code, duration_ms, payload, body, None,
+                                      request_id, event_id)
 
             # Without a tenant-confirmed idempotency guarantee, server timeouts
             # and 5xx responses may follow a committed event. Do not replay them.

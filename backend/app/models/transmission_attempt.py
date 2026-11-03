@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -17,6 +17,10 @@ class TransmissionAttempt(Base):
     endpoint: Mapped[str] = mapped_column(String(512))
     http_status: Mapped[int | None] = mapped_column(Integer, nullable=True)
     result: Mapped[str] = mapped_column(String(32))
+    retryable: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    ambiguous: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    oracle_request_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    oracle_event_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     duration_ms: Mapped[int] = mapped_column(Integer)
     request_payload: Mapped[dict] = mapped_column(JSON)
     response_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)

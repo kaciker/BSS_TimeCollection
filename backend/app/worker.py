@@ -8,10 +8,10 @@ from sqlalchemy import or_, select, update
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.domain.enums import DeliveryStatus
-from app.integrations.oracle.client import OracleClient, OracleMappingError
+from app.integrations.oracle.client import OracleClient
 from app.models.time_event import TimeEvent
-from app.models.transmission_attempt import TransmissionAttempt
 from app.models.worker_runtime_metrics import WorkerRuntimeMetrics
+from app.services.oracle_delivery import deliver_event
 from app.services.external_perimeter_sync import (
     reconcile_enabled_external_perimeters,
     sync_enabled_external_perimeters,
@@ -113,69 +113,7 @@ def claim_next_event() -> str | None:
 
 
 def deliver(event_id: str, client: OracleClient) -> None:
-    with SessionLocal() as db:
-        event = db.get(TimeEvent, event_id)
-        if event is None:
-            return
-        started_at = datetime.now(timezone.utc)
-        try:
-            result = client.send(event)
-        except OracleMappingError as exc:
-            event.delivery_status = DeliveryStatus.REJECTED.value
-            event.next_attempt_at = None
-            db.add(TransmissionAttempt(
-                event_id=event.id,
-                attempt_number=event.attempt_count,
-                started_at=started_at,
-                finished_at=datetime.now(timezone.utc),
-                endpoint=client.endpoint,
-                http_status=None,
-                result=DeliveryStatus.REJECTED.value,
-                duration_ms=0,
-                request_payload={},
-                response_payload=None,
-                error_message=str(exc),
-            ))
-            db.commit()
-            logger.error("Event mapping requires reconciliation event=%s reason=%s", event.id, exc)
-            return
-        finished_at = datetime.now(timezone.utc)
-
-        db.add(
-            TransmissionAttempt(
-                event_id=event.id,
-                attempt_number=event.attempt_count,
-                started_at=started_at,
-                finished_at=finished_at,
-                endpoint=client.endpoint,
-                http_status=result.status_code,
-                result=result.result,
-                duration_ms=result.duration_ms,
-                request_payload=result.request_payload,
-                response_payload=result.response_payload,
-                error_message=result.error_message,
-            )
-        )
-
-        event.delivery_status = result.result
-        if result.result == DeliveryStatus.SENT.value:
-            event.sent_at = finished_at
-            event.next_attempt_at = None
-            event.oracle_request_id = result.oracle_request_id
-            event.oracle_event_id = result.oracle_event_id
-        elif result.retryable:
-            delay_seconds = min(5 * (2 ** max(event.attempt_count - 1, 0)), 600)
-            event.next_attempt_at = finished_at + timedelta(seconds=delay_seconds)
-        else:
-            event.next_attempt_at = None
-        db.commit()
-        if result.result == DeliveryStatus.SENT.value:
-            try:
-                update_runtime_metrics(successful_delivery=True)
-            except Exception:
-                # Delivery outcome is already committed; telemetry failure must not undo it.
-                logger.warning("Worker successful-delivery metric update failed")
-        logger.info("Delivery result event=%s status=%s http=%s", event.id, result.result, result.status_code)
+    deliver_event(event_id, client, session_factory=SessionLocal, metrics_callback=update_runtime_metrics)
 
 
 def main() -> None:
