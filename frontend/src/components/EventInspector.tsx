@@ -10,7 +10,7 @@ export function EventInspector({ detail, onClose }: { detail: EventDetail; onClo
   const fields: [string, string | number | null | undefined][] = [
     ["Event ID", event.id], ["Request / requestNumber", event.request_number],
     ["Clock", event.terminal_code], ["deviceId", event.device_id],
-    ["Reader ID", event.reporter_id], ["Person ID", event.person_id],
+    ["RFID Value", event.reporter_id], ["Person ID", event.person_id],
     ["SECURITY_DB person PK", event.source_person_id], ["Credential / card", event.credential_id],
     ["Oracle reporterId", event.oracle_reporter_id], ["Oracle reporterIdType", event.oracle_reporter_id_type],
     ["Oracle mapping issue", event.oracle_mapping_error], ["PayrollTimeType", event.oracle_payroll_time_type],
@@ -24,7 +24,7 @@ export function EventInspector({ detail, onClose }: { detail: EventDetail; onClo
     ["timeEventId", event.oracle_event_id],
   ];
   if (event.event_kind === "PERIMETER") return <section className="admin-card event-inspector" aria-label="Event details">
-    <div className="monitor-heading"><div><div className="eyebrow">FACTORY PERIMETER</div><h2>Badge {event.reporter_id}</h2></div><button className="secondary" onClick={onClose}>Close details</button></div>
+    <div className="monitor-heading"><div><div className="eyebrow">FACTORY PERIMETER</div><h2>RFID Value {event.reporter_id}</h2></div><button className="secondary" onClick={onClose}>Close details</button></div>
     <p><Status value="LOCAL_ONLY" /> · Movimiento perimetral; no se transmite a Oracle.</p>
     <dl className="event-fields">{[["Factory",event.factory_code],["Clock",event.terminal_code],["Direction",event.state_effect],["Time",dateLabel(event.event_datetime)],["Correlation ID",event.correlation_id],["Automatic cell EXIT",event.auto_cell_exit_event_id]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value ?? "—"}</dd></div>)}</dl>
     <details><summary>Complete record stored in BSS</summary><Json value={event} /></details>

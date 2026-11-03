@@ -15,10 +15,10 @@ const pageSize = 50;
 export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }: { terminals: AdminTerminal[]; initialView?: View; onNavigate?: (view: View, query?: string) => void }) {
   const { t, language } = useLanguage();
   const employeeIdLabel = language === "es" ? "N.º empleado" : "Employee ID";
-  const readerIdLabel = language === "es" ? "ID lector" : "Reader ID";
+  const rfidValueLabel = language === "es" ? "Valor RFID" : "RFID Value";
   const cardLabel = language === "es" ? "Tarjeta" : "Card";
-  const identitySearchLabel = language === "es" ? "Empleado / lector / tarjeta" : "Employee / reader / card";
-  const identitySearchPlaceholder = language === "es" ? "Buscar empleado, RFID o tarjeta" : "Search employee, RFID or card";
+  const identitySearchLabel = language === "es" ? "Empleado / valor RFID / tarjeta" : "Employee / RFID value / card";
+  const identitySearchPlaceholder = language === "es" ? "Buscar empleado, valor RFID o tarjeta" : "Search employee, RFID value or card";
   const [view, setView] = useState<View>(initialView);
   const [hiddenColumns, setHiddenColumns] = useState<Record<string, string[]>>(() => {
     try { const stored = JSON.parse(localStorage.getItem("bss-admin-hidden-columns") ?? "{}"); return stored && typeof stored === "object" && !Array.isArray(stored) ? stored : {}; } catch { return {}; }
@@ -136,7 +136,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
     {id:"time",label:t("eventTime"),width:190,render:e=>dateLabel(e.event_datetime)},
     {id:"employee",label:employeeIdLabel,width:130,locked:true,render:e=><strong>{e.person_id ?? "—"}</strong>},
     {id:"clock",label:t("clock"),width:110,render:e=>e.terminal_code},
-    {id:"reader",label:readerIdLabel,width:160,render:e=>e.reporter_id},
+    {id:"reader",label:rfidValueLabel,width:160,render:e=>e.reporter_id},
     {id:"card",label:cardLabel,width:330,render:e=>e.credential_id ?? "—"},
     {id:"action",label:t("action"),width:310,render:e=><>{e.action_label}<span className="event-context"> · {e.event_kind === "PERIMETER" ? `${t("factoryPerimeter")} · ${e.factory_code}` : t("cell")}</span></>},
     {id:"effect",label:t("effect"),width:100,render:e=>e.state_effect},
@@ -145,7 +145,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
     {id:"inspect",label:t("inspect"),width:130,render:e=>detailButton(e.id)},
   ] : view === "cards" ? [
     {id:"employee",label:employeeIdLabel,width:130,locked:true,render:c=><strong>{c.person_id ?? c.event.person_id ?? "—"}</strong>},
-    {id:"reader",label:readerIdLabel,width:160,render:c=>c.reporter_id},
+    {id:"reader",label:rfidValueLabel,width:160,render:c=>c.reporter_id},
     {id:"card",label:cardLabel,width:330,render:c=>c.credential_id ?? c.event.credential_id ?? "—"},
     {id:"cellState",label:t("cellState"),width:110,render:c=>badgeStatus(c.worker_state)},
     ...(factoryEnabled ? [{id:"factoryState",label:t("factoryState"),width:180,render:(c: CardState)=>c.factory_state ? <>{badgeStatus(c.factory_state)}{c.factory_state === "UNKNOWN" && <div className="cell-secondary">{t("factoryPresenceUnknown")}</div>}<div className="cell-secondary">{c.factory_code}</div></> : <span className="muted">{t("notActivated")}</span>}] : []),

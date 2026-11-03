@@ -1,17 +1,17 @@
 // @vitest-environment jsdom
 import {afterEach,expect,it,vi} from 'vitest';
-import {act,cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {act,cleanup,fireEvent,render,screen,waitFor,within} from '@testing-library/react';
 import {MonitoringPanel} from '../src/components/MonitoringPanel';
 import {api} from '../src/api';
 vi.mock('../src/api',()=>({api:{get:vi.fn()}}));
 afterEach(()=>{cleanup();vi.clearAllMocks();localStorage.removeItem("bss-timecollection-language")});
-it('shows employee, reader and card with independent factory and cell states',async()=>{
+it('shows employee, RFID value and card with independent factory and cell states',async()=>{
  localStorage.setItem('bss-timecollection-language','es');
  vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:{factory_perimeter_enabled:true,total:1,items:[{reporter_id:'0582609699',person_id:'104582',credential_id:'CARD-A',worker_state:'OUTSIDE',factory_state:'INSIDE',factory_code:'ARGANDA',event:{id:'x',terminal_code:'GATE',event_datetime:'2026-10-20T10:00:00Z',action_label:'Factory entry',delivery_status:'LOCAL_ONLY'}}]} as never);
  render(<MonitoringPanel terminals={[]}/>);
  const factory=await screen.findByRole('combobox',{name:'Estado de fábrica'});
  expect(screen.getByRole('columnheader',{name:'N.º empleado'})).toBeTruthy();
- expect(screen.getByRole('columnheader',{name:'ID lector'})).toBeTruthy();
+ expect(screen.getByRole('columnheader',{name:'Valor RFID'})).toBeTruthy();
  expect(screen.getByRole('columnheader',{name:'Tarjeta'})).toBeTruthy();
  expect(screen.getByText('104582')).toBeTruthy();
  expect(screen.getByText('0582609699')).toBeTruthy();
@@ -22,13 +22,13 @@ it('shows employee, reader and card with independent factory and cell states',as
  fireEvent.click(screen.getByRole('button',{name:'Aplicar filtros'}));
  await waitFor(()=>expect(api.get).toHaveBeenCalledWith(expect.stringContaining('worker_state=OUTSIDE&factory_state=INSIDE')));
 });
-it('shows employee, reader and card in event logs',async()=>{
+it('shows employee, RFID value and card in captured events',async()=>{
  localStorage.setItem('bss-timecollection-language','en');
  vi.mocked(api.get).mockImplementation(async url=>url.includes('/clocks')?[]:{total:1,items:[{id:'event-1',event_kind:'CELL',terminal_code:'CLOCK',event_datetime:'2026-10-20T10:00:00Z',reporter_id:'0582609699',person_id:'104582',credential_id:'CARD-A',action_label:'Exit',state_effect:'EXIT',delivery_status:'PENDING',attempt_count:0}]} as never);
  render(<MonitoringPanel terminals={[]} initialView="events"/>);
  await screen.findByText('104582');
  expect(screen.getByRole('columnheader',{name:'Employee ID'})).toBeTruthy();
- expect(screen.getByRole('columnheader',{name:'Reader ID'})).toBeTruthy();
+ expect(screen.getByRole('columnheader',{name:'RFID Value'})).toBeTruthy();
  expect(screen.getByRole('columnheader',{name:'Card'})).toBeTruthy();
  expect(screen.getByText('0582609699')).toBeTruthy();
  expect(screen.getByText('CARD-A')).toBeTruthy();
@@ -46,6 +46,7 @@ it('opens event details in a scrollable modal and closes with Escape or outside 
  render(<MonitoringPanel terminals={[]}/>);
  fireEvent.click(await screen.findByRole('button',{name:'Details'}));
  const dialog=await screen.findByRole('dialog',{name:'Event details'}) as HTMLDialogElement;
+ expect(within(dialog).getByText('RFID Value',{selector:'dt'})).toBeTruthy();
  expect(dialog.className).toContain('event-modal-dialog');
  expect(dialog.querySelector('.event-modal')).toBeTruthy();
  fireEvent.keyDown(dialog,{key:'Escape'});
