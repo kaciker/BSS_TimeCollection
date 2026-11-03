@@ -137,7 +137,7 @@ def _query_candidates(query, candidates: tuple[str, ...]):
 def resolve_person_identity(reader_id: str, *, query=None) -> PersonIdentity:
     """Resolve either supported decimal representation, failing closed on collisions."""
     try:
-        digits = str(reader_id).strip()
+        digits = str(reader_id)
         if not digits or not digits.isascii() or not digits.isdecimal():
             raise ValueError
         candidates = rfid_lookup_candidates(digits)
