@@ -46,6 +46,10 @@ class TimeEvent(Base):
     subworkshop_description: Mapped[str | None] = mapped_column(String(255), nullable=True)
     project_line_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     project_line_description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Oracle structural values are frozen separately from local BSS structure codes.
+    oracle_work_area_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    oracle_machine_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    oracle_cell_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
 
     delivery_status: Mapped[str] = mapped_column(String(16), default="PENDING", index=True)
     attempt_count: Mapped[int] = mapped_column(Integer, default=0)

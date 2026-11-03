@@ -22,6 +22,7 @@ from app.services.person_identity import (
     resolve_person_identity_by_employee_id,
 )
 from app.services.state_service import derive_worker_state
+from app.services.oracle_readiness import oracle_readiness_errors
 
 
 def _oracle_request_number(terminal_code: str, event_id: str) -> str:
@@ -116,8 +117,9 @@ def _create_event(
     request_number = _oracle_request_number(terminal.code, event_id)
     event_time = event_time or datetime.now(ZoneInfo(settings.event_timezone))
     # work_cell is a local exit-policy attribute, not part of the Oracle TCD context.
-    oracle_attributes = {key: value for key, value in (terminal.oracle_attributes or {}).items() if key != "work_cell"}
-    oracle_attributes.update({key: value for key, value in (action.oracle_attributes or {}).items() if key != "work_cell"})
+    protected_attributes = {"PayrollTimeType", "WORK_AREA", "MACHINE", "CELL"}
+    oracle_attributes = {key: value for key, value in (terminal.oracle_attributes or {}).items() if key != "work_cell" and key not in protected_attributes}
+    oracle_attributes.update({key: value for key, value in (action.oracle_attributes or {}).items() if key != "work_cell" and key not in protected_attributes})
     structure = terminal.project_line
     branch = structure.subworkshop if structure else None
     workshop = branch.workshop if branch else None
@@ -143,6 +145,9 @@ def _create_event(
         subworkshop_description=branch.description if branch else None,
         project_line_code=structure.code if structure else None,
         project_line_description=structure.description if structure else None,
+        oracle_work_area_code=workshop.oracle_work_area_code if workshop else None,
+        oracle_machine_code=branch.oracle_machine_code if branch else None,
+        oracle_cell_code=structure.oracle_cell_code if structure else None,
         id=event_id,
         correlation_id=correlation_id,
         request_number=request_number,
@@ -171,11 +176,7 @@ def _create_event(
         event_timezone=settings.event_timezone,
         oracle_attributes=oracle_attributes,
         oracle_payroll_time_type=action.oracle_payroll_time_type,
-        oracle_mapping_error=(
-            "Resolved Person ID is missing; event requires identity reconciliation" if not person_id
-            else "Workshop / Subworkshop / Project-Line snapshot is incomplete"
-            if not (workshop and branch and structure) else None
-        ),
+        oracle_mapping_error=None,
         # Keep capture available locally; events without a frozen Person ID
         # are held out of Oracle delivery for reconciliation.
         delivery_status="PENDING",
@@ -194,9 +195,17 @@ def _create_event(
             setattr(event, field, getattr(snapshot, field))
         event.oracle_attributes = {
             **(snapshot.oracle_attributes or {}),
-            **{k: v for k, v in (action.oracle_attributes or {}).items() if k != "work_cell"},
+            **{k: v for k, v in (action.oracle_attributes or {}).items() if k != "work_cell" and k not in protected_attributes},
         }
-        event.oracle_payroll_time_type = action.oracle_payroll_time_type or snapshot.oracle_payroll_time_type
+        # A coupled automatic cell exit is a new event and uses the explicit
+        # selected EXIT action mapping; only the employee and local structure
+        # context are inherited from the source event.
+        event.oracle_payroll_time_type = action.oracle_payroll_time_type
+        event.oracle_work_area_code = snapshot.oracle_work_area_code
+        event.oracle_machine_code = snapshot.oracle_machine_code
+        event.oracle_cell_code = snapshot.oracle_cell_code
+    errors = oracle_readiness_errors(event)
+    event.oracle_mapping_error = "; ".join(errors)[:255] if errors else None
     db.add(event)
     if commit:
         db.commit()

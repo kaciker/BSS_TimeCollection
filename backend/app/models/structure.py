@@ -7,6 +7,7 @@ class Workshop(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
+    oracle_work_area_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     subworkshops = relationship("Subworkshop", back_populates="workshop")
 
@@ -17,6 +18,7 @@ class Subworkshop(Base):
     workshop_id: Mapped[int] = mapped_column(ForeignKey("workshops.id", ondelete="RESTRICT"), nullable=False)
     code: Mapped[str] = mapped_column(String(64), nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
+    oracle_machine_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     workshop = relationship("Workshop", back_populates="subworkshops")
     project_lines = relationship("ProjectLine", back_populates="subworkshop")
@@ -28,5 +30,6 @@ class ProjectLine(Base):
     subworkshop_id: Mapped[int] = mapped_column(ForeignKey("subworkshops.id", ondelete="RESTRICT"), nullable=False)
     code: Mapped[str] = mapped_column(String(64), nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
+    oracle_cell_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     subworkshop = relationship("Subworkshop", back_populates="project_lines")

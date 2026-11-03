@@ -29,9 +29,12 @@ def test_oracle_payload_uses_frozen_person_identity_when_available():
         event_timezone="Europe/Madrid",
         oracle_attributes={},
         oracle_payroll_time_type="Workshop Entry ES",
-        workshop_code="439",
-        subworkshop_code="4393",
-        project_line_code="54A",
+        workshop_code="local-W",
+        subworkshop_code="local-S",
+        project_line_code="local-P",
+        oracle_work_area_code="439",
+        oracle_machine_code="4391",
+        oracle_cell_code="54Q",
         delivery_status="PENDING",
     )
     item = OracleClient().build_payload(event)["timeEvents"][0]

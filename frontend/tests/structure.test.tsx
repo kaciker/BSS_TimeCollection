@@ -33,6 +33,6 @@ describe("Admin Structure",()=>{
     fireEvent.change(screen.getByLabelText("Code"),{target:{value:"2"}});
     fireEvent.change(screen.getByLabelText("Description"),{target:{value:"TP2"}});
     fireEvent.click(screen.getByRole("button",{name:"Save"}));
-    await waitFor(()=>expect(api.post).toHaveBeenCalledWith("/api/v1/admin/structure/project-lines",{code:"2",description:"TP2",active:true,subworkshop_id:10}));
+    await waitFor(()=>expect(api.post).toHaveBeenCalledWith("/api/v1/admin/structure/project-lines",{code:"2",description:"TP2",active:true,oracle_cell_code:null,subworkshop_id:10}));
   });
 });

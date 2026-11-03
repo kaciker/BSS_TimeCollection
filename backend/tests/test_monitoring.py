@@ -52,6 +52,8 @@ def add_event(db, badge, clock, effect, minute):
         event_timezone="Europe/Madrid", oracle_attributes={"reason": "meal"},
         person_id=badge, oracle_reporter_id=badge, oracle_reporter_id_type="PERSON",
         workshop_code="439", subworkshop_code="4393", project_line_code="54A",
+        oracle_payroll_time_type="Workshop Entry ES", oracle_work_area_code="439",
+        oracle_machine_code="4391", oracle_cell_code="54Q",
         delivery_status="PENDING", created_at=timestamp,
     )
     db.add(event)
@@ -151,7 +153,7 @@ def test_perimeter_event_freezes_current_identity(monitor):
 def test_detail_preserves_actual_attempt_payload_and_does_not_write(monitor):
     client, db = monitor
     event = add_event(db, "001", "A", "ENTER", 0)
-    event.oracle_payroll_time_type = "Test Entry"
+    event.oracle_payroll_time_type = "Workshop Entry ES"
     db.commit()
     actual = {"sourceId": "HISTORICAL-SOURCE", "requestTimestamp": "2026-10-09T12:04:00Z", "timeEvents": [{"reporterId": "001"}]}
     attempt = TransmissionAttempt(

@@ -30,6 +30,7 @@ def test_oracle_field_limits_are_enforced_before_capture():
         ScanRequest(reporter_id="R" * 81, identification_method="KEYPAD")
 
     assert TerminalCreate(name="Clock", factory_code="ARGANDA", external_device_id="D" * 40).external_device_id == "D" * 40
+    assert TerminalCreate(name="Clock", factory_code="ARGANDA").external_device_id is None
     assert ActionCreate(
         code="START",
         label="Start",
