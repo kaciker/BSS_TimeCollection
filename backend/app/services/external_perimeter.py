@@ -11,6 +11,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from app.core.config import settings
+from app.services.rfid_identity import reader_number_to_attr_value, rfid_lookup_candidates
 
 SQL = """
 SELECT TOP (1) t.event_time, t.acc_zone_code
@@ -18,7 +19,7 @@ FROM dbo.pers_attribute_ext AS pae
 JOIN dbo.pers_person AS p ON p.id = pae.person_id
 JOIN dbo.pers_card AS pc ON pc.person_id = p.id
 JOIN dbo.acc_transaction AS t ON t.card_no = pc.card_no
-WHERE pae.attr_value4 = ? AND t.acc_zone_code IN (1, 2)
+WHERE pae.attr_value4 IN ({candidate_placeholders}) AND t.acc_zone_code IN (1, 2)
 ORDER BY t.event_time DESC, t.log_id DESC
 """
 
@@ -35,16 +36,6 @@ logger = logging.getLogger(__name__)
 PROVIDER = "SQLSERVER_SECURITY_DB"
 DRIVER = "ODBC Driver 18 for SQL Server"
 _last_check: dict = {"last_check_at": None, "status": "NOT_CHECKED", "reachable": False, "error_category": None}
-
-
-def reader_number_to_attr_value(card: str) -> str:
-    digits = card.strip()
-    if not digits or not digits.isascii() or not digits.isdecimal():
-        raise ValueError("Badge must contain ASCII decimal digits")
-    number = int(digits)
-    if number >= 2 ** 32:
-        raise ValueError("Badge exceeds the validated 32-bit reader format")
-    return str(int.from_bytes(number.to_bytes(4, "big"), "little"))
 
 
 class ExternalPerimeterError(RuntimeError):
@@ -166,6 +157,7 @@ def test_external_connection(*, connect=None) -> dict:
 def check_external_presence(badge: str, *, now: datetime | None = None, query=None) -> dict:
     """Return INSIDE, OUTSIDE, STALE, UNKNOWN or ERROR; fail closed upstream."""
     try:
+        candidates = rfid_lookup_candidates(badge)
         converted = reader_number_to_attr_value(badge)
     except ValueError:
         return {"status": "UNKNOWN", "event_time": None, "zone_code": None, "error_category": "INVALID_RESPONSE"}
@@ -177,7 +169,7 @@ def check_external_presence(badge: str, *, now: datetime | None = None, query=No
             connection = pyodbc.connect(_connection_string(config), timeout=3, autocommit=True)
             try:
                 cursor = connection.cursor()
-                cursor.execute(SQL, converted)
+                cursor.execute(SQL.format(candidate_placeholders=", ".join("?" for _ in candidates)), *candidates)
                 row = cursor.fetchone()
             finally:
                 connection.close()
@@ -191,7 +183,10 @@ def check_external_presence(badge: str, *, now: datetime | None = None, query=No
             return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": category}
     else:
         try:
-            row = query(converted)
+            try:
+                row = query(*candidates)
+            except TypeError:
+                row = query(converted)
         except Exception:
             return {"status": "ERROR", "event_time": None, "zone_code": None, "error_category": "QUERY_FAILED"}
     return _presence_from_row(row, now=now)

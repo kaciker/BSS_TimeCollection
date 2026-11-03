@@ -21,6 +21,10 @@ from app.services.person_identity import (
     resolve_person_identity,
 )
 from app.services.external_perimeter import reader_number_to_attr_value
+from app.services.rfid_identity import (
+    canonical_reader_id, rfid_candidates_from_attribute, rfid_lookup_candidates,
+    resolve_sql_for_candidates,
+)
 
 logger = logging.getLogger(__name__)
 SOURCE = "SQLSERVER_SECURITY_DB"
@@ -185,7 +189,11 @@ def _collect_candidates(db: Session, factory_code: str) -> dict[str, _IdentityCa
     ).where(PersonBadgeAssignment.factory_code == factory_code)).all()
     for row in assignment_rows:
         if row.reader_id and row.person_id:
-            reader_people.setdefault(str(row.reader_id), set()).add(str(row.person_id))
+            try:
+                key = canonical_reader_id(str(row.reader_id))
+            except ValueError:
+                continue
+            reader_people.setdefault(key, set()).add(str(row.person_id))
 
     def add(person_id=None, reader_id=None, credential_id=None, source_person_id=None):
         person_id, reader_id, credential_id = map(_safe_text, (person_id, reader_id, credential_id))
@@ -221,20 +229,28 @@ def _collect_candidates(db: Session, factory_code: str) -> dict[str, _IdentityCa
     ).join(TimeEvent.terminal).where(TimeEvent.terminal.has(factory_code=factory_code))):
         method = row.identification_method
         reader = row.reporter_id if method == "RFID" else None
-        person = row.person_id or (next(iter(reader_people[reader])) if reader and len(reader_people.get(reader, ())) == 1 else None)
+        try:
+            identity_key = canonical_reader_id(reader) if reader else None
+        except ValueError:
+            identity_key = None
+        person = row.person_id or (next(iter(reader_people[identity_key])) if identity_key and len(reader_people.get(identity_key, ())) == 1 else None)
         add(person, reader, row.credential_id, row.source_person_id)
 
     for row in db.execute(select(
         FactoryPerimeterEvent.person_id, FactoryPerimeterEvent.reporter_id,
         FactoryPerimeterEvent.credential_id, FactoryPerimeterEvent.source_person_id,
     ).where(FactoryPerimeterEvent.factory_code == factory_code)):
-        person = row.person_id or (next(iter(reader_people[row.reporter_id])) if len(reader_people.get(row.reporter_id, ())) == 1 else None)
+        try:
+            identity_key = canonical_reader_id(row.reporter_id)
+        except ValueError:
+            identity_key = None
+        person = row.person_id or (next(iter(reader_people[identity_key])) if identity_key and len(reader_people.get(identity_key, ())) == 1 else None)
         # FactoryPerimeterEvent does not snapshot identification_method. A
         # reporter string alone therefore cannot prove it was a physical Reader
         # ID (a BOTH keypad could have supplied an Employee ID). Treat it as an
         # RFID identity only when trusted PersonBadgeAssignment history confirms
         # that exact observed Reader ID.
-        reader = row.reporter_id if row.reporter_id in reader_people else None
+        reader = row.reporter_id if identity_key in reader_people else None
         add(person, reader, row.credential_id, row.source_person_id)
 
     # Existing keys remain eligible for reconciliation, so losing the source
@@ -266,7 +282,10 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], his
         if identity.credential_id:
             current_by_credential.setdefault(identity.credential_id, []).append(identity)
         if identity.reader_id:
-            by_reader_index.setdefault(identity.reader_id, set()).add(identity)
+            try:
+                by_reader_index.setdefault(canonical_reader_id(identity.reader_id), set()).add(identity)
+            except ValueError:
+                pass
     reader_cache: dict[str, PersonIdentity | PersonIdentityError] = {}
     movement_cache: dict[str, dict | None | PresenceSourceError] = {}
     orphan_cache: dict[str, bool | PresenceSourceError] = {}
@@ -340,7 +359,11 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], his
             raise result
         if result is not None:
             return result
-        indexed = by_reader_index.get(reader_id, set())
+        try:
+            lookup_key = canonical_reader_id(reader_id)
+        except ValueError:
+            lookup_key = ""
+        indexed = by_reader_index.get(lookup_key, set())
         if len(indexed) == 1:
             first = next(iter(indexed))
             result = PersonIdentity(first.source_person_id, first.person_id, None, None, reader_id)
@@ -430,13 +453,10 @@ def _reader_ids_from_attribute(value: str | None) -> set[str]:
     number = int(representation)
     if number >= 2 ** 32:
         return set()
-    readers = {representation, _attr_value_to_reader_number(representation)}
-    # SQL Server numeric storage can strip leading zeros from a canonical
-    # 10-digit Reader ID; restoring that width is deterministic within the
-    # established reader contract and is still checked for identity collisions.
-    if len(representation) <= 10:
-        readers.add(f"{number:010d}")
-    return readers
+    try:
+        return set(rfid_candidates_from_attribute(representation))
+    except ValueError:
+        return set()
 
 
 def _movement(cursor, credential_id: str) -> dict | None:
@@ -483,8 +503,9 @@ def _source_resolver(cursor):
                 raise result
             return result
         try:
-            result = resolve_person_identity(reader_id, query=lambda raw, converted: cursor.execute(
-                _RESOLVE_SQL, raw, converted
+            candidates = rfid_lookup_candidates(reader_id)
+            result = resolve_person_identity(reader_id, query=lambda *_: cursor.execute(
+                resolve_sql_for_candidates(_RESOLVE_SQL, candidates), *candidates
             ).fetchall())
             reader_cache[reader_id] = result
             return result
@@ -500,17 +521,24 @@ def _source_resolver(cursor):
                 if exc.category == "AMBIGUOUS_IDENTITY":
                     try:
                         digits = str(reader_id).strip()
-                        if not digits or not digits.isascii() or not digits.isdecimal():
-                            raise ValueError
-                        number = int(digits)
-                        if number >= 2**32:
-                            raise ValueError
-                        raw, converted = digits, reader_number_to_attr_value(digits)
-                        rows = cursor.execute(_RESOLVE_SQL, raw, converted).fetchall()
+                        candidates = rfid_lookup_candidates(digits)
+                        rows = cursor.execute(resolve_sql_for_candidates(_RESOLVE_SQL, candidates), *candidates).fetchall()
                         identities = set()
                         invalid = False
                         for row in rows:
-                            if _safe_text(row[0]) not in {raw, converted}:
+                            raw_representation = _safe_text(row[0])
+                            if raw_representation is None:
+                                continue
+                            try:
+                                matched_representation = str(int(raw_representation)) in {
+                                    str(int(candidate)) for candidate in candidates
+                                }
+                            except ValueError:
+                                matched_representation = False
+                            if not matched_representation:
+                                continue
+                            if not raw_representation.isascii() or not raw_representation.isdecimal():
+                                invalid = True
                                 continue
                             identity = _normalize_row(row[1:], reader_id=digits)
                             if identity is None:
@@ -536,14 +564,13 @@ def _source_resolver(cursor):
         if not digits or not digits.isascii() or not digits.isdecimal():
             raise PersonIdentityError("IDENTITY_NOT_FOUND") from None
         try:
-            number = int(digits)
-            if number >= 2**32:
-                raise ValueError
-            candidates = {str(number), str(int(reader_number_to_attr_value(digits)))}
-            params = sorted(candidates)
-            if len(params) == 1:
-                params.append(params[0])
-            rows = cursor.execute(_NORMALIZED_READER_SQL, *params).fetchall()
+            candidate_values = set(rfid_lookup_candidates(digits))
+            normalized_candidates = {str(int(candidate)) for candidate in candidate_values}
+            params = sorted(normalized_candidates)
+            normalized_sql = _NORMALIZED_READER_SQL.replace(
+                "IN (?, ?)", "IN (" + ", ".join("?" for _ in params) + ")", 1
+            )
+            rows = cursor.execute(normalized_sql, *params).fetchall()
         except ValueError:
             error = PersonIdentityError("IDENTITY_NOT_FOUND")
             reader_cache[reader_id] = error
@@ -555,7 +582,7 @@ def _source_resolver(cursor):
         matches: set[PersonIdentity] = set()
         for row in rows:
             raw = _safe_text(row[0])
-            if not raw or not raw.isascii() or not raw.isdecimal() or str(int(raw)) not in candidates:
+            if not raw or not raw.isascii() or not raw.isdecimal() or str(int(raw)) not in normalized_candidates:
                 continue
             identity = _identity_from_person_row(row[1:])
             if identity is not None:
