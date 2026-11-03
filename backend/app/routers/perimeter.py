@@ -4,7 +4,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -114,7 +114,7 @@ def set_config(factory_code: str, payload: FactoryConfigUpdate, db: Session = De
         db.add(c)
     for field, value in payload.model_dump().items():
         setattr(c, field, value)
-    if c.badge_source == "EXTERNAL" and c.source_clock_correction_enabled:
+    if c.badge_source == "EXTERNAL" and c.source_clock_correction_enabled and c.source_clock_offset_minutes != 0:
         # One-time transition for legacy imports: retain their original timestamp
         # and record the corrected effective time and applied offset. Rows already
         # annotated by a prior correction are never reinterpreted on config changes.
