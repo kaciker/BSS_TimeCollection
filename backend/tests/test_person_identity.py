@@ -133,6 +133,14 @@ def test_reader_candidates_include_exact_numeric_raw_and_swapped():
     assert rfid_candidates("0542128736") == ("0542128736", "542128736", "1614434336")
 
 
+@pytest.mark.parametrize("invalid_reader", [" 0542128736", "0542128736 ", "０542128736"])
+def test_reader_candidate_input_requires_unpadded_ascii_decimal_string(invalid_reader):
+    from app.services.rfid_identity import rfid_candidates
+
+    with pytest.raises(ValueError):
+        rfid_candidates(invalid_reader)
+
+
 @pytest.mark.parametrize("representation", ["542128736", "1614434336", "0542128736"])
 def test_zero_padded_reader_resolves_each_security_representation(representation):
     from app.services.rfid_identity import rfid_candidates
