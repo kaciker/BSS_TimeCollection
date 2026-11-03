@@ -697,16 +697,27 @@ def external_current_states(
     candidates: list[dict] = []
     ambiguous_card_numbers: set[str] = set()
     unresolved = {"ENTER": 0, "EXIT": 0}
-    sql_state_shape = any(len(row) >= 9 for row in rows)
     for row in rows:
-        item = _normalize_external_row(row)
-        if (item.get("log_id") is None and item.get("source_transaction_id") is None) or item.get("event_time") is None:
+        # _CURRENT_STATES_SQL has the same documented nine-column contract as
+        # _CURRENT_INSIDE_SQL; only its zone predicate differs.
+        try:
+            values = {name: row[index] for name, index in _CURRENT_INSIDE_ROW.items()}
+        except (IndexError, TypeError):
             continue
-        if item.get("_mapping_ambiguous"):
-            if item.get("source_card_no") is not None:
-                ambiguous_card_numbers.add(str(item["source_card_no"]))
+        item = _normalize_external_row((
+            values["source_transaction_id"], values["unique_key"],
+            values["log_id"], values["source_created_at"],
+            values["event_time"], values["acc_zone_code"],
+            values["reader_attribute"],
+        ))
+        item["source_card_no"] = values["card_no"]
+        if bool(values["has_unresolved_mapping"]):
+            if values["card_no"] is not None:
+                ambiguous_card_numbers.add(str(values["card_no"]))
             direction = "ENTER" if item.get("zone_code") == 2 else "EXIT"
             unresolved[direction] += 1
+            continue
+        if (item.get("log_id") is None and not item.get("source_transaction_id")) or item.get("event_time") is None:
             continue
         if not item.get("reporter_id"):
             direction = "ENTER" if item.get("zone_code") == 2 else "EXIT"
@@ -757,10 +768,9 @@ def external_current_states(
         logger.warning("Unresolved external perimeter reconciliation totals enter=%s exit=%s",
                        unresolved["ENTER"], unresolved["EXIT"])
     result = list(latest.values())
-    if not sql_state_shape:
-        for item in result:
-            item.pop("_mapping_ambiguous", None)
-            item.pop("source_card_no", None)
+    for item in result:
+        item.pop("_mapping_ambiguous", None)
+        item.pop("source_card_no", None)
     return result
 
 
