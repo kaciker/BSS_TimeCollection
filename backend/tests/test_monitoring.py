@@ -10,11 +10,12 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
 from app.models.person_badge_assignment import PersonBadgeAssignment
-from app.models.perimeter import FactoryPerimeterEvent
+from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings, FactoryPresenceProjection
 from app.models.time_event import TimeEvent
 from app.models.transmission_attempt import TransmissionAttempt
 from app.models.factory import Factory, InstallationSettings
 from app.models.terminal import Terminal
+from app.models.person_badge_assignment import PersonBadgeAssignment
 
 
 @pytest.fixture
@@ -180,3 +181,94 @@ def test_pending_event_has_no_transmission_history(monitor):
     assert result["attempts"] == []
     assert result["event"]["delivery_status"] == "PENDING"
     assert client.get("/api/v1/admin/monitoring/events/missing").status_code == 404
+
+
+def test_historical_zero_padded_cell_event_enriched_and_searchable_by_employee(monitor):
+    client, db = monitor
+    event = add_event(db, "0542128736", "T0010", "ENTER", 3)
+    event.person_id = None
+    event.source_person_id = None
+    event.credential_id = None
+    db.commit()
+    add_current_identity(db, reader_id="542128736", person_id="1501", credential_id="CARD-1501")
+
+    result = client.get("/api/v1/admin/monitoring/events?reporter_id=1501").json()
+    assert result["total"] == 1
+    assert result["items"][0]["reporter_id"] == "0542128736"
+    assert result["items"][0]["person_id"] == "1501"
+    assert result["items"][0]["credential_id"] == "CARD-1501"
+
+    cards = client.get("/api/v1/admin/monitoring/cards?reporter_id=1501").json()
+    assert cards["total"] == 1
+    assert cards["items"][0]["event"]["reporter_id"] == "0542128736"
+    assert cards["items"][0]["person_id"] == "1501"
+
+
+def test_equivalent_reader_forms_group_by_person_but_collision_stays_unmerged(monitor):
+    client, db = monitor
+    event = add_event(db, "0542128736", "T0010", "ENTER", 0)
+    event.person_id = None
+    event.source_person_id = None
+    event.credential_id = None
+    db.commit()
+    add_current_identity(db, reader_id="1614434336", person_id="1501", credential_id="CARD-1501")
+    cards = client.get("/api/v1/admin/monitoring/cards").json()
+    assert cards["total"] == 1
+    assert cards["items"][0]["event"]["reporter_id"] == "0542128736"
+    assert cards["items"][0]["person_id"] == "1501"
+
+    db.add(PersonBadgeAssignment(
+        factory_code="ARGANDA", source_system="SQLSERVER_SECURITY_DB",
+        source_person_id="PERSON-PK-2", person_id="1502", source_card_id="CARD-PK-2",
+        credential_id="CARD-1502", reader_id="542128736",
+        observed_from=datetime(2026, 10, 9, 11, 0, tzinfo=timezone.utc),
+        observed_to=None, first_seen_at=datetime(2026, 10, 9, 11, 0, tzinfo=timezone.utc),
+        last_seen_at=datetime(2026, 10, 9, 11, 0, tzinfo=timezone.utc),
+    ))
+    db.commit()
+    cards = client.get("/api/v1/admin/monitoring/cards").json()
+    # The collision is fail-closed for historical enrichment. Current identity
+    # rows are not themselves events and therefore do not produce extra cards.
+    assert cards["total"] == 1
+    assert cards["items"][0]["person_id"] is None
+    assert cards["items"][0]["event"]["reporter_id"] == "0542128736"
+
+
+def test_equivalent_identity_survives_worker_state_filter_and_keeps_captured_reader(monitor):
+    client, db = monitor
+    event = add_event(db, "0542128736", "T0010", "ENTER", 4)
+    event.identification_method = "RFID"
+    event.person_id = None
+    event.source_person_id = None
+    event.credential_id = None
+    db.commit()
+    add_current_identity(db, reader_id="1614434336", person_id="1501", credential_id="CARD-1501")
+
+    result = client.get("/api/v1/admin/monitoring/cards?worker_state=INSIDE&reporter_id=1501").json()
+    assert result["total"] == 1
+    assert result["items"][0]["person_id"] == "1501"
+    assert result["items"][0]["event"]["reporter_id"] == "0542128736"
+    assert event.reporter_id == "0542128736"
+
+
+def test_factory_state_filter_uses_canonical_person_projection(monitor):
+    client, db = monitor
+    at = datetime(2026, 10, 9, 11, 0, tzinfo=timezone.utc)
+    event = add_event(db, "0542128736", "T0010", "ENTER", 5)
+    event.identification_method = "RFID"
+    event.person_id = None
+    event.source_person_id = None
+    event.credential_id = None
+    db.add(FactoryPerimeterSettings(factory_code="ARGANDA", enabled=True, badge_source="EXTERNAL"))
+    db.add(FactoryPresenceProjection(
+        factory_code="ARGANDA", tracking_key="PERSON:1501", person_id="1501",
+        state="INSIDE", source_system="SQLSERVER_SECURITY_DB",
+        resolution_code="CANONICAL_PERSON_CURRENT_CREDENTIAL", verified_at=at,
+    ))
+    db.commit()
+    add_current_identity(db, reader_id="542128736", person_id="1501", credential_id="CARD-1501")
+
+    result = client.get("/api/v1/admin/monitoring/cards?factory_state=INSIDE&reporter_id=1501").json()
+    assert result["total"] == 1
+    assert result["items"][0]["person_id"] == "1501"
+    assert result["items"][0]["factory_state"] == "INSIDE"

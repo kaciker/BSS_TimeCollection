@@ -1,6 +1,7 @@
 """Read-only SECURITY_DB identity resolution and local assignment observations."""
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import inspect
 import logging
 
 from sqlalchemy import or_, select
@@ -14,7 +15,14 @@ from app.services.external_perimeter import (
     _connection_string,
     _credentials,
     _safe_odbc_category,
-    reader_number_to_attr_value,
+)
+from app.services.rfid_identity import (
+    canonical_reader_id,
+    rfid_candidates,
+    reader_from_swapped_attribute,
+    resolve_sql_for_candidates,
+    rfid_lookup_candidates,
+    rfid_candidates_from_attribute,
 )
 
 logger = logging.getLogger(__name__)
@@ -78,14 +86,8 @@ def _connect():
 
 
 def _attr_value_to_reader_number(value: str) -> str:
-    digits = str(value).strip()
-    if not digits or not digits.isascii() or not digits.isdecimal():
-        raise ValueError("External badge attribute must contain ASCII decimal digits")
-    number = int(digits)
-    if number >= 2 ** 32:
-        raise ValueError("External badge attribute exceeds the validated 32-bit format")
-    reader_number = int.from_bytes(number.to_bytes(4, "big"), "little")
-    return f"{reader_number:010d}"
+    """Compatibility wrapper around shared attribute byte-swap conversion."""
+    return reader_from_swapped_attribute(value)
 
 
 def _normalize_row(row, *, reader_id: str | None = None) -> PersonIdentity | None:
@@ -111,53 +113,77 @@ def _normalize_row(row, *, reader_id: str | None = None) -> PersonIdentity | Non
     )
 
 
+def _query_candidates(query, candidates: tuple[str, ...]):
+    """Preserve existing injected two-argument adapters while supporting all aliases."""
+    try:
+        parameters = inspect.signature(query).parameters.values()
+        variable = any(parameter.kind == inspect.Parameter.VAR_POSITIONAL for parameter in parameters)
+        positional = [parameter for parameter in parameters if parameter.kind in (
+            inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD
+        )]
+    except (TypeError, ValueError):
+        variable, positional = True, []
+    if variable or len(positional) == len(candidates):
+        return query(*candidates)
+    if len(positional) == 1:
+        return query(candidates)
+    if len(positional) == 2:
+        # Legacy test adapters accepted exact and byte-swapped values. The
+        # production SQL path always receives every candidate dynamically.
+        return query(candidates[0], candidates[2] if len(candidates) > 2 else candidates[-1])
+    return query(*candidates)
+
+
 def resolve_person_identity(reader_id: str, *, query=None) -> PersonIdentity:
     """Resolve either supported decimal representation, failing closed on collisions."""
     try:
         digits = str(reader_id).strip()
         if not digits or not digits.isascii() or not digits.isdecimal():
             raise ValueError
-        number = int(digits)
-        if number >= 2**32:
-            raise ValueError
-        # Keep the terminal's exact decimal spelling, including RFID leading zeros.
-        raw_value = digits
-        converted = reader_number_to_attr_value(digits)
+        candidates = rfid_lookup_candidates(digits)
     except ValueError:
         raise PersonIdentityError("INVALID_READER_ID") from None
 
     if query is not None:
         try:
-            rows = list(query(raw_value, converted))
+            rows = list(_query_candidates(query, candidates))
         except Exception:
             raise PersonIdentityError("QUERY_FAILED") from None
     else:
         connection = _connect()
         try:
-            rows = connection.cursor().execute(_RESOLVE_SQL, raw_value, converted).fetchall()
+            rows = connection.cursor().execute(
+                resolve_sql_for_candidates(_RESOLVE_SQL, candidates), *candidates
+            ).fetchall()
         except Exception as exc:
             raise PersonIdentityError(_safe_odbc_category(exc, phase="query")) from None
         finally:
             connection.close()
 
+    invalid_representations: set[str] = set()
     by_representation: dict[str, set[PersonIdentity]] = {}
-    invalid_representation_match = False
-    for candidate in {raw_value, converted}:
-        by_representation.setdefault(candidate, set())
+    numeric_candidates = {str(int(candidate)) for candidate in candidates}
     for row in rows:
         try:
             representation = str(row[0]).strip()
         except (TypeError, IndexError):
             continue
-        if representation not in by_representation:
+        try:
+            normalized_representation = str(int(representation))
+        except ValueError:
+            normalized_representation = representation
+        if normalized_representation not in numeric_candidates:
+            continue
+        if not representation.isascii() or not representation.isdecimal():
+            invalid_representations.add(normalized_representation)
             continue
         identity = _normalize_row(row[1:], reader_id=digits)
         if identity is not None:
-            by_representation[representation].add(identity)
+            by_representation.setdefault(normalized_representation, set()).add(identity)
         else:
-            invalid_representation_match = True
+            invalid_representations.add(normalized_representation)
 
-    if invalid_representation_match or any(len(matches) > 1 for matches in by_representation.values()):
+    if invalid_representations or any(len(matches) > 1 for matches in by_representation.values()):
         logger.warning("Ambiguous SECURITY_DB identity reader_id=%s", digits)
         raise PersonIdentityError("AMBIGUOUS_IDENTITY")
 
@@ -255,7 +281,7 @@ def fetch_current_person_badges(*, query=None) -> list[PersonIdentity]:
             attr_value = None
         if attr_value is not None:
             try:
-                readers.add(_attr_value_to_reader_number(str(attr_value)))
+                readers.add(reader_from_swapped_attribute(str(attr_value)))
             except ValueError:
                 pass
 
@@ -287,6 +313,7 @@ def observe_identity(
 ) -> bool:
     """Record one observed mapping without claiming the rest of the source snapshot."""
     observed_at = observed_at or datetime.now(timezone.utc)
+    candidate_ids = set(rfid_lookup_candidates(identity.reader_id)) if identity.reader_id else set()
     active = db.scalars(
         select(PersonBadgeAssignment).where(
             PersonBadgeAssignment.factory_code == factory_code,
@@ -294,7 +321,7 @@ def observe_identity(
             or_(
                 PersonBadgeAssignment.source_person_id == identity.source_person_id,
                 PersonBadgeAssignment.credential_id == identity.credential_id,
-                PersonBadgeAssignment.reader_id == identity.reader_id if identity.reader_id else False,
+                or_(*[PersonBadgeAssignment.reader_id == candidate for candidate in candidate_ids]) if candidate_ids else False,
             ),
         )
     ).all()
@@ -307,7 +334,14 @@ def observe_identity(
             and row.source_card_id == identity.source_card_id
             and row.credential_id == identity.credential_id
         )
-        if same_base and (row.reader_id == identity.reader_id or not identity.reader_id):
+        try:
+            same_reader = row.reader_id == identity.reader_id or (
+                row.reader_id is not None and identity.reader_id is not None
+                and canonical_reader_id(row.reader_id) == canonical_reader_id(identity.reader_id)
+            )
+        except ValueError:
+            same_reader = row.reader_id == identity.reader_id
+        if same_base and (same_reader or not identity.reader_id):
             exact = row
         elif same_base and row.reader_id is None and identity.reader_id:
             row.reader_id = identity.reader_id
@@ -356,9 +390,57 @@ def apply_current_snapshot(
 ) -> int:
     """Reconcile local observations with one complete authoritative current snapshot."""
     observed_at = observed_at or datetime.now(timezone.utc)
+    deduplicated: dict[tuple[str, str, str, str], PersonIdentity] = {}
+    for identity in identities:
+        base = (identity.source_person_id, identity.person_id, identity.source_card_id, identity.credential_id)
+        previous = deduplicated.get(base)
+        if previous is None:
+            deduplicated[base] = identity
+            continue
+        if previous.reader_id and identity.reader_id:
+            try:
+                if canonical_reader_id(previous.reader_id) != canonical_reader_id(identity.reader_id):
+                    raise PersonIdentityError("AMBIGUOUS_CURRENT_MAPPING")
+            except ValueError:
+                raise PersonIdentityError("AMBIGUOUS_CURRENT_MAPPING") from None
+            if len(identity.reader_id) > len(previous.reader_id):
+                deduplicated[base] = identity
+    identities = list(deduplicated.values())
+    identities_by_person = {}
+    for identity in identities:
+        prior = identities_by_person.get(identity.source_person_id)
+        if prior is not None:
+            try:
+                equivalent_reader = canonical_reader_id(prior.reader_id) == canonical_reader_id(identity.reader_id)
+            except (ValueError, TypeError):
+                equivalent_reader = prior.reader_id == identity.reader_id
+            if (prior.person_id, prior.source_card_id, prior.credential_id, equivalent_reader) != (
+                identity.person_id, identity.source_card_id, identity.credential_id, True
+            ):
+                raise PersonIdentityError("AMBIGUOUS_CURRENT_MAPPING")
+        identities_by_person[identity.source_person_id] = identity
+    identities = list(identities_by_person.values())
+    # A RAW value and its byte-swapped value are equivalent lookup forms. If
+    # SECURITY_DB assigns that equivalence class to different people/cards,
+    # reject the snapshot instead of creating conflicting active assignments.
+    identities_by_reader: dict[str, tuple[str, str, str, str]] = {}
+    for identity in identities:
+        if not identity.reader_id:
+            continue
+        try:
+            reader_key = canonical_reader_id(identity.reader_id)
+        except ValueError:
+            raise PersonIdentityError("AMBIGUOUS_CURRENT_MAPPING") from None
+        identity_key = (
+            identity.source_person_id, identity.person_id,
+            identity.source_card_id or "", identity.credential_id or "",
+        )
+        previous = identities_by_reader.setdefault(reader_key, identity_key)
+        if previous != identity_key:
+            raise PersonIdentityError("AMBIGUOUS_CURRENT_MAPPING")
     incoming_by_person = {identity.source_person_id: identity for identity in identities}
     incoming_by_credential = {identity.credential_id: identity for identity in identities}
-    if len(incoming_by_person) != len(identities) or len(incoming_by_credential) != len(identities):
+    if len(incoming_by_credential) != len(identities):
         raise PersonIdentityError("AMBIGUOUS_CURRENT_MAPPING")
 
     active = db.scalars(
@@ -371,7 +453,7 @@ def apply_current_snapshot(
     active_base: dict[tuple[str, str, str, str], PersonBadgeAssignment] = {}
     for row in active:
         key = (row.source_person_id, row.person_id, row.source_card_id, row.credential_id)
-        active_base[key] = row
+        active_base.setdefault(key, row)
         incoming = incoming_by_person.get(row.source_person_id)
         if incoming is None or (
             incoming.person_id,
@@ -384,7 +466,13 @@ def apply_current_snapshot(
         if row.reader_id is None and incoming.reader_id:
             row.reader_id = incoming.reader_id
             changes += 1
-        elif row.reader_id and incoming.reader_id and row.reader_id != incoming.reader_id:
+        elif row.reader_id and incoming.reader_id:
+            try:
+                equivalent = canonical_reader_id(row.reader_id) == canonical_reader_id(incoming.reader_id)
+            except ValueError:
+                equivalent = False
+            if equivalent:
+                continue
             row.observed_to = observed_at
             changes += 1
 
@@ -397,9 +485,21 @@ def apply_current_snapshot(
         )
         existing = active_base.get(key)
         if existing is not None and existing.observed_to is None:
-            continue
-        db.add(
-            PersonBadgeAssignment(
+            if existing.reader_id is None and identity.reader_id:
+                existing.reader_id = identity.reader_id
+                changes += 1
+            elif existing.reader_id and identity.reader_id:
+                try:
+                    equivalent = canonical_reader_id(existing.reader_id) == canonical_reader_id(identity.reader_id)
+                except ValueError:
+                    equivalent = False
+                if equivalent:
+                    continue
+                existing.observed_to = observed_at
+                changes += 1
+            else:
+                continue
+        assignment = PersonBadgeAssignment(
                 factory_code=factory_code,
                 source_system=SOURCE,
                 source_person_id=identity.source_person_id,
@@ -412,8 +512,9 @@ def apply_current_snapshot(
                 first_seen_at=observed_at,
                 last_seen_at=observed_at,
             )
-        )
+        db.add(assignment)
         changes += 1
+        active_base[key] = assignment
     return changes
 
 

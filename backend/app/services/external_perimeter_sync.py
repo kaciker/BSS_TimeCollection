@@ -14,6 +14,7 @@ from app.models.perimeter import FactoryPerimeterEvent, FactoryPerimeterSettings
 from app.models.terminal import Terminal
 from app.models.factory import Factory
 from app.services.person_identity import PersonIdentityError, _RESOLVE_SQL, resolve_person_identity
+from app.services.rfid_identity import resolve_sql_for_candidates
 from app.services.external_perimeter import (
     ExternalPerimeterError,
     _connection_string,
@@ -21,6 +22,7 @@ from app.services.external_perimeter import (
     _safe_odbc_category,
     reader_number_to_attr_value,
 )
+from app.services.rfid_identity import reader_from_swapped_attribute
 from app.services.perimeter_service import create_auto_cell_exit_for_factory_exit
 
 logger = logging.getLogger(__name__)
@@ -125,15 +127,8 @@ ORDER BY t.event_time DESC, t.id DESC
 
 
 def attr_value_to_reader_number(value: str) -> str:
-    """Reverse the validated 32-bit byte swap and restore the 10-digit reader format."""
-    digits = str(value).strip()
-    if not digits or not digits.isascii() or not digits.isdecimal():
-        raise ValueError("External badge attribute must contain ASCII decimal digits")
-    number = int(digits)
-    if number >= 2 ** 32:
-        raise ValueError("External badge attribute exceeds the validated 32-bit format")
-    reader_number = int.from_bytes(number.to_bytes(4, "big"), "little")
-    return f"{reader_number:010d}"
+    """Reverse the shared validated 32-bit byte-swap conversion."""
+    return reader_from_swapped_attribute(value)
 
 
 def _connect():
@@ -641,11 +636,8 @@ def external_current_states(
                 try:
                     identity = resolve_person_identity(
                         badge,
-                        query=lambda raw_value, converted: cursor.execute(
-                            _RESOLVE_SQL.format(
-                                placeholders=", ".join("?" for _ in (raw_value, converted))
-                            ),
-                            raw_value, converted,
+                        query=lambda *candidates: cursor.execute(
+                            resolve_sql_for_candidates(_RESOLVE_SQL, candidates), *candidates,
                         ).fetchall(),
                     )
                 except PersonIdentityError as exc:

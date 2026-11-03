@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from app.db.base import Base
 from app.models.person_badge_assignment import PersonBadgeAssignment
+from app.services.rfid_identity import rfid_candidates
 
 
 class FactoryPerimeterSettings(Base):
@@ -86,6 +87,10 @@ def snapshot_current_person_badge_identity(session, flush_context, instances) ->
         if target.source_person_id and target.person_id and target.credential_id:
             continue
 
+        try:
+            equivalent_readers = set(rfid_candidates(target.reporter_id))
+        except ValueError:
+            equivalent_readers = {target.reporter_id}
         rows = session.execute(
             select(
                 PersonBadgeAssignment.source_person_id,
@@ -94,7 +99,7 @@ def snapshot_current_person_badge_identity(session, flush_context, instances) ->
             )
             .where(
                 PersonBadgeAssignment.factory_code == target.factory_code,
-                PersonBadgeAssignment.reader_id == target.reporter_id,
+                PersonBadgeAssignment.reader_id.in_(equivalent_readers),
                 PersonBadgeAssignment.observed_to.is_(None),
             )
             .order_by(PersonBadgeAssignment.observed_from.desc(), PersonBadgeAssignment.id.desc())
