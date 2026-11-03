@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 12289)
+Total output lines: 999
+
 """Reconcile current physical factory presence independently of movement history."""
 from __future__ import annotations
 
@@ -20,7 +23,7 @@ from app.services.person_identity import (
     _attr_value_to_reader_number, _normalize_row, fetch_current_person_badges,
     resolve_person_identity,
 )
-from app.services.external_perimeter import reader_number_to_attr_value
+from app.services.external_perimeter import reader_number_to_attr_value, normalize_security_db_event_time
 from app.services.rfid_identity import (
     canonical_reader_id, rfid_candidates_from_attribute, rfid_lookup_candidates,
     resolve_sql_for_candidates,
@@ -142,7 +145,7 @@ def _same_projection_value(left, right) -> bool:
     return left == right
 
 
-def _movement_from_row(row) -> dict | None:
+def _movement_from_row(row, config=None) -> dict | None:
     try:
         transaction_index = 0 if len(row) == 3 else 1
         when_index = transaction_index + 1
@@ -151,8 +154,7 @@ def _movement_from_row(row) -> dict | None:
         when = row[when_index]
         if zone not in (1, 2) or not isinstance(when, datetime):
             return None
-        if when.tzinfo is None:
-            when = when.replace(tzinfo=ZoneInfo(settings.event_timezone))
+        when, applied_offset = normalize_security_db_event_time(when, config)
         age = datetime.now(timezone.utc) - when.astimezone(timezone.utc)
         if age < -timedelta(seconds=60):
             state = "UNKNOWN"
@@ -162,7 +164,9 @@ def _movement_from_row(row) -> dict | None:
             state = "UNKNOWN"
         else:
             state = "INSIDE"
-        return {"state": state, "at": when, "transaction_id": _safe_text(row[transaction_index])}
+        return {"state": state, "at": when, "source_event_time": row[when_index],
+                "source_clock_offset_minutes": applied_offset,
+                "transaction_id": _safe_text(row[transaction_index])}
     except (TypeError, ValueError, IndexError):
         return None
 
@@ -272,7 +276,7 @@ def _collect_candidates(db: Session, factory_code: str) -> dict[str, _IdentityCa
     return candidates
 
 
-def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], historical_credentials=()):
+def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], historical_credentials=(), config=None):
     """Resolve the local population from one SECURITY_DB snapshot efficiently."""
     by_reader_index: dict[str, set[PersonIdentity]] = {}
     current_by_person: dict[str, list[PersonIdentity]] = {}
@@ -331,7 +335,7 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], his
             for row in rows:
                 credential = _safe_text(row[0])
                 if credential:
-                    movement_cache[credential] = _movement_from_row(row[1:])
+                    movement_cache[credential] = _movement_from_row(row[1:], config)
         except Exception as exc:
             error = PresenceSourceError(_safe_odbc_category(exc, phase="query"))
             for credential in chunk:
@@ -346,7 +350,7 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], his
             credential = _safe_text(row[0])
             if not credential:
                 continue
-            movement_cache[credential] = _movement_from_row(row)
+            movement_cache[credential] = _movement_from_row(row, config)
     except Exception as exc:
         error = PresenceSourceError(_safe_odbc_category(exc, phase="query"))
         for identity in identities:
@@ -410,7 +414,7 @@ def _source_resolver_from_snapshot(cursor, identities: list[PersonIdentity], his
                 movement_cache[credential_id] = None
             else:
                 try:
-                    movement_cache[credential_id] = _movement(cursor, credential_id)
+                    movement_cache[credential_id] = _movement(cursor, credential_id, config)
                 except PresenceSourceError as exc:
                     movement_cache[credential_id] = exc
         result = movement_cache[credential_id]
@@ -459,7 +463,7 @@ def _reader_ids_from_attribute(value: str | None) -> set[str]:
         return set()
 
 
-def _movement(cursor, credential_id: str) -> dict | None:
+def _movement(cursor, credential_id: str, config=None) -> dict | None:
     try:
         row = cursor.execute(_LATEST_CARD_MOVEMENT_SQL, credential_id).fetchone()
     except Exception as exc:
@@ -471,8 +475,7 @@ def _movement(cursor, credential_id: str) -> dict | None:
         when = row[1]
         if zone not in (1, 2) or not isinstance(when, datetime):
             return None
-        if when.tzinfo is None:
-            when = when.replace(tzinfo=ZoneInfo(settings.event_timezone))
+        when, applied_offset = normalize_security_db_event_time(when, config)
         # Match the existing external-presence policy: an EXIT remains reliable
         # evidence of OUTSIDE, while an old ENTER cannot prove someone is still
         # inside indefinitely. In particular, historical movement alone must
@@ -484,13 +487,14 @@ def _movement(cursor, credential_id: str) -> dict | None:
             "UNKNOWN" if age > timedelta(hours=settings.perimeter_external_max_age_hours)
             else "INSIDE"
         )
-        return {"state": state, "at": when,
+        return {"state": state, "at": when, "source_event_time": row[1],
+                "source_clock_offset_minutes": applied_offset,
                 "transaction_id": _safe_text(row[0])}
     except (TypeError, ValueError, IndexError):
         return None
 
 
-def _source_resolver(cursor):
+def _source_resolver(cursor, config=None):
     reader_cache: dict[str, PersonIdentity | PersonIdentityError] = {}
     person_cache: dict[str, list[PersonIdentity] | PresenceSourceError] = {}
     movement_cache: dict[str, dict | None | PresenceSourceError] = {}
@@ -527,27 +531,7 @@ def _source_resolver(cursor):
                         invalid = False
                         for row in rows:
                             raw_representation = _safe_text(row[0])
-                            if raw_representation is None:
-                                continue
-                            try:
-                                matched_representation = str(int(raw_representation)) in {
-                                    str(int(candidate)) for candidate in candidates
-                                }
-                            except ValueError:
-                                matched_representation = False
-                            if not matched_representation:
-                                continue
-                            if not raw_representation.isascii() or not raw_representation.isdecimal():
-                                invalid = True
-                                continue
-                            identity = _normalize_row(row[1:], reader_id=digits)
-                            if identity is None:
-                                invalid = True
-                            else:
-                                identities.add(identity)
-                        people = {identity.person_id for identity in identities}
-                        if identities and len(people) == 1 and len(source_people := {
-                            identity.source_person_id for identity in identities
+                            if raw_representati…289 tokens truncated…      identity.source_person_id for identity in identities
                         }) == 1 and not invalid:
                             person_id = next(iter(people))
                             result = PersonIdentity(
@@ -646,7 +630,7 @@ def _source_resolver(cursor):
                 raise result
             return result
         try:
-            result = _movement(cursor, credential_id)
+            result = _movement(cursor, credential_id, config)
         except PresenceSourceError as exc:
             movement_cache[credential_id] = exc
             raise
@@ -825,7 +809,7 @@ def reconcile_factory_presence(
                     identities.append(identity)
             source = _source_resolver_from_snapshot(cursor, identities, candidates_credentials := {
                 credential for item in candidates.values() for credential in item.credential_ids
-            })
+            }, config=config)
         by_reader, current_credentials, movement = source[:3]
         if len(source) > 3:
             movement.current_orphan_credential = source[3]
