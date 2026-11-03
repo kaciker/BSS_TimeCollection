@@ -1,0 +1,31 @@
+{
+  "timeEventRequestId": 300001304086023,
+  "requestNumber": "BSS-POC-SANITIZED",
+  "requestTimestamp": "2026-11-03T12:29:02.212Z",
+  "sourceId": "HUT_TCD_SUPP1",
+  "timeEvents": {
+    "items": [
+      {
+        "timeEventId": 300001304086024,
+        "timeEventRequestId": 300001304086023,
+        "eventDateTime": "2026-11-03T12:29:02.212Z",
+        "deviceId": null,
+        "supplierDeviceEvent": "HUT_TCD_SUPP1_IN_2",
+        "reporterId": "23703",
+        "reporterIdType": "PERSON",
+        "timeEventAttributes": {
+          "items": [
+            {"timeEventAttributeId": 300001304086025, "name": "PayrollTimeType", "value": "Workshop Entry ES"},
+            {"timeEventAttributeId": 300001304086026, "name": "WORK_AREA", "value": "439"},
+            {"timeEventAttributeId": 300001304086027, "name": "MACHINE", "value": "4393"},
+            {"timeEventAttributeId": 300001304086028, "name": "CELL", "value": "54A"}
+          ],
+          "count": 4,
+          "hasMore": false
+        }
+      }
+    ],
+    "count": 1,
+    "hasMore": false
+  }
+}
