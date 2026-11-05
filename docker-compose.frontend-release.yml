@@ -1,0 +1,8 @@
+services:
+  web:
+    build:
+      context: ${BSS_FRONTEND_CONTEXT:?Set BSS_FRONTEND_CONTEXT to the official frontend source directory}
+      dockerfile: Dockerfile
+      args:
+        VCS_REF: ${BSS_WEB_REVISION:?Set BSS_WEB_REVISION to the source commit SHA}
+    image: bsstimecollection-web:${BSS_WEB_REVISION:?Set BSS_WEB_REVISION to the source commit SHA}
