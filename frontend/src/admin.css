@@ -143,3 +143,11 @@
  .admin-layout .events-table thead [data-column="time"],.admin-layout .events-table thead [data-column="employee"]{left:auto}
  .column-picker fieldset{display:grid;grid-template-columns:1fr}
 }
+
+.admin-layout .clock-filter{position:relative;min-width:180px;align-self:end;border:1px solid #dce3ed;border-radius:7px;background:#fff;color:#334860;font-size:12px}
+.admin-layout .clock-filter>summary{padding:11px 12px;min-height:40px;white-space:nowrap}
+.admin-layout .clock-filter[open]{z-index:8}
+.admin-layout .clock-filter fieldset{position:absolute;top:100%;left:0;z-index:9;min-width:240px;max-height:260px;overflow:auto;margin:4px 0 0;padding:10px 12px;border:1px solid #dce3ed;border-radius:7px;background:#fff;box-shadow:0 8px 22px #14274220}
+.admin-layout .clock-filter label{display:flex;flex-direction:row;align-items:center;gap:8px;padding:6px 2px;white-space:nowrap}
+.admin-layout .clock-filter input{width:16px;height:16px;min-width:16px;margin:0;accent-color:#245bdd}
+@media(max-width:760px){.admin-layout .clock-filter{width:100%}.admin-layout .clock-filter fieldset{width:100%;min-width:0}}

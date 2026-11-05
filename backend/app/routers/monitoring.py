@@ -131,7 +131,7 @@ def clock_codes(db: Session = Depends(get_db)):
 
 def _filters(query, terminal_code, reporter_id):
     if terminal_code:
-        query = query.where(TimeEvent.terminal_code == terminal_code)
+        query = query.where(TimeEvent.terminal_code.in_(terminal_code))
     if reporter_id:
         query = query.where(or_(
             TimeEvent.reporter_id.contains(reporter_id, autoescape=True),
@@ -166,7 +166,7 @@ def _perimeter_snapshot(db, event):
 
 @router.get("/events", response_model=EventPage)
 def events(
-    terminal_code: str | None = None, reporter_id: str | None = None,
+    terminal_code: list[str] | None = Query(None), reporter_id: str | None = None
     delivery_status: str | None = None,
     start: datetime | None = None, end: datetime | None = None,
     offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100),
@@ -192,7 +192,7 @@ def events(
         cell = cell.where(TimeEvent.terminal_code == terminal_code)
     perimeter = select(FactoryPerimeterEvent.id.label("id"), func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime).label("at"), FactoryPerimeterEvent.event_datetime.label("created"), literal("PERIMETER").label("kind")).join(Terminal, Terminal.id == FactoryPerimeterEvent.terminal_id)
     if terminal_code:
-        perimeter = perimeter.where(Terminal.code == terminal_code)
+        perimeter = perimeter.where(Terminal.code.in_(terminal_code))
     if reporter_id:
         perimeter = perimeter.where(or_(
             FactoryPerimeterEvent.reporter_id.contains(reporter_id, autoescape=True),
@@ -221,7 +221,7 @@ def events(
 
 @router.get("/cards", response_model=CardPage)
 def cards(
-    terminal_code: str | None = None,
+    terminal_code: list[str] | None = Query(None),
     reporter_id: str | None = None,
     worker_state: Literal["INSIDE", "OUTSIDE"] | None = None,
     factory_state: Literal["INSIDE", "OUTSIDE", "UNKNOWN"] | None = None,
@@ -348,7 +348,7 @@ def cards(
         & (canonical_projection.tracking_key == literal("PERSON:").concat(cast(ranked.c.person_id, String))),
     ).where(ranked.c.position == 1)
     if terminal_code:
-        query = query.where(ranked.c.clock == terminal_code)
+        query = query.where(ranked.c.clock.in_(terminal_code))
     if reporter_id:
         query = query.where(or_(
             ranked.c.badge.contains(reporter_id, autoescape=True),
