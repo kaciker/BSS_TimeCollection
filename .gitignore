@@ -38,3 +38,9 @@ coverage/
 # Environment-managed workspace briefing (local only)
 /AGENTS.md
 /MYCODEX_CONTEXT_CATALOG.md
+
+# Retired incomplete prebuilt frontend release context
+/deploy-context-oracle-catalogue/static/
+
+# Generated Vite public asset copy
+/frontend/public/img/
