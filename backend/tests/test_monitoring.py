@@ -185,6 +185,35 @@ def test_pending_event_has_no_transmission_history(monitor):
     assert client.get("/api/v1/admin/monitoring/events/missing").status_code == 404
 
 
+@pytest.mark.parametrize("view", ("events", "cards", "attempts"))
+def test_monitoring_filters_multiple_clocks_without_changing_unfiltered_results(monitor, view):
+    client, db = monitor
+    clocks = ("A", "B", "C")
+    for index, clock in enumerate(clocks):
+        event = add_event(db, f"00{index + 1}", clock, "ENTER", index)
+        db.add(TransmissionAttempt(
+            event_id=event.id, attempt_number=1, started_at=event.event_datetime,
+            finished_at=event.event_datetime + timedelta(seconds=1),
+            endpoint="https://example.invalid/timeEventRequests",
+            http_status=201, result="SENT", duration_ms=1000,
+            request_payload={}, response_payload={}, error_message=None,
+        ))
+    db.commit()
+
+    endpoint = f"/api/v1/admin/monitoring/{view}"
+    for selected in ((), ("A",), ("A", "B"), ("C",), ("UNKNOWN",)):
+        response = client.get(endpoint, params=[("terminal_code", code) for code in selected])
+        assert response.status_code == 200, response.text
+        result = response.json()
+        expected = set(selected) & set(clocks) if selected else set(clocks)
+        assert result["total"] == len(expected)
+        if view == "cards":
+            observed = {item["event"]["terminal_code"] for item in result["items"]}
+        else:
+            observed = {item["terminal_code"] for item in result["items"]}
+        assert observed == expected
+
+
 def test_historical_zero_padded_cell_event_enriched_and_searchable_by_employee(monitor):
     client, db = monitor
     event = add_event(db, "0542128736", "T0010", "ENTER", 3)

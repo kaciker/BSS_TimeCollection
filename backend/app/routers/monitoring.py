@@ -166,7 +166,7 @@ def _perimeter_snapshot(db, event):
 
 @router.get("/events", response_model=EventPage)
 def events(
-    terminal_code: list[str] | None = Query(None), reporter_id: str | None = None
+    terminal_code: list[str] | None = Query(None), reporter_id: str | None = None,
     delivery_status: str | None = None,
     start: datetime | None = None, end: datetime | None = None,
     offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100),
@@ -189,7 +189,7 @@ def events(
               for factory, key in search_keys],
         ))
     if terminal_code:
-        cell = cell.where(TimeEvent.terminal_code == terminal_code)
+        cell = cell.where(TimeEvent.terminal_code.in_(terminal_code))
     perimeter = select(FactoryPerimeterEvent.id.label("id"), func.coalesce(FactoryPerimeterEvent.effective_event_datetime, FactoryPerimeterEvent.event_datetime).label("at"), FactoryPerimeterEvent.event_datetime.label("created"), literal("PERIMETER").label("kind")).join(Terminal, Terminal.id == FactoryPerimeterEvent.terminal_id)
     if terminal_code:
         perimeter = perimeter.where(Terminal.code.in_(terminal_code))
@@ -395,7 +395,7 @@ def cards(
 
 @router.get("/attempts", response_model=AttemptPage)
 def attempts(
-    terminal_code: str | None = None,
+    terminal_code: list[str] | None = Query(None),
     reporter_id: str | None = None,
     result: DeliveryStatus | None = None,
     offset: int = Query(0, ge=0),
