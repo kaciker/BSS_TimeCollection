@@ -9,7 +9,7 @@ import { useLanguage } from "../i18n";
 
 type View = "cards" | "events" | "attempts";
 const statuses = ["PENDING", "SENDING", "RETRY", "SENT", "REJECTED", "UNKNOWN"];
-const initialFilters = { clock: "", badge: "", state: "", factoryState: "", status: "", start: "", end: "" };
+const initialFilters = { clock: [] as string[], badge: "", state: "", factoryState: "", status: "", start: "", end: "" };
 const pageSize = 50;
 
 export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }: { terminals: AdminTerminal[]; initialView?: View; onNavigate?: (view: View, query?: string) => void }) {
@@ -32,7 +32,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
   };
   const [draft, setDraft] = useState(() => {
     const query = new URLSearchParams(window.location.search);
-    return { ...initialFilters, badge: query.get("badge") ?? "", clock: query.get("clock") ?? "" };
+    return { ...initialFilters, badge: query.get("badge") ?? "", clock: [...new Set([...query.getAll("clock"), ...query.getAll("terminal_code")])] };
   });
   const [filters, setFilters] = useState(draft);
   const [offset, setOffset] = useState(0);
@@ -83,7 +83,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
     let active = true;
     let pending = false;
     const query = new URLSearchParams({ offset: String(offset), limit: String(pageSize) });
-    if (filters.clock) query.set("terminal_code", filters.clock);
+    filters.clock.forEach(clock => query.append("terminal_code", clock));
     if (filters.badge) query.set("reporter_id", filters.badge);
     if (view === "cards" && filters.state) query.set("worker_state", filters.state);
     if (view === "cards" && filters.factoryState) query.set("factory_state", filters.factoryState);
@@ -125,7 +125,9 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
   const history = (badge: string) => {
     const next = { ...filters, badge, start: "", end: "", status: "" };
     if (onNavigate) {
-      onNavigate("events", `?badge=${encodeURIComponent(badge)}&clock=${encodeURIComponent(filters.clock)}`);
+      const query = new URLSearchParams({ badge });
+      filters.clock.forEach(clock => query.append("clock", clock));
+      onNavigate("events", `?${query}`);
     } else { setDraft(next); setFilters(next); selectView("events"); }
   };
   const badgeStatus = (value: string) => <span className={`status ${value === "INSIDE" ? "status-sent" : ""}`}>{value === "INSIDE" ? t("inside") : value === "OUTSIDE" ? t("outside") : t("unknown")}</span>;
@@ -135,7 +137,7 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
   const columns: Column[] = view === "events" ? [
     {id:"time",label:t("eventTime"),width:190,render:e=>dateLabel(e.event_datetime)},
     {id:"employee",label:employeeIdLabel,width:130,locked:true,render:e=><strong>{e.person_id ?? "—"}</strong>},
-    {id:"clock",label:t("clock"),width:110,render:e=>e.terminal_code},
+    {id:"clock",label:t("clock"),width:110,locked:true,render:e=>e.terminal_code},
     {id:"reader",label:rfidValueLabel,width:160,render:e=>e.reporter_id},
     {id:"card",label:cardLabel,width:330,render:e=>e.credential_id ?? "—"},
     {id:"action",label:t("action"),width:310,render:e=><>{e.action_label}<span className="event-context"> · {e.event_kind === "PERIMETER" ? `${t("factoryPerimeter")} · ${e.factory_code}` : t("cell")}</span></>},
@@ -171,7 +173,14 @@ export function MonitoringPanel({ terminals, initialView = "cards", onNavigate }
     <section className="admin-card monitoring">
       <div className="monitor-heading"><div><h2>{view === "cards" ? t("badgeRegister") : view === "events" ? t("capturedEvents") : t("deliveryAttempts")}</h2></div><button className="secondary" onClick={() => setRevision(value => value + 1)}>{t("refresh")}</button></div>
       <form className="monitor-filters" onSubmit={apply}>
-        <label>{t("clock")}<select value={draft.clock} onChange={e => setDraft({ ...draft, clock: e.target.value })}><option value="">{t("allClocks")}</option>{terminals.map(terminal => <option key={terminal.code} value={terminal.code}>{terminal.code} · {terminal.name}</option>)}{removedCodes.map(code => <option key={code} value={code}>{code} · {t("removed")}</option>)}</select></label>
+        <details className="clock-filter">
+          <summary>{t("clock")} · {draft.clock.length ? `${draft.clock.length} ${t(draft.clock.length === 1 ? "selectedOne" : "selected")}` : t("allClocks")}</summary>
+          <fieldset><legend className="sr-only">{t("clock")}</legend>
+            <label><input type="checkbox" checked={draft.clock.length === 0} onChange={() => setDraft({ ...draft, clock: [] })} />{t("allClocks")}</label>
+            {terminals.map(terminal => <label key={terminal.code}><input type="checkbox" checked={draft.clock.includes(terminal.code)} onChange={event => setDraft({ ...draft, clock: event.target.checked ? [...draft.clock, terminal.code] : draft.clock.filter(code => code !== terminal.code) })} />{terminal.code} · {terminal.name}</label>)}
+            {removedCodes.map(code => <label key={code}><input type="checkbox" checked={draft.clock.includes(code)} onChange={event => setDraft({ ...draft, clock: event.target.checked ? [...draft.clock, code] : draft.clock.filter(value => value !== code) })} />{code} · {t("removed")}</label>)}
+          </fieldset>
+        </details>
         <label>{identitySearchLabel}<input value={draft.badge} placeholder={identitySearchPlaceholder} onChange={e => setDraft({ ...draft, badge: e.target.value })} /></label>
         {view === "cards" ? <label>{t("cellState")}<select value={draft.state} onChange={e => setDraft({ ...draft, state: e.target.value })}><option value="">{t("all")}</option><option value="INSIDE">{t("inside")}</option><option value="OUTSIDE">{t("outside")}</option></select></label> : <label>{view === "events" ? t("delivery") : t("attemptResult")}<select value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value })}><option value="">{t("all")}</option>{(view === "events" ? [...statuses,"LOCAL_ONLY"] : statuses).map(status => <option key={status} value={status}>{status === "LOCAL_ONLY" ? t("localOnly") : status}</option>)}</select></label>}
         {view === "cards" && factoryEnabled && <label>{t("factoryState")}<select value={draft.factoryState} onChange={e => setDraft({ ...draft, factoryState: e.target.value })}><option value="">{t("all")}</option><option value="INSIDE">{t("inside")}</option><option value="OUTSIDE">{t("outside")}</option><option value="UNKNOWN">{t("unknown")}</option></select></label>}
