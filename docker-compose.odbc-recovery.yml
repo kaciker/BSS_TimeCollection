@@ -1,0 +1,12 @@
+# Recovery candidate: API and worker share one verified ODBC runtime image.
+services:
+  api:
+    image: bsstimecollection-api:${BSS_API_REVISION:?Set BSS_API_REVISION to the validated recovery revision}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.corp-offline-recovery
+      args:
+        VCS_REF: ${BSS_API_REVISION:?Set BSS_API_REVISION to the validated recovery revision}
+  worker:
+    image: bsstimecollection-api:${BSS_API_REVISION:?Set BSS_API_REVISION to the validated recovery revision}
+    command: ["python", "-m", "app.worker"]
