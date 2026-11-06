@@ -1,11 +1,11 @@
 """Safely restore missing action mappings on never-attempted pending events."""
 from datetime import datetime, timezone
 
-from sqlalchemy import exists, or_, select
+from sqlalchemy import and_, case, exists, func, or_, select
 
 from app.domain.enums import DeliveryStatus
 from app.models.action import Action
-from app.models.oracle_catalogue import OraclePayrollTimeType
+from app.models.oracle_catalogue import OracleCell, OracleMachine, OraclePayrollTimeType, OracleWorkArea
 from app.models.oracle_mapping_recovery import OracleMappingRecoveryAudit
 from app.models.terminal import Terminal, terminal_actions
 from app.models.time_event import TimeEvent
@@ -29,10 +29,22 @@ def recover_pending_action_mappings(db, *, limit: int = BATCH_SIZE, now: datetim
             terminal_actions.c.action_id == TimeEvent.action_id,
         )
     )
+    request_ready = and_(TimeEvent.request_number.is_not(None),
+                         func.length(TimeEvent.request_number) <= 80,
+                         func.length(func.trim(TimeEvent.request_number)) > 0)
+    structure_ready = and_(
+        OracleWorkArea.active.is_(True), OracleMachine.active.is_(True), OracleCell.active.is_(True),
+        OracleMachine.work_area_code == TimeEvent.oracle_work_area_code,
+        OracleCell.machine_code == TimeEvent.oracle_machine_code,
+    )
     statement = (
         select(TimeEvent)
         .join(Terminal, Terminal.id == TimeEvent.terminal_id)
         .join(Action, Action.id == TimeEvent.action_id)
+        .join(OracleWorkArea, OracleWorkArea.code == TimeEvent.oracle_work_area_code)
+        .join(OracleMachine, OracleMachine.code == TimeEvent.oracle_machine_code)
+        .join(OracleCell, OracleCell.code == TimeEvent.oracle_cell_code)
+        .join(OraclePayrollTimeType, OraclePayrollTimeType.code == Action.oracle_payroll_time_type)
         .where(TimeEvent.delivery_status == DeliveryStatus.PENDING.value)
         .where(TimeEvent.attempt_count == 0)
         .where(TimeEvent.last_attempt_at.is_(None))
@@ -43,10 +55,27 @@ def recover_pending_action_mappings(db, *, limit: int = BATCH_SIZE, now: datetim
         .where(linked_action)
         .where(Terminal.terminal_role == "CELL")
         .where(Action.active.is_(True))
+        .where(OraclePayrollTimeType.active.is_(True))
         # The action must have been edited after this captured event; otherwise
         # the live configuration does not establish a later correction.
         .where(Action.updated_at > TimeEvent.created_at)
         .where(Action.state_effect == TimeEvent.state_effect)
+        .where(Action.oracle_supplier_event == case(
+            (TimeEvent.state_effect == "ENTER", "HUT_TCD_SUPP1_IN_2"),
+            (TimeEvent.state_effect == "EXIT", "HUT_TCD_SUPP1_OUT_2"),
+            else_=None,
+        ))
+        .where(or_(TimeEvent.oracle_supplier_event.is_(None),
+                   TimeEvent.oracle_supplier_event == Action.oracle_supplier_event))
+        .where(TimeEvent.person_id.is_not(None))
+        .where(func.length(func.trim(TimeEvent.person_id)) > 0)
+        .where(request_ready)
+        .where(structure_ready)
+        .where(or_(TimeEvent.oracle_payroll_time_type.is_(None),
+                   select(OraclePayrollTimeType.code)
+                   .where(OraclePayrollTimeType.code == TimeEvent.oracle_payroll_time_type,
+                          OraclePayrollTimeType.active.is_(True))
+                   .correlate(TimeEvent).exists()))
         .where(or_(TimeEvent.oracle_payroll_time_type.is_(None), TimeEvent.oracle_supplier_event.is_(None)))
         .order_by(TimeEvent.created_at, TimeEvent.id)
         .with_for_update(of=(TimeEvent, Action), skip_locked=True)
