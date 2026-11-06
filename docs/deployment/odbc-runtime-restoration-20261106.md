@@ -28,20 +28,27 @@ image tag. Package binaries remain local, gitignored build inputs; stage all
   resolved.
 - No SQL Server connection, synchronization, or Oracle transmission ran.
 
-## Build and deployment gate
+## Production recovery verified — 2026-11-06
 
-The only configured builder is the production Docker daemon; it was not used.
-No separate authorized builder was found, and GitHub Actions was not authorized
-as the isolated release builder. Candidate build and deployment remain pending.
+PR #48 was merged into GitHub `main` as squash commit
+`12aaee8b835ec6c959a1140b13ad9547d65d3669`. The production API and worker
+now use image `bsstimecollection-api:odbc-oracle-safe-20261106`
+(`sha256:aa142b948cd813cedd594cd4f8715ab2a91015121476d6d796aa0f007a2340b1`).
 
-Before deployment, record API/worker container and image IDs, effective Compose
-settings, health and restart counts, and verify the Oracle transmission queue
-is idle. Back up deployment files and retain the old images for rollback.
-Replace only API and worker. Preserve database/web services, credentials,
-volumes, Oracle controls, RFID canonicalization, factory mappings and external
-presence behavior. Verify both services use the same candidate image and check
-`import pyodbc`, `pyodbc.drivers()`, `odbcinst`, and `libodbc.so.2`. Perform an
-approved read-only ARGANDA connection and synchronization check without Oracle
-transmission. On failure restore recorded image references and Compose files,
-recreate only API and worker, then verify health and preserved state. Record
-previous image IDs and explicit deployment approval in the release record.
+Production verification reported for this recovery:
+
+- Microsoft ODBC Driver 18 is available.
+- `pyodbc` 5.2.0 is operational.
+- The API is healthy.
+
+The source recovery in this release pins the offline bundle checksums in Git
+and installs the same ODBC runtime through the corporate offline and recovery
+Dockerfiles. The 20 package binaries remain staged build inputs and are
+gitignored; rebuilds require staging the verified bundle described above.
+The production image tag and digest identify the recovered runtime.
+
+For any later API/worker replacement, retain the deployment safeguards in this
+record: preserve current Oracle transmission controls, database/web services,
+credentials, volumes and factory/RFID configuration; use a verified backup
+when database changes are involved; and validate without creating production
+time events.

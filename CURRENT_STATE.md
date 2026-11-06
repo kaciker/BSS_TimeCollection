@@ -1,5 +1,8 @@
 # Estado actual de BSS Time Collection
 
+> Actualización ODBC del 6 de noviembre de 2026: el API y el worker de producción usan la imagen `bsstimecollection-api:odbc-oracle-safe-20261106` (digest `sha256:aa142b948cd813cedd594cd4f8715ab2a91015121476d6d796aa0f007a2340b1`). Se verificaron Driver 18, `pyodbc` 5.2.0 operativo y API healthy. La recuperación reproducible está consolidada en GitHub main mediante PR #48: [registro de recuperación ODBC](docs/deployment/odbc-runtime-restoration-20261106.md).
+
+
 Actualizado: 21 de octubre de 2026. Consolidación desde `988a9261fdff87dc70505691bf875e42aadc69a9`, descendiente de `96ddb8b`; incluye las últimas traducciones desplegadas en la web CORP (`988a926+i18n`). CORP ejecuta componentes en revisiones distintas. Inventario: [full-state-reconciliation-20261021.md](docs/deployment/full-state-reconciliation-20261021.md).
 
 ## Objetivo y arquitectura
