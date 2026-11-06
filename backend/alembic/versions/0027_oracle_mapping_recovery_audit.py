@@ -2,7 +2,7 @@
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0027_oracle_mapping_recovery_audit"
+revision = "0027_oracle_map_recovery"
 down_revision = "0026_securitydb_clock_correction"
 branch_labels = None
 depends_on = None
