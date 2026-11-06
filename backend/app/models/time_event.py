@@ -63,3 +63,4 @@ class TimeEvent(Base):
     terminal = relationship("Terminal")
     action = relationship("Action")
     attempts = relationship("TransmissionAttempt", back_populates="event", cascade="all, delete-orphan")
+    mapping_recoveries = relationship("OracleMappingRecoveryAudit", back_populates="event")

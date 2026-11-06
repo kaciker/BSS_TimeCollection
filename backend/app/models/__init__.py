@@ -10,6 +10,7 @@ from app.models.worker_runtime_metrics import WorkerRuntimeMetrics
 from app.models.perimeter import FactoryPerimeterSettings, FactoryPerimeterEvent, FactoryPresenceProjection, TerminalBadgeRead
 from app.models.factory import Factory, InstallationSettings
 from app.models.oracle_catalogue import OracleWorkArea, OracleMachine, OracleCell, OraclePayrollTimeType
+from app.models.oracle_mapping_recovery import OracleMappingRecoveryAudit
 
 __all__ = [
     "Action",
@@ -30,4 +31,5 @@ __all__ = [
     "OracleMachine",
     "OracleCell",
     "OraclePayrollTimeType",
+    "OracleMappingRecoveryAudit",
 ]
