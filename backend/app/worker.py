@@ -13,6 +13,7 @@ from app.models.time_event import TimeEvent
 from app.models.worker_runtime_metrics import WorkerRuntimeMetrics
 from app.services.oracle_delivery import deliver_event
 from app.services.oracle_readiness import is_oracle_ready
+from app.services.oracle_mapping_recovery import recover_pending_action_mappings
 from app.services.external_perimeter_sync import (
     reconcile_enabled_external_perimeters,
     sync_enabled_external_perimeters,
@@ -139,6 +140,7 @@ def main() -> None:
     next_external_reconciliation = 0.0
     next_factory_presence_reconciliation = 0.0
     next_person_badge_sync = 0.0
+    next_mapping_recovery = 0.0
     try:
         recover_stale_events()
         client = OracleClient()
@@ -182,6 +184,19 @@ def main() -> None:
                 except Exception:
                     logger.exception("Unhandled authoritative factory presence reconciliation failure")
                 next_factory_presence_reconciliation = now_monotonic + 180.0
+
+            # Mappings can be corrected by administrators at any time. Inspect only a
+            # bounded indexed batch periodically, before the normal claim path.
+            if now_monotonic >= next_mapping_recovery:
+                try:
+                    with SessionLocal() as db:
+                        repaired = recover_pending_action_mappings(db)
+                        db.commit()
+                    if repaired:
+                        logger.info("Recovered %s pending event mapping(s); delivery remains a separate attempt", repaired)
+                except Exception:
+                    logger.exception("Oracle mapping recovery cycle failed")
+                next_mapping_recovery = now_monotonic + 30.0
 
             if not settings.oracle_enabled:
                 time.sleep(max(settings.worker_poll_seconds, 1.0))

@@ -25,6 +25,7 @@ from app.models import (
     OracleMachine,
     OracleCell,
     OraclePayrollTimeType,
+    OracleMappingRecoveryAudit,
 )  # noqa: F401
 
 config = context.config
