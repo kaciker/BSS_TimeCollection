@@ -44,3 +44,7 @@ coverage/
 
 # Generated Vite public asset copy
 /frontend/public/img/
+
+# Offline SQL Server ODBC package binaries are staged locally and checksum-verified.
+/backend/odbc-packages/*.deb
+/backend/odbc-packages/*.whl

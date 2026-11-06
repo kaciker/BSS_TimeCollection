@@ -1,0 +1,26 @@
+# Self-contained recovery image shared by API and worker.
+FROM python:3.12-slim
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
+ARG VCS_REF
+ENV ACCEPT_EULA=Y PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY odbc-packages /tmp/odbc-packages
+RUN cd /tmp/odbc-packages \
+    && sha256sum -c MANIFEST.txt \
+    && dpkg -i ./*.deb \
+    && python -m pip install --no-index --no-deps ./pyodbc-5.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    && ldconfig \
+    && ldconfig -p | grep -F 'libodbc.so.2' \
+    && odbcinst -q -d -n "ODBC Driver 18 for SQL Server" \
+    && python -c 'import pyodbc; assert "ODBC Driver 18 for SQL Server" in pyodbc.drivers(); print("pyodbc", pyodbc.version)' \
+    && rm -rf /tmp/odbc-packages
+COPY . .
+LABEL org.opencontainers.image.revision=$VCS_REF
+CMD ["sh", "-c", "python -m alembic upgrade head && python -m app.bootstrap && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"]

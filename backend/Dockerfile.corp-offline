@@ -1,5 +1,17 @@
-# Reuse the validated CORP Arganda API runtime with pyodbc + ODBC Driver 18.
+# Reuse the validated CORP application runtime and install the checksum-pinned
+# SQL Server ODBC dependencies. API and worker use this same resulting image.
 FROM bsstimecollection-api:perimeter-9930f3a
+ENV ACCEPT_EULA=Y
 WORKDIR /app
+COPY odbc-packages /tmp/odbc-packages
+RUN cd /tmp/odbc-packages \
+    && sha256sum -c MANIFEST.txt \
+    && dpkg -i ./*.deb \
+    && python -m pip install --no-index --no-deps ./pyodbc-5.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    && ldconfig \
+    && ldconfig -p | grep -F 'libodbc.so.2' \
+    && odbcinst -q -d -n "ODBC Driver 18 for SQL Server" \
+    && python -c 'import pyodbc; assert "ODBC Driver 18 for SQL Server" in pyodbc.drivers(); print("pyodbc", pyodbc.version)' \
+    && rm -rf /tmp/odbc-packages
 COPY . .
-LABEL org.opencontainers.image.revision="oracle-hrpath-contract-20261029"
+LABEL org.opencontainers.image.revision="odbc-runtime-manifest-pinned"
