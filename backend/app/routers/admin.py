@@ -585,22 +585,45 @@ def update_action(action_code: str, payload: ActionSettings, db: Session = Depen
     if action is None:
         raise HTTPException(404, "Action not found")
     check_supplier_event(db, payload.supplier_device_event, action)
-    oracle_supplier_event = payload.oracle_supplier_event or action.oracle_supplier_event
-    if payload.oracle_payroll_time_type is not None and not payroll_time_type_is_active(db, payload.oracle_payroll_time_type):
+    supplied_fields = payload.model_fields_set
+    # Operational updates such as deactivation may omit Oracle mapping fields.
+    # Preserve omitted values while allowing an explicit null to clear a field.
+    oracle_supplier_event = (
+        payload.oracle_supplier_event
+        if "oracle_supplier_event" in supplied_fields and payload.oracle_supplier_event is not None
+        else action.oracle_supplier_event
+    )
+    payroll_type = (
+        payload.oracle_payroll_time_type
+        if "oracle_payroll_time_type" in supplied_fields
+        else action.oracle_payroll_time_type
+    )
+    if payroll_type is not None and not payroll_time_type_is_active(db, payroll_type):
         raise HTTPException(422, "PayrollTimeType must be selected from the HR-Path catalogue")
-    parent = resolve_parent_action(db, payload.parent_action_code, action)
+    parent_code = (
+        payload.parent_action_code
+        if "parent_action_code" in supplied_fields
+        else action.parent_action.code if action.parent_action else None
+    )
+    parent = resolve_parent_action(db, parent_code, action)
     action.label = payload.label
     action.supplier_device_event = payload.supplier_device_event
     action.oracle_supplier_event = oracle_supplier_event
     action.state_effect = payload.state_effect.value
-    action.oracle_payroll_time_type = payload.oracle_payroll_time_type
-    action.oracle_attributes = payload.oracle_attributes
-    action.display_order = payload.display_order
-    action.requires_subaction = payload.requires_subaction
-    action.visual_key = payload.visual_key
-    action.show_on_terminal = payload.show_on_terminal
+    action.oracle_payroll_time_type = payroll_type
+    if "oracle_attributes" in supplied_fields:
+        action.oracle_attributes = payload.oracle_attributes
+    if "display_order" in supplied_fields:
+        action.display_order = payload.display_order
+    if "requires_subaction" in supplied_fields:
+        action.requires_subaction = payload.requires_subaction
+    if "visual_key" in supplied_fields:
+        action.visual_key = payload.visual_key
+    if "show_on_terminal" in supplied_fields:
+        action.show_on_terminal = payload.show_on_terminal
     action.parent_action = parent
-    action.active = payload.active
+    if "active" in supplied_fields:
+        action.active = payload.active
     try:
         validate_action_hierarchy(action, parent)
         from app.services.configuration_service import validate_supplier_event_direction

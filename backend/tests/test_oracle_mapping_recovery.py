@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
 
+import os
+import threading
+import uuid
+
 import pytest
-from sqlalchemy import create_engine, insert, select
+from sqlalchemy import create_engine, insert, select, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -217,3 +221,85 @@ def test_normal_worker_delivers_recovered_correlated_exit_via_mocked_oracle(db_f
         assert event.oracle_request_id == "mock-request"
         assert db.scalars(select(OracleMappingRecoveryAudit).where(OracleMappingRecoveryAudit.event_id == event_id)).all()
         assert db.scalars(select(TransmissionAttempt).where(TransmissionAttempt.event_id == event_id)).all()
+
+
+def test_postgresql_concurrent_recovery_locks_one_batch_and_is_idempotent():
+    """Run against a disposable PostgreSQL DB via ORACLE_RECOVERY_TEST_DATABASE_URL."""
+    url = os.getenv("ORACLE_RECOVERY_TEST_DATABASE_URL")
+    if not url:
+        pytest.skip("set ORACLE_RECOVERY_TEST_DATABASE_URL to run PostgreSQL concurrency coverage")
+    schema = f"oracle_recovery_{uuid.uuid4().hex}"
+    admin_engine = create_engine(url, pool_pre_ping=True)
+    with admin_engine.begin() as connection:
+        connection.execute(text(f'CREATE SCHEMA "{schema}"'))
+    engine = create_engine(url, connect_args={"options": f"-csearch_path={schema}"}, pool_size=3)
+    factory = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+    try:
+        Base.metadata.create_all(engine)
+        with factory() as db:
+            db.add_all([
+                Factory(id=1, code="PGF", name="Isolated test factory", timezone="UTC", active=True),
+                OracleWorkArea(code="PGW", description="Test work area", active=True),
+                OraclePayrollTimeType(code="PG approved", active=True, source_reference="isolated PostgreSQL concurrency test"),
+            ])
+            db.flush()
+            db.add(OracleMachine(code="PGM", description="Test machine", work_area_code="PGW", active=True))
+            db.flush()
+            db.add(OracleCell(code="PGC", description="Test cell", machine_code="PGM", active=True))
+            db.flush()
+            action = Action(id=1, code="PG EXIT", label="PG EXIT", supplier_device_event="direct_exit",
+                oracle_supplier_event="HUT_TCD_SUPP1_OUT_2", state_effect="EXIT", oracle_payroll_time_type="PG approved",
+                oracle_attributes={}, display_order=1, requires_subaction=False, show_on_terminal=True, active=True)
+            terminal = Terminal(id=1, factory_code="PGF", terminal_role="CELL", code="PGT", name="Test cell",
+                external_device_id="PGD", identification_mode="RFID", reporter_id_type="BADGE", oracle_attributes={}, active=True)
+            db.add_all([action, terminal]); db.flush()
+            db.execute(insert(terminal_actions).values(terminal_id=terminal.id, action_id=action.id))
+            db.add(TimeEvent(
+                id="pg-concurrent-event", request_number="BSS-pg-concurrent-event", terminal_id=1, action_id=1,
+                correlation_id="pg-correlation", terminal_code="PGT", device_id="PGD", action_code="PG EXIT",
+                action_label="PG EXIT", supplier_device_event="direct_exit", oracle_supplier_event="HUT_TCD_SUPP1_OUT_2",
+                state_effect="EXIT", reporter_id="test-badge", reporter_id_type="BADGE", identification_method="RFID",
+                person_id="P100", oracle_reporter_id="P100", oracle_reporter_id_type="PERSON",
+                event_datetime=NOW, event_timezone="Europe/Madrid", oracle_payroll_time_type=None,
+                oracle_mapping_error="PayrollTimeType missing", oracle_attributes={}, workshop_code="local-W",
+                subworkshop_code="local-S", project_line_code="local-P", oracle_work_area_code="PGW",
+                oracle_machine_code="PGM", oracle_cell_code="PGC", delivery_status="PENDING", attempt_count=0,
+                created_at=NOW,
+            ))
+            db.commit()
+
+        first_recovered = threading.Event()
+        release_first = threading.Event()
+        outcomes = {}
+        def first_worker():
+            with factory() as db:
+                outcomes["first"] = recover_pending_action_mappings(db, now=NOW)
+                first_recovered.set()
+                assert release_first.wait(timeout=10)
+                db.commit()
+        thread = threading.Thread(target=first_worker)
+        thread.start()
+        assert first_recovered.wait(timeout=10)
+        with factory() as second:
+            outcomes["second"] = recover_pending_action_mappings(second, now=NOW)
+            second.commit()
+        release_first.set()
+        thread.join(timeout=10)
+        assert not thread.is_alive()
+        assert outcomes == {"first": 1, "second": 0}
+        with factory() as db:
+            assert recover_pending_action_mappings(db, now=NOW) == 0
+            db.commit()
+            event = db.get(TimeEvent, "pg-concurrent-event")
+            audits = db.scalars(select(OracleMappingRecoveryAudit).where(
+                OracleMappingRecoveryAudit.event_id == "pg-concurrent-event")).all()
+            assert event.oracle_payroll_time_type == "PG approved"
+            assert event.event_datetime.replace(tzinfo=timezone.utc) == NOW
+            assert event.request_number == "BSS-pg-concurrent-event"
+            assert event.correlation_id == "pg-correlation"
+            assert len(audits) == 1 and audits[0].new_value == "PG approved"
+    finally:
+        engine.dispose()
+        with admin_engine.begin() as connection:
+            connection.execute(text(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'))
+        admin_engine.dispose()

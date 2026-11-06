@@ -158,6 +158,51 @@ def test_action_payroll_type_must_be_authoritative_and_directional_on_update(str
     inconsistent=client.put("/api/v1/admin/actions/START_WORK",json={**created.json(),"state_effect":"EXIT","oracle_supplier_event":"HUT_TCD_SUPP1_IN_2","oracle_payroll_time_type":"Workshop Entry ES"})
     assert inconsistent.status_code==422
 
+def test_action_update_preserves_omitted_oracle_fields_and_explicitly_updates_mapping(structure_client):
+    client, db = structure_client
+    created = client.post("/api/v1/admin/actions", json={
+        "code": "EXIT_PERSIST", "label": "Exit", "supplier_device_event": "BSS_EXIT",
+        "oracle_supplier_event": "HUT_TCD_SUPP1_OUT_2", "state_effect": "EXIT",
+        "oracle_payroll_time_type": "Project Entry ES", "oracle_attributes": {"legacy": "keep"},
+    })
+    assert created.status_code == 201, created.text
+    action = db.scalar(select(Action).where(Action.code == "EXIT_PERSIST"))
+    assert action.oracle_payroll_time_type == "Project Entry ES"
+
+    deactivated = client.put("/api/v1/admin/actions/EXIT_PERSIST", json={
+        "label": "Exit", "supplier_device_event": "BSS_EXIT", "state_effect": "EXIT",
+        "display_order": 100, "requires_subaction": False, "show_on_terminal": True,
+        "active": False,
+    })
+    assert deactivated.status_code == 200, deactivated.text
+    assert deactivated.json()["oracle_payroll_time_type"] == "Project Entry ES"
+    db.expire_all()
+    assert db.scalar(select(Action).where(Action.code == "EXIT_PERSIST")).oracle_attributes == {"legacy": "keep"}
+
+    updated = client.put("/api/v1/admin/actions/EXIT_PERSIST", json={
+        "label": "Exit", "supplier_device_event": "BSS_EXIT",
+        "oracle_supplier_event": "HUT_TCD_SUPP1_OUT_2", "state_effect": "EXIT",
+        "oracle_payroll_time_type": "Workshop Entry ES", "oracle_attributes": {"legacy": "keep"},
+        "display_order": 100, "requires_subaction": False, "show_on_terminal": True, "active": True,
+    })
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["oracle_payroll_time_type"] == "Workshop Entry ES"
+    db.expire_all()
+    persisted = db.scalar(select(Action).where(Action.code == "EXIT_PERSIST"))
+    assert persisted.oracle_payroll_time_type == "Workshop Entry ES"
+    reread = client.get("/api/v1/admin/actions").json()
+    assert next(item for item in reread if item["code"] == "EXIT_PERSIST")["oracle_payroll_time_type"] == "Workshop Entry ES"
+
+    invalid = client.put("/api/v1/admin/actions/EXIT_PERSIST", json={
+        "label": "Exit", "supplier_device_event": "BSS_EXIT", "state_effect": "EXIT",
+        "oracle_payroll_time_type": "Unknown HR Path value", "oracle_attributes": {},
+        "display_order": 100, "requires_subaction": False, "show_on_terminal": True, "active": True,
+    })
+    assert invalid.status_code == 422
+    db.expire_all()
+    assert db.scalar(select(Action).where(Action.code == "EXIT_PERSIST")).oracle_payroll_time_type == "Workshop Entry ES"
+
+
 def test_mapping_catalogue_hierarchy_and_local_codes_are_independent(structure_client):
     client, _db = structure_client
     work_area = post(client, "workshops", code="local-439", description="Local label", oracle_work_area_code="439")
