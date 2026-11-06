@@ -14,7 +14,7 @@ Conector SQL Server de ARGANDA: la configuración habilitada y el SQL se validan
 
 ## PostgreSQL y despliegues
 
-PostgreSQL 16 conserva datos/volumen originales; Alembic vigente `0027_oracle_mapping_recovery_audit` (PR #47). No cambiar volumen ni ejecutar `down -v`; preservar `.env`, configuración, terminales, acciones, sesiones e históricos. Antes de despliegues con API/migraciones, generar backup verificable. DDL no se ejecuta importando API.
+PostgreSQL 16 conserva datos/volumen originales; la base de producción quedó en Alembic `0026_securitydb_clock_correction` tras el despliegue del 5-nov. PR #47 añadió `0027_oracle_mapping_recovery_audit` a GitHub main; su migración requiere despliegue planificado con backup verificable. No cambiar volumen ni ejecutar `down -v`; preservar `.env`, configuración, terminales, acciones, sesiones e históricos. Antes de despliegues con API/migraciones, generar backup verificable. DDL no se ejecuta importando API.
 
 Despliegue PR #46: API/web en revisión `6dc848753328ba25c411ce3ed3440a7a4dc5ebba`, healthy. Se aplicó Alembic 0026 tras backup verificable; logs y multi-clock verificados. Worker y PostgreSQL no recreados.
 
