@@ -59,3 +59,17 @@ it('keeps advanced terminal values mounted through collapse and preserves the co
  const payload=vi.mocked(api.put).mock.calls[0][1] as Record<string,unknown>;
  expect(payload).toMatchObject({factory_code:'ARGANDA',perimeter_only:false,workshop_id:1,subworkshop_id:2,project_line_id:3,name:'Main Clock',external_device_id:'DEVICE-CHANGED',identification_mode:'BOTH',exit_menu_timeout_seconds:31,oracle_attributes:{Plant:'legacy',line:'L2',work_cell:'B-09'},exit_policy_mode:'SAME_WORK_CELL',active:true,action_codes:['START','EXIT']});
 });
+
+it('reveals the terminal Advanced section when its required timeout is invalid', async()=>{
+ vi.mocked(api.get).mockImplementation(async path=>path.includes('/policies/')?{global_mode:'DISABLED'}:path==='/api/v1/admin/structure'?cellStructure:[]);
+ render(<TerminalEditor terminal={null} actions={cellActions as never} factories={[factory]} initialFactory="ARGANDA" onClose={()=>{}} onSaved={()=>{}}/>);
+ fireEvent.change(screen.getByLabelText('Display name'),{target:{value:'Main Clock'}});
+ const summary=screen.getByText('Advanced Configuration');
+ fireEvent.click(summary);
+ fireEvent.change(screen.getByLabelText(/Seconds before return/i),{target:{value:''}});
+ fireEvent.click(summary);
+ const section=summary.closest('details')!;
+ expect(section.open).toBe(false);
+ expect(document.querySelector('form')!.reportValidity()).toBe(false);
+ expect(section.open).toBe(true);
+});

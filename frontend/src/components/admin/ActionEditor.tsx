@@ -5,6 +5,7 @@ import { api } from "../../api";
 import type { AdminAction, AdminTerminal } from "../../types";
 import type { OracleCatalogue } from "../../types";
 import { EditorDialog } from "./EditorDialog";
+import { revealInvalidAdvancedField } from "./advancedConfiguration";
 
 
 
@@ -52,7 +53,7 @@ export function ActionEditor({ action, actions, terminals, onClose, onSaved }: {
     catch (err) { setError((err as Error).message); setBusy(false); }
   };
   return <EditorDialog title={action ? "Edit action" : "New action"} description="Define a worker action and its Oracle event mapping. Exit actions can optionally open one level of sub-actions." busy={busy} onClose={onClose}>
-    <form onSubmit={submit}><div className="editor-body"><fieldset disabled={busy}>
+    <form onSubmit={submit} onInvalidCapture={revealInvalidAdvancedField}><div className="editor-body"><fieldset disabled={busy}>
       <section className="form-section"><h3>Worker action</h3><div className="field-grid">
         <label>Action code<input name="code" required maxLength={64} defaultValue={action?.code ?? ""} readOnly={!!action} placeholder="e.g. FACTORY_EXIT" autoFocus /></label>
         <label>Label (English)<input name="label" required maxLength={120} defaultValue={action?.label ?? ""} placeholder="e.g. Factory exit" /></label>

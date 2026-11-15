@@ -6,6 +6,7 @@ import { exitPolicyLabel, exitPolicyModes } from "./exitPolicyOptions";
 import type { ExitPolicyMode } from "./exitPolicyOptions";
 import { EditorDialog } from "./EditorDialog";
 import { useLanguage } from "../../i18n";
+import { revealInvalidAdvancedField } from "./advancedConfiguration";
 
 const LEGACY_STRUCTURE_KEYS = new Set(["Plant", "Workshop", "Cell", "Project"]);
 function editableAttributes(attributes: Record<string, unknown>): Record<string, unknown> {
@@ -81,7 +82,7 @@ export function TerminalEditor({ terminal, actions, factories, initialFactory, o
     try { const saved = terminal ? await api.put<AdminTerminal>(`/api/v1/admin/terminals/${encodeURIComponent(terminal.code)}`, payload) : await api.post<AdminTerminal>("/api/v1/admin/terminals", payload); onSaved(saved); }
     catch (err) { setError((err as Error).message); setBusy(false); }
   };
-  return <EditorDialog title={terminal ? "Edit terminal" : "New terminal"} description="Set terminal identity, operational structure, input method and actions." busy={busy} onClose={onClose}><form onSubmit={submit}>
+  return <EditorDialog title={terminal ? "Edit terminal" : "New terminal"} description="Set terminal identity, operational structure, input method and actions." busy={busy} onClose={onClose}><form onSubmit={submit} onInvalidCapture={revealInvalidAdvancedField}>
     <div className="editor-body"><fieldset disabled={busy}>
       <section className="form-section"><div className="section-heading"><div><h3>Factory perimeter terminal</h3><p>Use this terminal for factory entry and exit. Cell time collection fields are disabled.</p></div><label className="switch-control"><input type="checkbox" role="switch" checked={perimeterOnly} onChange={event => setPerimeterOnly(event.target.checked)} /><span className="switch-track" aria-hidden="true" /><span>Perimeter only</span></label></div>{perimeterOnly && <p className="form-notice">After saving, assign the factory and entrance / exit direction in Factory Perimeter. No cell actions or Oracle device mapping are required.</p>}</section>
       <section className="form-section"><h3>Terminal identity</h3><div className="field-grid"><label>Factory<select required value={factoryCode} onChange={event => setFactoryCode(event.target.value)}><option value="">Select factory</option>{factories.map(factory => <option key={factory.code} value={factory.code}>{factory.name} · {factory.code}</option>)}</select><small>Terminal assignment: {factories.find(factory => factory.code === factoryCode)?.name ?? "Not selected"} ({factoryCode || "—"})</small></label><label>Terminal code<input value={terminal?.code ?? "Assigned automatically"} readOnly /><small>Managed by the application. Codes are unique, immutable and never reused.</small></label><label>Display name<input name="name" required maxLength={160} defaultValue={terminal?.name ?? ""} /></label><label>Identification method<select name="mode" defaultValue={terminal?.identification_mode ?? "BOTH"}><option value="BOTH">Badge reader + keypad</option><option value="KEYPAD">Manual keypad</option><option value="RFID">Badge reader (RFID)</option></select></label></div></section>

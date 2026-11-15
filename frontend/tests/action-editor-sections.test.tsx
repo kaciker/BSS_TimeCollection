@@ -43,3 +43,17 @@ it("keeps action workflow fields standard and preserves advanced values through 
     display_order: 12, requires_subaction: true, parent_action_code: null, visual_key: "scene-a", show_on_terminal: false, active: true,
   });
 });
+
+it("reveals Advanced Configuration when a required supplier event is invalid", async () => {
+  vi.mocked(api.get).mockResolvedValue(catalogue as never);
+  render(<ActionEditor action={action} actions={[action]} terminals={[]} onClose={vi.fn()} onSaved={vi.fn()} />);
+  await screen.findByRole("option", { name: "Payroll B" });
+  const summary = screen.getByText("Advanced Configuration");
+  fireEvent.click(summary);
+  fireEvent.change(screen.getByLabelText("Local action supplier event"), { target: { value: "" } });
+  fireEvent.click(summary);
+  const section = summary.closest("details")!;
+  expect(section.open).toBe(false);
+  expect(document.querySelector("form")!.reportValidity()).toBe(false);
+  expect(section.open).toBe(true);
+});

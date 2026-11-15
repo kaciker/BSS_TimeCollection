@@ -51,3 +51,18 @@ it("places optional location, country and current timezone under Advanced when c
   fireEvent.click(screen.getByRole("button", { name: "Create factory" }));
   await waitFor(() => expect(api.post).toHaveBeenCalledWith("/api/v1/admin/factories", { code: "NEW_PLANT", name: "New Plant", location: "West", country: "ES", timezone: "Europe/Lisbon" }));
 });
+
+it("reveals Advanced Configuration when a required factory timezone is invalid", async () => {
+  setup();
+  render(<FactoryPanel />);
+  await screen.findByText("Factory A");
+  fireEvent.change(screen.getByLabelText("Factory code"), { target: { value: "NEW_PLANT" } });
+  fireEvent.change(screen.getByLabelText("Factory name"), { target: { value: "New Plant" } });
+  const advanced = screen.getAllByText("Advanced Configuration")[0];
+  fireEvent.click(advanced);
+  fireEvent.change(screen.getAllByLabelText("Timezone")[0], { target: { value: "" } });
+  fireEvent.click(advanced);
+  expect(advanced.closest("details")?.open).toBe(false);
+  expect(document.querySelectorAll("form")[0].reportValidity()).toBe(false);
+  expect(advanced.closest("details")?.open).toBe(true);
+});
