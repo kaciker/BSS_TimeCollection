@@ -19,11 +19,7 @@ RUN npm test && npm run build && npm run verify:dist
 FROM nginx:alpine
 ARG VCS_REF
 LABEL org.opencontainers.image.revision=$VCS_REF
-RUN mkdir -p /var/cache/nginx/client_temp /var/cache/nginx/proxy_temp \
-        /var/cache/nginx/fastcgi_temp /var/cache/nginx/uwsgi_temp \
-        /var/cache/nginx/scgi_temp \
-    && chown -R nginx:nginx /var/cache/nginx \
-    && rm -f /etc/nginx/conf.d/default.conf
+RUN rm -f /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY --from=build /app/dist /usr/share/nginx/html
-USER nginx
+USER 10001:10001
