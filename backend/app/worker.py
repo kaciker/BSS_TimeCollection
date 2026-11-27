@@ -129,8 +129,9 @@ def claim_next_event() -> str | None:
         event.delivery_status = DeliveryStatus.SENDING.value
         event.attempt_count += 1
         event.last_attempt_at = now
+        event_id = event.id
         db.commit()
-    return event.id
+        return event_id
 
 
 def _recovery_created_after() -> datetime:
