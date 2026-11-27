@@ -106,6 +106,29 @@ def test_worker_rejects_cutoff_without_timezone(delivery_db, monkeypatch):
         worker.claim_next_event()
 
 
+def test_worker_event_allowlist_takes_precedence_and_never_claims_other_rows(delivery_db, monkeypatch):
+    cutoff = datetime(2026, 11, 6, 13, 0, tzinfo=timezone.utc)
+    with Session(delivery_db) as db:
+        db.add_all([
+            make_event("listed-before-cutoff", cutoff - timedelta(days=1)),
+            make_event("unlisted-after-cutoff", cutoff + timedelta(days=1)),
+        ])
+        db.commit()
+
+    monkeypatch.setattr(worker.settings, "oracle_delivery_created_after", cutoff.isoformat())
+    monkeypatch.setattr(worker.settings, "oracle_delivery_event_allowlist", "listed-before-cutoff")
+    assert worker.claim_next_event() == "listed-before-cutoff"
+    assert worker.claim_next_event() is None
+
+    with Session(delivery_db) as db:
+        assert db.get(TimeEvent, "unlisted-after-cutoff").delivery_status == "PENDING"
+
+
+def test_worker_empty_configured_event_allowlist_fails_closed(delivery_db, monkeypatch):
+    monkeypatch.setattr(worker.settings, "oracle_delivery_event_allowlist", " , ")
+    assert worker.claim_next_event() is None
+
+
 @pytest.mark.parametrize(("result", "expected_status", "retryable"), [
     ("RETRY", "RETRY", True),
     ("REJECTED", "REJECTED", False),

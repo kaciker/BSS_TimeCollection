@@ -108,6 +108,18 @@ def test_repeat_is_idempotent_and_never_overwrites_non_null_history(db_factory):
         assert len(db.scalars(select(OracleMappingRecoveryAudit)).all()) == 1
 
 
+def test_recovery_event_allowlist_limits_mapping_repairs(db_factory):
+    selected = add_event(db_factory, "selected")
+    unselected = add_event(db_factory, "unselected")
+    with db_factory() as db:
+        db.get(Action, 1).updated_at = NOW + datetime.resolution
+        assert recover_pending_action_mappings(db, event_ids={selected}, now=NOW) == 1
+        db.commit()
+    with db_factory() as db:
+        assert db.get(TimeEvent, selected).oracle_payroll_time_type == "Approved type"
+        assert db.get(TimeEvent, unselected).oracle_payroll_time_type is None
+
+
 @pytest.mark.parametrize("overrides", [
     {"attempt_count": 1}, {"last_attempt_at": NOW}, {"sent_at": NOW},
     {"oracle_request_id": "request-id"}, {"oracle_event_id": "event-id"},

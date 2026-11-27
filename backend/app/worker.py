@@ -92,17 +92,12 @@ def recover_stale_events() -> None:
 
 def claim_next_event() -> str | None:
     now = datetime.now(timezone.utc)
-    created_after = None
-    if settings.oracle_delivery_created_after:
-        try:
-            created_after = datetime.fromisoformat(
-                settings.oracle_delivery_created_after.replace("Z", "+00:00")
-            )
-        except ValueError as exc:
-            raise ValueError("ORACLE_DELIVERY_CREATED_AFTER must be an ISO-8601 timestamp") from exc
-        if created_after.tzinfo is None:
-            raise ValueError("ORACLE_DELIVERY_CREATED_AFTER must include a timezone")
-        created_after = created_after.astimezone(timezone.utc)
+    allowlist_configured = bool(settings.oracle_delivery_event_allowlist.strip())
+    allowed_event_ids = {
+        value.strip() for value in settings.oracle_delivery_event_allowlist.split(",") if value.strip()
+    }
+    if allowlist_configured and not allowed_event_ids:
+        return None
     with SessionLocal() as db:
         statement = (
             select(TimeEvent)
@@ -111,22 +106,20 @@ def claim_next_event() -> str | None:
             .order_by(TimeEvent.created_at)
             .with_only_columns(TimeEvent.id)
         )
-        if created_after is not None:
-            statement = statement.where(TimeEvent.created_at >= created_after)
+        if allowlist_configured:
+            statement = statement.where(TimeEvent.id.in_(allowed_event_ids))
+        elif settings.oracle_delivery_created_after.strip():
+            statement = statement.where(TimeEvent.created_at >= _recovery_created_after())
         candidate_ids = db.scalars(statement).all()
         # Catalogue hierarchy validation lives in one shared service. Rows not
         # ready remain local and pending; the worker never claims them.
         event = None
         for candidate_id in candidate_ids:
             candidate = db.scalar(select(TimeEvent).where(TimeEvent.id == candidate_id).with_for_update(skip_locked=True))
-            candidate_created_at = candidate.created_at if candidate is not None else None
-            if candidate_created_at is not None and candidate_created_at.tzinfo is None:
-                candidate_created_at = candidate_created_at.replace(tzinfo=timezone.utc)
             if (
                 candidate is not None
                 and candidate.delivery_status in {DeliveryStatus.PENDING.value, DeliveryStatus.RETRY.value}
                 and (candidate.next_attempt_at is None or candidate.next_attempt_at <= now)
-                and (created_after is None or candidate_created_at >= created_after)
                 and is_oracle_ready(candidate, db)
             ):
                 event = candidate
@@ -137,7 +130,20 @@ def claim_next_event() -> str | None:
         event.attempt_count += 1
         event.last_attempt_at = now
         db.commit()
-        return event.id
+    return event.id
+
+
+def _recovery_created_after() -> datetime:
+    value = settings.oracle_delivery_created_after.strip()
+    if not value:
+        raise ValueError("Oracle recovery cutoff is not configured")
+    try:
+        cutoff = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("ORACLE_DELIVERY_CREATED_AFTER must be an ISO-8601 timestamp") from exc
+    if cutoff.tzinfo is None:
+        raise ValueError("Oracle recovery cutoff must include a timezone")
+    return cutoff.astimezone(timezone.utc)
 
 
 def deliver(event_id: str, client: OracleClient) -> None:
@@ -208,7 +214,22 @@ def main() -> None:
             if now_monotonic >= next_mapping_recovery:
                 try:
                     with SessionLocal() as db:
-                        repaired = recover_pending_action_mappings(db)
+                        allowlist_configured = bool(settings.oracle_delivery_event_allowlist.strip())
+                        allowed_event_ids = {
+                            value.strip()
+                            for value in settings.oracle_delivery_event_allowlist.split(",")
+                            if value.strip()
+                        }
+                        cutoff = None if allowlist_configured else (
+                            _recovery_created_after()
+                            if settings.oracle_delivery_created_after.strip()
+                            else None
+                        )
+                        repaired = recover_pending_action_mappings(
+                            db,
+                            event_ids=allowed_event_ids if allowlist_configured else None,
+                            created_after=cutoff,
+                        )
                         db.commit()
                     if repaired:
                         logger.info("Recovered %s pending event mapping(s); delivery remains a separate attempt", repaired)

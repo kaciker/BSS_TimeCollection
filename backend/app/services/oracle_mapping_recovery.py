@@ -19,7 +19,14 @@ RECOVERY_REASON = (
 )
 
 
-def recover_pending_action_mappings(db, *, limit: int = BATCH_SIZE, now: datetime | None = None) -> int:
+def recover_pending_action_mappings(
+    db,
+    *,
+    limit: int = BATCH_SIZE,
+    now: datetime | None = None,
+    event_ids: set[str] | None = None,
+    created_after: datetime | None = None,
+) -> int:
     """Repair a small locked batch; caller owns and commits the transaction."""
     now = now or datetime.now(timezone.utc)
     has_attempt = exists(select(TransmissionAttempt.id).where(TransmissionAttempt.event_id == TimeEvent.id))
@@ -46,6 +53,8 @@ def recover_pending_action_mappings(db, *, limit: int = BATCH_SIZE, now: datetim
         .join(OracleCell, OracleCell.code == TimeEvent.oracle_cell_code)
         .join(OraclePayrollTimeType, OraclePayrollTimeType.code == Action.oracle_payroll_time_type)
         .where(TimeEvent.delivery_status == DeliveryStatus.PENDING.value)
+        .where(TimeEvent.id.in_(event_ids) if event_ids is not None else True)
+        .where(TimeEvent.created_at >= created_after if created_after is not None else True)
         .where(TimeEvent.attempt_count == 0)
         .where(TimeEvent.last_attempt_at.is_(None))
         .where(TimeEvent.sent_at.is_(None))
