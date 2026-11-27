@@ -66,7 +66,7 @@ def keypad_event(db, *, person="3627", reporter="3627", at=None):
         reporter_id_type="PERSON", identification_method="KEYPAD", event_datetime=at,
         event_timezone="UTC", oracle_attributes={}, delivery_status="PENDING", created_at=at,
         person_id=person, source_person_id="SEC-" + person, oracle_reporter_id=person,
-        oracle_reporter_id_type="PERSON",
+        oracle_reporter_id_type="BADGE",
     ))
     db.commit()
 

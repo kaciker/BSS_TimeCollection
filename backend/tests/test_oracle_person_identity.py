@@ -24,7 +24,7 @@ def test_oracle_payload_uses_frozen_person_identity_when_available():
         person_id="104582",
         credential_id="CARD-A",
         oracle_reporter_id="104582",
-        oracle_reporter_id_type="PERSON",
+        oracle_reporter_id_type="BADGE",
         event_datetime=datetime(2026, 10, 28, 10, 0, tzinfo=timezone.utc),
         event_timezone="Europe/Madrid",
         oracle_attributes={},
@@ -39,4 +39,4 @@ def test_oracle_payload_uses_frozen_person_identity_when_available():
     )
     item = OracleClient().build_payload(event)["timeEvents"][0]
     assert item["reporterId"] == "104582"
-    assert item["reporterIdType"] == "PERSON"
+    assert item["reporterIdType"] == "BADGE"

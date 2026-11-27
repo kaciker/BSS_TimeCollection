@@ -8,6 +8,12 @@ Captura RFID/teclado local, eventos conservados en PostgreSQL y transmisión as�
 
 ## Oracle e integraciones
 
+Contrato final acordado 26-nov-2026: el employee code existente (`person_id`, confirmado por Hutchinson como el Badge ID mapeado/cargado en DEV2 por HR Path) conserva el mismo valor; serializer fijo `reporterIdType=BADGE`. Snapshots nuevos y Reporter type en Admin exponen BADGE. No existe selector ni ruta PERSON. Corte de cola observado: `2026-11-06T13:00:00+00:00`; preservar históricos y no reintentar UNKNOWN.
+
+Transición pendiente de autorización: inventario de solo lectura 27-nov encontró 122 PENDING (120 anteriores al corte; 2 posteriores), 986 SENT y ningún RETRY/UNKNOWN/SENDING. Los 2 post-corte son fichajes históricos no intentados; no liberar/reproducirlos ni cambiar corte/worker sin autorización explícita. API y worker de CORP detenidos, DB sigue activa; ORACLE_ENABLED está true en env de worker.
+
+PR #53 (`fix/oracle-badge-contract-20261127`, commit `e83fe80`) implementa BADGE sin migración ni edición histórica. Focales locales: backend 138 passed/1 skipped; frontend Settings 11 passed/build verificado. CI PR backend/frontend/compose-smoke pasó. No se construyó en Docker producción. BuildIm rechazó fuera de allowlist MyCodex/llmhub; Harbor digest pendiente. No merge/despliegue autorizado ni listo; decidir explícitamente cola de dos eventos post-corte y completar BuildIm/Harbor antes de release.
+
 CORP transmite eventos operativos a Oracle (`ORACLE_ENABLED=true` en el worker, verificado el 5-nov-2026). La sobrecarga activa es `docker-compose.oracle-dev2-poc.yml`. Al renderizar Compose o recrear el worker, incluir esta sobrecarga además de los archivos operativos existentes; preservar `ORACLE_ENABLED=true`, mantener el worker en servicio y verificar que procesa la cola. No apagar Oracle ni dejar el worker detenido como precaución de despliegue. No crear ni transmitir eventos de prueba en producción: validaciones con UIDs sintéticos o mocks. No inventar mappings ni atributos Oracle; solo se usan los configurados explícitamente. Solo eventos de célula son elegibles para Oracle. Movimientos perimetrales son locales (`LOCAL_ONLY`), sin payload ni intentos Oracle.
 
 Conector SQL Server de ARGANDA: la configuración habilitada y el SQL se validan con credencial SELECT-only; secretos de conector solo por montaje protegido. Eventos externos necesitan identidad canónica resoluble; reconciliación no resuelta debe quedar como aviso, sin inventar identidad/estado. Seguridad DB validada antes de activar lecturas productivas.

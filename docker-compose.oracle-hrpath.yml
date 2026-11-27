@@ -20,9 +20,8 @@ services:
       ORACLE_BASE_URL: https://fa-eocc-dev2-saasfaprod1.fa.ocs.oraclecloud.com
       ORACLE_API_PATH: /hcmRestApi/resources/11.13.18.05/timeEventRequests
       ORACLE_SOURCE_ID: HUT_TCD_SUPP1
-      ORACLE_AUTH_MODE: basic
-      ORACLE_PERSON_REPORTER_ID_TYPE: PERSON
       ORACLE_REPORTER_ID_TYPE: BADGE
+      ORACLE_AUTH_MODE: basic
       ORACLE_REST_FRAMEWORK_VERSION: "4"
       ORACLE_TIMEOUT_SECONDS: "15"
       ORACLE_CREDENTIALS_FILE: /run/secrets/oracle/oracle_credentials.json
@@ -50,9 +49,8 @@ services:
       ORACLE_BASE_URL: https://fa-eocc-dev2-saasfaprod1.fa.ocs.oraclecloud.com
       ORACLE_API_PATH: /hcmRestApi/resources/11.13.18.05/timeEventRequests
       ORACLE_SOURCE_ID: HUT_TCD_SUPP1
-      ORACLE_AUTH_MODE: basic
-      ORACLE_PERSON_REPORTER_ID_TYPE: PERSON
       ORACLE_REPORTER_ID_TYPE: BADGE
+      ORACLE_AUTH_MODE: basic
       ORACLE_REST_FRAMEWORK_VERSION: "4"
       ORACLE_TIMEOUT_SECONDS: "15"
       ORACLE_CREDENTIALS_FILE: /run/secrets/oracle/oracle_credentials.json

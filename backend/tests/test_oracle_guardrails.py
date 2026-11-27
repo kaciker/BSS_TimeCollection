@@ -72,7 +72,7 @@ def test_stale_sending_event_requires_reconciliation(monkeypatch):
                 event_datetime=old_attempt,
                 event_timezone="Europe/Madrid",
                 oracle_attributes={},
-                person_id="123", oracle_reporter_id="123", oracle_reporter_id_type="PERSON",
+                person_id="123", oracle_reporter_id="123", oracle_reporter_id_type="BADGE",
                 workshop_code="439", subworkshop_code="4393", project_line_code="54A",
                 delivery_status="SENDING",
                 attempt_count=1,

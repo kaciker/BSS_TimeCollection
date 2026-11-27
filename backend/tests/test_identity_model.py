@@ -114,7 +114,7 @@ def test_cross_method_worker_timeline_and_reporter_preservation(
     assert entry_event.source_person_id == "PERSON-PK-3627"
     assert entry_event.credential_id == ("CREDENTIAL" if entry_method == IdentificationMethod.RFID else None)
     assert entry_event.oracle_reporter_id == "3627"
-    assert entry_event.oracle_reporter_id_type == "PERSON"
+    assert entry_event.oracle_reporter_id_type == "BADGE"
     assert derive_worker_state(db, exit_reporter, "ARGANDA", person_id="3627") == WorkerState.INSIDE
 
     pending = event_service.scan(db, "CLOCK-A", exit_reporter, exit_method)
@@ -125,7 +125,7 @@ def test_cross_method_worker_timeline_and_reporter_preservation(
     assert exit_event.reporter_id == exit_reporter
     assert exit_event.person_id == "3627"
     assert exit_event.oracle_reporter_id == "3627"
-    assert exit_event.oracle_reporter_id_type == "PERSON"
+    assert exit_event.oracle_reporter_id_type == "BADGE"
     assert derive_worker_state(db, entry_reporter, "ARGANDA", person_id="3627") == WorkerState.OUTSIDE
     cards = client.get("/api/v1/admin/monitoring/cards?reporter_id=3627").json()
     assert cards["total"] == 1

@@ -80,19 +80,22 @@ def test_terminal_code_is_allocated_and_retired_codes_are_not_reused(monitor):
     assert second.json()["code"] == "T0002"
 
 
-def test_reporter_id_type_is_global_integration_configuration(monitor, monkeypatch):
+def test_reporter_id_type_is_fixed_badge_integration_contract(monitor, monkeypatch):
     client, db = monitor
-    monkeypatch.setattr(settings, "oracle_person_reporter_id_type", "PERSON")
     terminal, _ = configured_terminal(client)
-    assert terminal["reporter_id_type"] == "PERSON"
+    assert terminal["reporter_id_type"] == "BADGE"
     integration = client.get("/api/v1/admin/integration-settings")
     assert integration.status_code == 200
-    assert integration.json()["reporter_id_type"] == "PERSON"
+    assert integration.json()["reporter_id_type"] == "BADGE"
     activate_created_terminal(client, terminal)
     response = client.post("/api/v1/terminal/scan", json={"reporter_id": "0001", "identification_method": "KEYPAD"})
     assert response.status_code == 200
     event = db.get(TimeEvent, response.json()["event"]["id"])
     assert event.reporter_id_type == "BADGE"
+    assert event.oracle_reporter_id == event.person_id
+    # The fixture resolver is intentionally unavailable; no new identity
+    # snapshot is created until a canonical person has resolved.
+    assert event.oracle_reporter_id_type is None
 
 
 def test_integration_settings_expose_effective_nonsecret_values(monitor):
@@ -104,7 +107,7 @@ def test_integration_settings_expose_effective_nonsecret_values(monitor):
     assert value["api_path"] == "/hcmRestApi/resources/11.13.18.05/timeEventRequests"
     assert value["oracle_source_id"] == "HUT_TCD_SUPP1"
     assert value["auth_mode"] == "basic"
-    assert value["reporter_id_type"] == "PERSON"
+    assert value["reporter_id_type"] == "BADGE"
     assert value["rest_framework_version"] == "4"
     assert value["oracle_enabled"] is False
     assert value["password"] in {"Configured", "Not configured"}
@@ -157,12 +160,12 @@ def test_edit_configuration_keeps_captured_event_snapshot(monitor):
         "name": "Updated gate",
         "external_device_id": "NEW-DEVICE",
         "identification_mode": "KEYPAD",
-        "reporter_id_type": "PERSON",
+        "reporter_id_type": "BADGE",
         "oracle_attributes": {"Workshop": "Finishing", "Project": "P99"},
     })
     assert response.status_code == 200
     assert response.json()["name"] == "Updated gate"
-    assert response.json()["reporter_id_type"] == "PERSON"
+    assert response.json()["reporter_id_type"] == "BADGE"
     db.expire_all()
     event = db.get(TimeEvent, event_id)
     assert event.device_id == "CLOCK-A"
