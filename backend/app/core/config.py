@@ -13,9 +13,6 @@ class Settings(BaseSettings):
     oracle_base_url: str = "https://fa-eocc-dev2-saasfaprod1.fa.ocs.oraclecloud.com"
     oracle_api_path: str = "/hcmRestApi/resources/11.13.18.05/timeEventRequests"
     oracle_source_id: str = "HUT_TCD_SUPP1"
-    # Preserve the local capture identity value; OracleClient always emits PERSON.
-    oracle_reporter_id_type: str = "BADGE"
-    oracle_person_reporter_id_type: str = "PERSON"
     oracle_auth_mode: str = "basic"
     oracle_username: str = ""
     oracle_password: str = ""

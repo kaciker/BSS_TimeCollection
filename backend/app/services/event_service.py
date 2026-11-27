@@ -130,13 +130,13 @@ def _create_event(
     person_id = identity.person_id if identity else None
     credential_id = identity.credential_id if identity else None
     oracle_reporter_id = person_id
-    oracle_reporter_id_type = settings.oracle_person_reporter_id_type if person_id else None
+    oracle_reporter_id_type = "BADGE" if person_id else None
     if identity is None and snapshot is not None and snapshot.person_id:
         source_person_id = snapshot.source_person_id
         person_id = snapshot.person_id
         credential_id = snapshot.credential_id
         oracle_reporter_id = snapshot.person_id
-        oracle_reporter_id_type = settings.oracle_person_reporter_id_type
+        oracle_reporter_id_type = "BADGE"
 
     event = TimeEvent(
         workshop_code=workshop.code if workshop else None,
@@ -163,9 +163,9 @@ def _create_event(
         oracle_supplier_event=action.oracle_supplier_event,
         state_effect=action.state_effect,
         reporter_id=reporter_id,
-        # Preserve the local capture/monitoring identity semantics. Oracle
-        # serialization independently enforces reporterIdType=PERSON.
-        reporter_id_type=settings.oracle_reporter_id_type,
+        # Preserve local capture identity semantics. Oracle serialization uses
+        # the fixed Badge ID contract.
+        reporter_id_type="BADGE",
         identification_method=method.value,
         source_person_id=source_person_id,
         person_id=person_id,

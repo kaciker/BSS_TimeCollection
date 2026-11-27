@@ -178,7 +178,7 @@ def _terminal_read(terminal: Terminal, activation_token: str | None = None) -> T
         external_device_id=terminal.external_device_id,
         identification_mode=terminal.identification_mode,
         exit_menu_timeout_seconds=terminal.exit_menu_timeout_seconds,
-        reporter_id_type=settings.oracle_person_reporter_id_type,
+        reporter_id_type="BADGE",
         oracle_attributes=terminal.oracle_attributes or {},
         active=terminal.active,
         action_codes=sorted(action.code for action in terminal.actions),
@@ -237,7 +237,7 @@ def integration_settings():
         "username": credential_status["username"],
         "password": "Configured" if credential_status["password_configured"] else "Not configured",
         "bearer_token": "Configured" if credential_status["bearer_token_configured"] else "Not configured",
-        "reporter_id_type": settings.oracle_person_reporter_id_type,
+        "reporter_id_type": "BADGE",
         "rest_framework_version": settings.oracle_rest_framework_version,
         "timeout_seconds": settings.oracle_timeout_seconds,
         "credentials_configured": credential_status["credentials_configured"],
@@ -432,7 +432,7 @@ def create_terminal(payload: TerminalCreate, db: Session = Depends(get_db)):
         factory_code=factory.code,
         identification_mode=payload.identification_mode.value,
         exit_menu_timeout_seconds=payload.exit_menu_timeout_seconds if payload.exit_menu_timeout_seconds is not None else 5,
-        reporter_id_type=settings.oracle_person_reporter_id_type,
+        reporter_id_type="BADGE",
         oracle_attributes={} if payload.perimeter_only else payload.oracle_attributes,
         active=payload.active,
         actions=actions,
@@ -476,7 +476,7 @@ def update_terminal(terminal_code: str, payload: TerminalSettings, db: Session =
     terminal.identification_mode = payload.identification_mode.value
     if payload.exit_menu_timeout_seconds is not None:
         terminal.exit_menu_timeout_seconds = payload.exit_menu_timeout_seconds
-    terminal.reporter_id_type = settings.oracle_person_reporter_id_type
+    terminal.reporter_id_type = "BADGE"
     terminal.oracle_attributes = {} if perimeter else payload.oracle_attributes
     terminal.active = payload.active
     terminal.actions = actions

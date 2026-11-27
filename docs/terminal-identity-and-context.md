@@ -27,7 +27,7 @@ The create API still accepts an explicit `code` for migration and automated-test
 
 `reporterIdType` describes the meaning of the worker identifier sent to Oracle, not how the identifier was captured. It is therefore global Oracle integration configuration rather than a per-terminal setting.
 
-The backend setting is `ORACLE_REPORTER_ID_TYPE`, defaulting to `BADGE`. RFID and keypad remain capture methods; both can produce a reporter ID whose Oracle type is `BADGE`. New event snapshots use the global value at capture time.
+RFID and keypad remain capture methods; both resolve through the existing employee identity logic. New event snapshots use the fixed Oracle type `BADGE`; this does not change local capture identity or employee resolution.
 
 Administration Settings exposes the effective reporter ID type, Oracle source ID and delivery enabled/disabled state as read-only integration information.
 

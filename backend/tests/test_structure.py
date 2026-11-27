@@ -76,7 +76,7 @@ def test_terminal_path_snapshot_and_oracle_attributes(structure_client):
     event.person_id = "104582"
     event.oracle_payroll_time_type = "Workshop Entry ES"
     event.oracle_reporter_id = "104582"
-    event.oracle_reporter_id_type = "PERSON"
+    event.oracle_reporter_id_type = "BADGE"
     assert (event.workshop_code,event.subworkshop_code,event.project_line_code)==("W","S","P")
     assert (event.workshop_description,event.subworkshop_description,event.project_line_description)==("Workshop","Sub","Project")
     assert event.supplier_device_event == action.supplier_device_event

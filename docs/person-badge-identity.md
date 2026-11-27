@@ -72,12 +72,12 @@ For a resolved SECURITY_DB identity the event snapshot uses:
 
 ```text
 oracle_reporter_id      = pers_person.pin
-oracle_reporter_id_type = ORACLE_PERSON_REPORTER_ID_TYPE
+oracle_reporter_id_type = BADGE
 ```
 
-The default type is `PERSON`, but it is deployment-configurable because the Oracle implementation team must confirm whether this tenant expects `PERSON` or `PERSONID` for the value stored in `pers_person.pin`.
+Hutchinson confirmed on 26 November 2026 that this employee code is exactly the Badge ID mapped and loaded into Oracle DEV2 by HR Path. The permanent outbound type is `BADGE`; the value and BSS Person ID semantics remain unchanged.
 
-Legacy/unmapped events continue to fall back to `ORACLE_REPORTER_ID_TYPE` and the original `reporter_id`.
+Legacy/unmapped events retain their existing local snapshots and remain ineligible for Oracle until identity reconciliation; there is no fallback or alternate outbound identity path.
 
 ## Deployment notes
 
@@ -90,7 +90,6 @@ Apply Alembic revision:
 Set or confirm:
 
 ```text
-ORACLE_PERSON_REPORTER_ID_TYPE=PERSON
 PERSON_BADGE_SYNC_SECONDS=180
 ```
 
@@ -100,4 +99,4 @@ Before enabling Oracle delivery, validate one known employee end-to-end:
 2. `person_id` equals the intended Oracle reporter value.
 3. Replacing the card closes the old local observed assignment and opens the new one.
 4. New time events keep the old/new credential that was effective at capture time.
-5. Oracle preview uses Person ID while the event retains the physical credential snapshot.
+5. Oracle preview uses the unchanged resolved employee code with `reporterIdType=BADGE`, while the event retains the physical credential snapshot.

@@ -78,8 +78,8 @@ class OracleClient:
             event.oracle_mapping_error = "; ".join(errors)[:255]
             raise OracleMappingError(event.oracle_mapping_error)
 
-        # Only the frozen resolved Person ID is valid for this contract. Keep
-        # the terminal's raw identifier locally for audit; never send it here.
+        # The resolved employee code is the Badge ID mapped into Oracle DEV2.
+        # Keep the terminal's raw identifier locally for audit; never send it here.
         reporter_id = event.person_id
         expected_supplier = event.oracle_supplier_event
 
@@ -114,7 +114,7 @@ class OracleClient:
             "eventDateTime": oracle_timestamp,
             "supplierDeviceEvent": expected_supplier,
             "reporterId": reporter_id,
-            "reporterIdType": "PERSON",
+            "reporterIdType": "BADGE",
             "timeEventAttributes": attributes,
         }
         return {

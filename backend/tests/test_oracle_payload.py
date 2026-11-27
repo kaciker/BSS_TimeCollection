@@ -24,7 +24,7 @@ def test_oracle_payload_matches_validated_dev2_contract_and_uses_capture_time():
         reporter_id="0582609699",
         reporter_id_type="BADGE",
         person_id="84729",
-        oracle_reporter_id="SHOULD-NOT-BE-USED",
+        oracle_reporter_id="84729",
         oracle_reporter_id_type="BADGE",
         identification_method="KEYPAD",
         event_datetime=datetime(2026, 10, 9, 16, 0, 0, 123456, tzinfo=timezone.utc),
@@ -43,7 +43,9 @@ def test_oracle_payload_matches_validated_dev2_contract_and_uses_capture_time():
     assert item["eventDateTime"] == payload["requestTimestamp"]
     assert "deviceId" not in item
     assert item["reporterId"] == "84729"
-    assert item["reporterIdType"] == "PERSON"
+    assert item["reporterIdType"] == "BADGE"
+    assert event.oracle_reporter_id == event.person_id
+    assert item["reporterId"] == event.person_id
     assert item["supplierDeviceEvent"] == "HUT_TCD_SUPP1_IN_2"
     assert item["timeEventAttributes"] == [
         {"name": "PayrollTimeType", "value": "Workshop Entry ES"},

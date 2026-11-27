@@ -9,7 +9,7 @@ vi.mock('../src/api', () => ({ api: { get: vi.fn(), post: vi.fn(), put: vi.fn() 
 afterEach(() => { cleanup(); vi.clearAllMocks(); localStorage.clear(); });
 
 const settings = {
-  oracle_enabled: false, oracle_source_id: 'HUT_TCD_SUPP1', reporter_id_type: 'PERSON',
+  oracle_enabled: false, oracle_source_id: 'HUT_TCD_SUPP1', reporter_id_type: 'BADGE',
   base_url: 'https://oracle.example', api_path: '/timeEventRequests', endpoint: 'https://oracle.example/timeEventRequests',
   auth_mode: 'basic', rest_framework_version: '4', timeout_seconds: 15,
   credentials_configured: true, username: 'oracle-admin', password_configured: true,
@@ -20,6 +20,7 @@ it('shows mode-specific inputs and only safe configured state', async () => {
   vi.mocked(api.get).mockResolvedValue(settings as never);
   render(<SettingsPanel />);
   await screen.findByLabelText('Username');
+  expect((screen.getByLabelText('Reporter type') as HTMLInputElement).value).toBe('BADGE');
   expect(screen.getByLabelText(/^Password/)).toBeTruthy();
   expect(screen.queryByLabelText('Bearer token')).toBeNull();
   expect(screen.getByText(/Empty leaves the saved password unchanged/)).toBeTruthy();

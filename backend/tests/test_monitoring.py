@@ -50,7 +50,7 @@ def add_event(db, badge, clock, effect, minute):
         state_effect=effect, reporter_id=badge, reporter_id_type="BADGE",
         identification_method="KEYPAD", event_datetime=timestamp,
         event_timezone="Europe/Madrid", oracle_attributes={"reason": "meal"},
-        person_id=badge, oracle_reporter_id=badge, oracle_reporter_id_type="PERSON",
+        person_id=badge, oracle_reporter_id=badge, oracle_reporter_id_type="BADGE",
         workshop_code="439", subworkshop_code="4393", project_line_code="54A",
         oracle_payroll_time_type="Workshop Entry ES", oracle_work_area_code="439",
         oracle_machine_code="4391", oracle_cell_code="54Q",

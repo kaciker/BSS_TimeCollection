@@ -8,7 +8,7 @@ KEYPAD resolution queries `dbo.pers_person.pin = ?` in SECURITY_DB. It does not 
 
 RFID continues using the established identity resolver: exact and byte-swapped `pers_attribute_ext.attr_value4` candidates are checked with the existing fail-closed ambiguity rules, and only physical RFID observations update `PersonBadgeAssignment.reader_id`.
 
-For newly resolved events, Oracle `reporterId` is `person_id` and `reporterIdType` is `PERSON`. Local event logs continue to expose `reporter_id`, identification method, `person_id`, and credential where available. Oracle remains disabled in CORP.
+For newly resolved events, Oracle `reporterId` is the unchanged resolved employee code in `person_id`, confirmed as the Badge ID mapped and loaded into Oracle DEV2 by HR Path. Its fixed `reporterIdType` is `BADGE`. Local event logs continue to expose `reporter_id`, identification method, `person_id`, and credential where available. Oracle remains disabled in CORP.
 
 Worker-state continuity, exit policy, cross-method duplicate protection, and advisory locking use `person_id` when resolved. Historical events with null `person_id` retain reporter-based fallback. Historical TimeEvents are not backfilled or rewritten.
 
