@@ -91,6 +91,7 @@ def test_worker_cutoff_leaves_older_pending_rows_unclaimed(delivery_db, monkeypa
         ])
         db.commit()
 
+    monkeypatch.setattr(worker.settings, "oracle_delivery_event_allowlist", "")
     monkeypatch.setattr(worker.settings, "oracle_delivery_created_after", cutoff.isoformat())
     assert worker.claim_next_event() == "at-cutoff"
     assert worker.claim_next_event() == "after-cutoff"
@@ -101,6 +102,7 @@ def test_worker_cutoff_leaves_older_pending_rows_unclaimed(delivery_db, monkeypa
 
 
 def test_worker_rejects_cutoff_without_timezone(delivery_db, monkeypatch):
+    monkeypatch.setattr(worker.settings, "oracle_delivery_event_allowlist", "")
     monkeypatch.setattr(worker.settings, "oracle_delivery_created_after", "2026-11-06T13:00:00")
     with pytest.raises(ValueError, match="must include a timezone"):
         worker.claim_next_event()
