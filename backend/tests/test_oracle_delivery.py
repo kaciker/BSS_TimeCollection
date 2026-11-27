@@ -81,6 +81,31 @@ def test_claims_events_in_capture_order_and_enforces_unique_local_request_number
         db.rollback()
 
 
+def test_worker_cutoff_leaves_older_pending_rows_unclaimed(delivery_db, monkeypatch):
+    cutoff = datetime(2026, 11, 6, 13, 0, tzinfo=timezone.utc)
+    with Session(delivery_db) as db:
+        db.add_all([
+            make_event("before-cutoff", cutoff - timedelta(microseconds=1)),
+            make_event("at-cutoff", cutoff),
+            make_event("after-cutoff", cutoff + timedelta(seconds=1)),
+        ])
+        db.commit()
+
+    monkeypatch.setattr(worker.settings, "oracle_delivery_created_after", cutoff.isoformat())
+    assert worker.claim_next_event() == "at-cutoff"
+    assert worker.claim_next_event() == "after-cutoff"
+    assert worker.claim_next_event() is None
+
+    with Session(delivery_db) as db:
+        assert db.get(TimeEvent, "before-cutoff").delivery_status == "PENDING"
+
+
+def test_worker_rejects_cutoff_without_timezone(delivery_db, monkeypatch):
+    monkeypatch.setattr(worker.settings, "oracle_delivery_created_after", "2026-11-06T13:00:00")
+    with pytest.raises(ValueError, match="must include a timezone"):
+        worker.claim_next_event()
+
+
 @pytest.mark.parametrize(("result", "expected_status", "retryable"), [
     ("RETRY", "RETRY", True),
     ("REJECTED", "REJECTED", False),

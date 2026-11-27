@@ -92,23 +92,41 @@ def recover_stale_events() -> None:
 
 def claim_next_event() -> str | None:
     now = datetime.now(timezone.utc)
+    created_after = None
+    if settings.oracle_delivery_created_after:
+        try:
+            created_after = datetime.fromisoformat(
+                settings.oracle_delivery_created_after.replace("Z", "+00:00")
+            )
+        except ValueError as exc:
+            raise ValueError("ORACLE_DELIVERY_CREATED_AFTER must be an ISO-8601 timestamp") from exc
+        if created_after.tzinfo is None:
+            raise ValueError("ORACLE_DELIVERY_CREATED_AFTER must include a timezone")
+        created_after = created_after.astimezone(timezone.utc)
     with SessionLocal() as db:
-        candidate_ids = db.scalars(
+        statement = (
             select(TimeEvent)
             .where(TimeEvent.delivery_status.in_([DeliveryStatus.PENDING.value, DeliveryStatus.RETRY.value]))
             .where(or_(TimeEvent.next_attempt_at.is_(None), TimeEvent.next_attempt_at <= now))
             .order_by(TimeEvent.created_at)
             .with_only_columns(TimeEvent.id)
-        ).all()
+        )
+        if created_after is not None:
+            statement = statement.where(TimeEvent.created_at >= created_after)
+        candidate_ids = db.scalars(statement).all()
         # Catalogue hierarchy validation lives in one shared service. Rows not
         # ready remain local and pending; the worker never claims them.
         event = None
         for candidate_id in candidate_ids:
             candidate = db.scalar(select(TimeEvent).where(TimeEvent.id == candidate_id).with_for_update(skip_locked=True))
+            candidate_created_at = candidate.created_at if candidate is not None else None
+            if candidate_created_at is not None and candidate_created_at.tzinfo is None:
+                candidate_created_at = candidate_created_at.replace(tzinfo=timezone.utc)
             if (
                 candidate is not None
                 and candidate.delivery_status in {DeliveryStatus.PENDING.value, DeliveryStatus.RETRY.value}
                 and (candidate.next_attempt_at is None or candidate.next_attempt_at <= now)
+                and (created_after is None or candidate_created_at >= created_after)
                 and is_oracle_ready(candidate, db)
             ):
                 event = candidate

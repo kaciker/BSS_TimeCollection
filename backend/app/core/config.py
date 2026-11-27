@@ -43,6 +43,9 @@ class Settings(BaseSettings):
 
     worker_poll_seconds: float = 3.0
     worker_stale_sending_seconds: int = 300
+    # UTC creation cutoff for controlled recovery of the live CT104 event queue.
+    # Older pending rows remain local and must never be claimed automatically.
+    oracle_delivery_created_after: str = ""
 
     operational_metrics_token: str = ""
     operational_statement_timeout_ms: int = 750
