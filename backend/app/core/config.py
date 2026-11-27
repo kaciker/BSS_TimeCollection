@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     oracle_base_url: str = "https://fa-eocc-dev2-saasfaprod1.fa.ocs.oraclecloud.com"
     oracle_api_path: str = "/hcmRestApi/resources/11.13.18.05/timeEventRequests"
     oracle_source_id: str = "HUT_TCD_SUPP1"
+    # Local event/terminal metadata; Oracle serialization uses its fixed BADGE contract.
+    oracle_reporter_id_type: str = "BADGE"
     oracle_auth_mode: str = "basic"
     oracle_username: str = ""
     oracle_password: str = ""

@@ -165,7 +165,7 @@ def _create_event(
         reporter_id=reporter_id,
         # Preserve local capture identity semantics. Oracle serialization uses
         # the fixed Badge ID contract.
-        reporter_id_type="BADGE",
+        reporter_id_type=settings.oracle_reporter_id_type,
         identification_method=method.value,
         source_person_id=source_person_id,
         person_id=person_id,
